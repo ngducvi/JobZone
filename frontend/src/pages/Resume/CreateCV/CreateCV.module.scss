@@ -1,0 +1,1259 @@
+// Variables
+$primary-blue: #013a74;
+$primary-green: #02a346;
+$light-gray: #f5f5f5;
+$border-gray: #e0e0e0;
+$text-dark: #2d2d2d;
+$text-gray: #666666;
+$shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+$shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+$transition: all 0.3s ease;
+
+// Định nghĩa biến màu cho các loại template
+$type-colors: (
+  'creative': (#4A90E2, #E3F2FD),    // Xanh sáng tạo
+  'modern': (#9C27B0, #F3E5F5),      // Tím hiện đại
+  'professional': (#2E7D32, #E8F5E9), // Xanh chuyên nghiệp
+  'simple': (#455A64, #ECEFF1)        // Xám đơn giản
+);
+
+// Animations
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+// Template type styles
+@mixin template-type-styles {
+  @each $type, $colors in $type-colors {
+    &.#{$type} {
+      background: nth($colors, 2);
+      color: nth($colors, 1);
+      
+      &:hover {
+        background: rgba(nth($colors, 1), 0.15);
+        transform: translateY(-1px);
+      }
+    }
+  }
+}
+
+// Template card hover styles
+@mixin template-card-hover {
+  @each $type, $colors in $type-colors {
+    &.#{$type} {
+      &:hover {
+        border-color: nth($colors, 1);
+        
+        .use-template-btn {
+          background: nth($colors, 1);
+        }
+      }
+    }
+  }
+}
+
+.wrapper {
+  padding: 32px 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+  background-color: white;
+  margin-top: 20px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, $primary-blue, darken($primary-blue, 10%));
+  color: white;
+  border-radius: 12px;
+  box-shadow: $shadow-md;
+  position: relative;
+  overflow: hidden;
+
+  .search-bar {
+    margin-top: 24px;
+    display: flex;
+    align-items: center;
+    max-width: 600px;
+    margin: 24px auto 0;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50px;
+    padding: 8px 16px;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    
+    input {
+      flex: 1;
+      background: none;
+      border: none;
+      color: white;
+      padding: 8px;
+      font-size: 16px;
+      
+      &::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+      }
+      
+      &:focus {
+        outline: none;
+      }
+    }
+    
+    .search-icon {
+      color: rgba(255, 255, 255, 0.7);
+      margin-right: 8px;
+    }
+    
+    .filter-toggle {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: $transition;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+      
+      &.active {
+        background: white;
+        color: $primary-blue;
+      }
+    }
+  }
+}
+
+.content-wrapper {
+  position: relative;
+  
+  .tabs-container {
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 10;
+    padding: 16px 0;
+    border-bottom: 1px solid $border-gray;
+  }
+}
+
+.filters {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+  background: white;
+  
+  &.show {
+    max-height: 200px;
+    padding: 16px 0;
+    animation: slideDown 0.3s ease-out;
+  }
+  
+  .filter-select {
+    margin: 0 8px;
+  }
+}
+
+.no-results {
+  text-align: center;
+  padding: 48px 0;
+  grid-column: 1 / -1;
+  
+  img {
+    width: 200px;
+    margin-bottom: 24px;
+    opacity: 0.7;
+  }
+  
+  h3 {
+    color: $text-dark;
+    margin-bottom: 8px;
+  }
+  
+  p {
+    color: $text-gray;
+  }
+}
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  margin: -20px auto 32px;
+  background: white;
+  padding: 8px;
+  border-radius: 50px;
+  box-shadow: $shadow-sm;
+  max-width: 600px;
+  position: relative;
+  animation: fadeIn 0.8s ease-out 0.4s backwards;
+
+  .tab {
+    padding: 12px 32px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-weight: 600;
+    color: $text-gray;
+    border-radius: 25px;
+    transition: $transition;
+    position: relative;
+    overflow: hidden;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: $primary-green;
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+
+    &:hover::after {
+      transform: scaleX(1);
+    }
+
+    &:hover {
+      color: $primary-green;
+    }
+
+    &.active {
+      background: linear-gradient(135deg, $primary-green, darken($primary-green, 5%));
+      color: white;
+    }
+  }
+}
+
+.filters {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+
+  .filter-select {
+    padding: 12px 24px;
+    border: 2px solid $border-gray;
+    border-radius: 8px;
+    min-width: 180px;
+    font-size: 15px;
+    color: $text-dark;
+    background-color: white;
+    cursor: pointer;
+    transition: $transition;
+    position: relative;
+    background: white;
+    box-shadow: $shadow-sm;
+    
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+
+    &::after {
+      content: '▼';
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: $primary-green;
+      font-size: 12px;
+      pointer-events: none;
+      transition: $transition;
+    }
+
+    &:focus::after {
+      transform: translateY(-50%) rotate(180deg);
+    }
+
+    option {
+      padding: 8px;
+    }
+  }
+}
+
+.templates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 32px;
+  padding: 20px 0;
+}
+
+.template-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: $transition;
+  border: 1px solid transparent;
+  animation: fadeIn 0.6s ease-out;
+
+  &:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+    border-color: $primary-green;
+    
+    .template-image img {
+      transform: scale(1.05);
+    }
+    
+    .use-template-btn {
+      background: $primary-green;
+    }
+  }
+
+  .template-image {
+    position: relative;
+    padding-top: 141%;
+    overflow: hidden;
+    background: $light-gray;
+
+    img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: $transition;
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(0, 0, 0, 0.2) 100%
+      );
+      opacity: 0;
+      transition: $transition;
+      z-index: 1;
+    }
+
+    .template-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: $transition;
+      z-index: 2;
+    }
+
+    .overlay-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 20px;
+      width: 100%;
+      max-width: 200px;
+
+      button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: $transition;
+        transform: translateY(20px);
+        opacity: 0;
+
+        svg {
+          font-size: 18px;
+        }
+
+        &.preview-btn {
+          background: white;
+          color: $primary-blue;
+
+          &:hover {
+            background: darken(white, 5%);
+          }
+        }
+
+        &.use-template-btn {
+          background: $primary-green;
+          color: white;
+
+          &:hover {
+            background: darken($primary-green, 5%);
+          }
+        }
+      }
+    }
+  }
+
+  &:hover {
+    .template-overlay {
+      opacity: 1;
+    }
+
+    .overlay-buttons button {
+      transform: translateY(0);
+      opacity: 1;
+
+      &:nth-child(1) {
+        transition-delay: 0.1s;
+      }
+      &:nth-child(2) {
+        transition-delay: 0.2s;
+      }
+    }
+  }
+
+  .template-info {
+    padding: 16px;
+    
+    .template-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: $text-dark;
+      margin: 12px 0;
+      line-height: 1.4;
+    }
+
+    .template-description {
+      font-size: 14px;
+      color: $text-gray;
+      margin-bottom: 16px;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      line-clamp: 2;
+      overflow: hidden;
+    }
+  }
+
+  .template-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 0 4px;
+
+    .template-type-container {
+      flex: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .template-type {
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 12px;
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      transition: all 0.2s ease;
+      
+      // Mặc định style
+      background: rgba($primary-blue, 0.1);
+      color: $primary-blue;
+
+      // Áp dụng styles cho từng loại
+      @include template-type-styles;
+
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+
+      &.more-types {
+        background: rgba($text-gray, 0.1);
+        color: $text-gray;
+        font-size: 11px;
+        padding: 4px 8px;
+        min-width: auto;
+        
+        &:hover {
+          background: rgba($text-gray, 0.15);
+          transform: none;
+          box-shadow: none;
+        }
+      }
+    }
+
+    .template-downloads {
+      font-size: 13px;
+      color: $text-gray;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 12px;
+      background: $light-gray;
+      
+      svg {
+        font-size: 14px;
+        color: $primary-green;
+      }
+    }
+  }
+
+  .template-downloads {
+    font-size: 13px;
+    color: $primary-green;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    animation: float 3s ease-in-out infinite;
+
+    &::before {
+      content: '↓';
+      font-size: 16px;
+    }
+  }
+
+  .use-template-btn {
+    width: 100%;
+    padding: 12px;
+    background: $primary-blue;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: $transition;
+    position: relative;
+    overflow: hidden;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.6s ease-out, height 0.6s ease-out;
+    }
+
+    &:active::after {
+      width: 300px;
+      height: 300px;
+    }
+
+    &:hover {
+      background: lighten($primary-green, 5%);
+      transform: translateY(-2px);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+
+  // Áp dụng hover styles
+  @include template-card-hover;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, 
+    $light-gray 25%, 
+    lighten($light-gray, 5%) 50%, 
+    $light-gray 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+// Thêm animation cho buttons
+@keyframes buttonPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.preview-btn:hover,
+.use-template-btn:hover {
+  animation: buttonPop 0.3s ease;
+}
+
+// Thêm ripple effect
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(0);
+  animation: ripple 0.6s linear;
+  pointer-events: none;
+}
+
+@keyframes ripple {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .header {
+    padding: 30px 15px;
+    
+    h1 {
+      font-size: 24px;
+    }
+  }
+
+  .tabs {
+    flex-direction: column;
+    border-radius: 12px;
+    
+    .tab {
+      width: 100%;
+      text-align: center;
+    }
+  }
+
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+    
+    .filter-select {
+      width: 100%;
+    }
+  }
+
+  .templates-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+  }
+
+  .template-header {
+    flex-direction: column;
+    align-items: flex-start;
+    
+    .template-type-container {
+      width: 100%;
+      margin-bottom: 8px;
+    }
+    
+    .template-downloads {
+      align-self: flex-end;
+    }
+  }
+}
+
+.template-description {
+  font-size: 14px;
+  color: $text-gray;
+  margin: 8px 0 16px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.template-downloads {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  
+  svg {
+    font-size: 12px;
+  }
+}
+
+.template-image {
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: $light-gray;
+  }
+}
+
+.use-template-btn {
+  svg {
+    margin-right: 8px;
+  }
+}
+
+.template-card {
+  &.creative {
+    border-color: rgba($primary-blue, 0.2);
+  }
+  
+  &.modern {
+    border-color: rgba(#6b46c1, 0.2);
+  }
+  
+  &.professional {
+    border-color: rgba(#2c5282, 0.2);
+  }
+  
+  &.simple {
+    border-color: rgba(#718096, 0.2);
+  }
+}
+
+// Thêm styles cho modal preview
+.preview-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.preview-modal {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 1200px;
+  height: 90vh;
+  overflow: hidden;
+  animation: scaleIn 0.3s ease;
+  
+  .preview-content {
+    display: flex;
+    height: 100%;
+    
+    .preview-cv {
+      flex: 1;
+      background: $light-gray;
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+      
+      .cv-preview {
+        background: white;
+        width: 100%;
+        max-width: 800px;
+        min-height: 1000px;
+        box-shadow: $shadow-md;
+        position: relative;
+        
+        // Thêm watermark khi preview
+        &::after {
+          content: 'PREVIEW';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%) rotate(-45deg);
+          font-size: 120px;
+          color: rgba($primary-blue, 0.05);
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        // Đảm bảo nội dung CV hiển thị trên watermark
+        > * {
+          position: relative;
+          z-index: 1;
+        }
+      }
+    }
+    
+    .preview-sidebar {
+      width: 320px;
+      border-left: 1px solid $border-gray;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      
+      .preview-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: $text-dark;
+        margin-bottom: 24px;
+      }
+      
+      .preview-form {
+        flex: 1;
+        
+        .form-group {
+          margin-bottom: 20px;
+          
+          label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: $text-dark;
+          }
+          
+          select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid $border-gray;
+            border-radius: 8px;
+            font-size: 15px;
+            color: $text-dark;
+            background: white;
+            cursor: pointer;
+            
+            &:focus {
+              border-color: $primary-blue;
+              outline: none;
+              box-shadow: 0 0 0 3px rgba($primary-blue, 0.1);
+            }
+          }
+          
+          .color-options {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            
+            .color-btn {
+              width: 32px;
+              height: 32px;
+              border-radius: 50%;
+              border: 2px solid white;
+              cursor: pointer;
+              transition: all 0.2s ease;
+              box-shadow: $shadow-sm;
+              
+              &:hover {
+                transform: scale(1.1);
+              }
+              
+              &.active {
+                border: 2px solid $primary-green;
+                transform: scale(1.1);
+              }
+            }
+          }
+        }
+      }
+      
+      .preview-actions {
+        margin-top: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        
+        .use-template-btn {
+          width: 100%;
+          padding: 14px;
+          background: $primary-green;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          
+          &:hover {
+            background: darken($primary-green, 5%);
+            transform: translateY(-2px);
+          }
+        }
+        
+        .close-btn {
+          width: 100%;
+          padding: 14px;
+          background: white;
+          color: $text-dark;
+          border: 1px solid $border-gray;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          
+          &:hover {
+            background: $light-gray;
+          }
+        }
+      }
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { 
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to { 
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.cv-form {
+  background: white;
+  width: 100%;
+  max-width: 800px;
+  min-height: 1000px;
+  padding: 40px;
+  box-shadow: $shadow-md;
+  border-radius: 8px;
+
+  .cv-header {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 32px;
+    
+    .avatar-placeholder {
+      width: 120px;
+      height: 120px;
+      background: $light-gray;
+      border-radius: 50%;
+    }
+    
+    .basic-info {
+      flex: 1;
+      
+      .header-field {
+        margin-bottom: 16px;
+        
+        input {
+          width: 100%;
+          
+          &:first-child {
+            font-size: 24px;
+            font-weight: 700;
+          }
+          
+          &:last-child {
+            font-size: 18px;
+            color: $text-gray;
+          }
+        }
+      }
+    }
+  }
+
+  .cv-body {
+    .cv-section {
+      margin-bottom: 24px;
+      
+      h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: $primary-blue;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid rgba($primary-blue, 0.1);
+      }
+    }
+  }
+
+  .cv-input {
+    width: 100%;
+    padding: 8px 0;
+    border: none;
+    border-bottom: 1px solid $border-gray;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    
+    &:focus {
+      outline: none;
+      border-color: $primary-blue;
+    }
+    
+    &::placeholder {
+      color: lighten($text-gray, 20%);
+    }
+  }
+
+  .cv-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px;
+    border: 1px solid $border-gray;
+    border-radius: 8px;
+    font-size: 15px;
+    resize: vertical;
+    transition: all 0.3s ease;
+    
+    &:focus {
+      outline: none;
+      border-color: $primary-blue;
+      box-shadow: 0 0 0 3px rgba($primary-blue, 0.1);
+    }
+    
+    &::placeholder {
+      color: lighten($text-gray, 20%);
+    }
+  }
+}
+
+// Template Basic 1
+.cv-basic-1 {
+  // Style cho template basic
+  .cv-header {
+    display: flex;
+    gap: 24px;
+    // ...
+  }
+  // ...
+}
+
+// Template Modern 1 
+.cv-modern-1 {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  
+  .sidebar {
+    background: $primary-blue;
+    color: white;
+    // ...
+  }
+  // ...
+}
+
+// Template Creative 1
+.cv-creative-1 {
+  // Style khác cho template creative
+}
+
+.cv-template-1 {
+  background: white;
+  padding: 40px;
+  font-family: 'Roboto', sans-serif;
+  color: #2d3748;
+  
+  .cv-header {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 2px solid rgba($primary-blue, 0.1);
+
+    .avatar-section {
+      .avatar {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background: $light-gray;
+        border: 3px solid $primary-blue;
+      }
+    }
+
+    .basic-info {
+      flex: 1;
+
+      .fullname {
+        font-size: 32px;
+        font-weight: 700;
+        color: $primary-blue;
+        margin-bottom: 8px;
+        letter-spacing: -0.02em;
+      }
+
+      .title {
+        font-size: 20px;
+        color: $text-gray;
+        font-weight: 500;
+      }
+    }
+  }
+
+  .contact-info {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 32px;
+    padding: 16px 24px;
+    background: rgba($primary-blue, 0.03);
+    border-radius: 12px;
+
+    .info-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: $text-gray;
+
+      i {
+        color: $primary-blue;
+        font-size: 18px;
+      }
+    }
+  }
+
+  .cv-content {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 40px;
+
+    section {
+      margin-bottom: 32px;
+
+      h2 {
+        font-size: 20px;
+        font-weight: 600;
+        color: $primary-blue;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid rgba($primary-blue, 0.1);
+
+        i {
+          font-size: 18px;
+          opacity: 0.8;
+        }
+      }
+
+      .content {
+        font-size: 15px;
+        line-height: 1.6;
+        color: $text-gray;
+
+        // Style cho education
+        .education-item {
+          margin-bottom: 16px;
+          
+          .school {
+            font-weight: 600;
+            color: $text-dark;
+          }
+          
+          .period {
+            font-size: 13px;
+            color: $primary-green;
+          }
+        }
+
+        // Style cho experience
+        .experience-item {
+          margin-bottom: 24px;
+          
+          .company {
+            font-weight: 600;
+            color: $text-dark;
+          }
+          
+          .period {
+            font-size: 13px;
+            color: $primary-green;
+          }
+          
+          .description {
+            margin-top: 8px;
+          }
+        }
+
+        // Style cho skills
+        .skill-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 12px;
+          
+          .skill-name {
+            font-weight: 500;
+          }
+          
+          .skill-level {
+            height: 4px;
+            flex: 1;
+            background: rgba($primary-blue, 0.1);
+            border-radius: 2px;
+            
+            .level-bar {
+              height: 100%;
+              background: $primary-blue;
+              border-radius: 2px;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Responsive
+  @media (max-width: 1024px) {
+    .cv-content {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 24px;
+
+    .cv-header {
+      flex-direction: column;
+      text-align: center;
+      gap: 16px;
+
+      .avatar-section .avatar {
+        width: 120px;
+        height: 120px;
+      }
+    }
+
+    .contact-info {
+      flex-direction: column;
+      gap: 12px;
+    }
+  }
+}

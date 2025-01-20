@@ -1,0 +1,56 @@
+@import "normalize.css";
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap");
+:root {
+  --primary-color: #195a97;
+  --white-color: #fff;
+  --divider-color: #dee3e9;
+  --black-color: #000;
+  --background-light: #f4f6f9;
+  // --button-color: #1dbfaf;
+  --button-color: #195a97;
+  --button-hover-color: #195a97;
+    --success-color: #00b894;
+  --invalid-color: #f33a58;
+  --desc-color: #0000008a;
+  --comment-text-color: #2e3441;
+  --comment-editor-bg: #eef4fc;
+  --text-color: #333;
+  --comment-title-color: #4e586b;
+  --comment-primary-button-bg: #0093fc;
+  --comment-interactive-color: #0093fc;
+  --button-image: linear-gradient(70.06deg, #195a97 -5%, #2cccff 106%);
+  --header-height: 6.4rem;
+  --footer-height: 5.2rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+html {
+  font-size: 62.5%;
+}
+
+body {
+  font-family: "Roboto", sans-serif;
+  font-size: 1.6rem;
+  line-height: 1.5;
+  text-rendering: optimizeSpeed;
+}
+
+button {
+  border: none;
+  box-shadow: none;
+}
+
+ul {
+  padding-left: 0;
+  list-style-type: none;
+}
+
+a {
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    text-decoration: none;
+  }
+}

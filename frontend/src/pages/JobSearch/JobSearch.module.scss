@@ -1,0 +1,377 @@
+.wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.job-search {
+  padding-top: 76px;
+  min-height: 100vh;
+}
+
+.search-header {
+  background: linear-gradient(135deg, #013a74 0%, #02a346 100%);
+  padding: 24px 0;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.search-form {
+  display: flex;
+  gap: 16px;
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+
+  .search-input,
+  .location-input {
+    flex: 1;
+    position: relative;
+
+    i {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #6b7280;
+    }
+
+    input {
+      width: 100%;
+      height: 44px;
+      padding: 0 12px 0 36px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-size: 15px;
+
+      &:focus {
+        outline: none;
+        border-color: #013a74;
+      }
+    }
+  }
+
+  .search-button {
+    padding: 0 32px;
+    height: 44px;
+    background: linear-gradient(135deg, #013a74, #02a346);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(1, 58, 116, 0.2);
+    }
+  }
+}
+
+.content {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 32px;
+  padding: 32px 0;
+}
+
+.filters {
+  position: sticky;
+  top: 90px;
+  height: calc(100vh - 90px);
+  overflow-y: auto;
+  padding-right: 16px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+    
+    &:hover {
+      background: #a1a1a1;
+    }
+  }
+
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+
+  scroll-behavior: smooth;
+
+  .filter-section {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 16px;
+    }
+  }
+
+  .checkbox-item,
+  .radio-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    cursor: pointer;
+
+    input {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    span {
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .count {
+      color: #6b7280;
+      margin-left: auto;
+    }
+  }
+
+  .show-more {
+    color: #013a74;
+    font-size: 14px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 0;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .filter-section {
+    opacity: 0.7;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+
+    &.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.job-list {
+  .job-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .active-filters {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    span {
+      font-size: 15px;
+      font-weight: 500;
+      color: #374151;
+    }
+  }
+
+  .filter-tags {
+    display: flex;
+    gap: 8px;
+  }
+
+  .filter-tag {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    background: #e5e7eb;
+    border-radius: 16px;
+    font-size: 14px;
+    color: #374151;
+
+    .remove-tag {
+      background: none;
+      border: none;
+      color: #6b7280;
+      cursor: pointer;
+      padding: 0;
+      font-size: 16px;
+      line-height: 1;
+
+      &:hover {
+        color: #374151;
+      }
+    }
+  }
+
+  .sort-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    span {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .sort-select {
+      padding: 6px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #374151;
+      background: white;
+      cursor: pointer;
+
+      &:focus {
+        outline: none;
+        border-color: #013a74;
+      }
+    }
+  }
+
+  .jobs {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .content {
+    grid-template-columns: 1fr;
+  }
+
+  .filters {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .search-form {
+    flex-direction: column;
+
+    .search-button {
+      width: 100%;
+    }
+  }
+
+  .job-list-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+}
+
+.salary-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 0;
+
+  input {
+    width: 80px;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    font-size: 14px;
+
+    &:focus {
+      outline: none;
+      border-color: #013a74;
+    }
+  }
+
+  span {
+    color: #6b7280;
+    font-size: 14px;
+  }
+}
+
+.select-wrapper {
+  select {
+    width: 100%;
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #374151;
+    background: white;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+
+    &:focus {
+      outline: none;
+      border-color: #013a74;
+    }
+  }
+}
+
+.filter-section {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .radio-item {
+    padding: 6px 0;
+    
+    &:hover {
+      background: rgba(1, 58, 116, 0.05);
+    }
+  }
+}

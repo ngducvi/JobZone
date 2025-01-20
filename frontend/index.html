@@ -1,0 +1,78 @@
+<div style="max-width: 800px; margin: 0 auto; padding-left: 15px; padding-right: 15px; font-family: Arial, sans-serif; line-height: 1.6;">
+    
+    <img src="https://drive.google.com/thumbnail?id=1j0Ru5dAkeuvQHiMmxKuzypdPk6MhR7ed&sz=w1000" alt="Logo BIT Group" style="max-width: 100%; height: auto;">
+
+      <p style="text-align: right; font-style: italic;">Tp. Hồ Chí Minh, ngày ${day} tháng ${month} năm ${year}</p>
+      <p>
+          <strong>Kính gửi: ${currentFields['Tên khách hàng']}</strong> ,
+      </p>
+      <p>
+          Lời đầu tiên, xin trân trọng cảm ơn Quý Công ty đã quan tâm đến dịch vụ BIT Group! <br>
+          Căn cứ vào ngày hết hạn của tên miền BIT Group xin gửi đến Quý Công ty thông báo về việc gia hạn với thông tin chi tiết như sau:
+      </p>
+
+      <table style="width: 100%; border-collapse: collapse; margin: 20px auto; font-family: Arial, sans-serif; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
+        <thead>
+          <tr>
+            <th style="text-align: center;background-color: #3f78e0; color: white; border: 1px solid #ddd; padding: 10px;">STT</th>
+            <th style="text-align: center;background-color: #3f78e0; color: white; border: 1px solid #ddd; padding: 10px;">Mô tả</th>
+            <th style="text-align: center;background-color: #3f78e0; color: white; border: 1px solid #ddd; padding: 10px;">ĐVT</th>
+            <th style="text-align: center;background-color: #3f78e0; color: white; border: 1px solid #ddd; padding: 10px;">Đơn giá</th>
+            
+            <th style="text-align: center;background-color: #3f78e0; color: white; border: 1px solid #ddd; padding: 10px;">Thành tiền<br>(Bao gồm VAT)</th>
+            <th style="text-align: center;background-color: #3f78e0; color: white; border: 1px solid #ddd; padding: 10px;">Ghi chú</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td style="border: 1px solid #ddd; padding: 10px; text-align: right; font-weight: bold;" colspan="4">TỔNG CỘNG</td>
+            <td style="border: 1px solid #ddd; padding: 10px; text-align: center; font-weight: bold;"> ${currentFields['Số tiền']} VNĐ</td>
+          </tr>
+          <tr>
+            <td style="border: 1px solid #ddd; padding: 10px; text-align: left; font-style: italic; color: #555;" colspan="5">
+              Bằng chữ: ${wordNumber}./.
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <p ><strong style="color: red;">Lưu ý</strong></p>
+      <p>- Thanh toán trước ngày <strong style="color: red;">${convertTimestamp(currentFields['Ngày thanh toán'])}</strong> để đảm bảo thời gian gia hạn tên miền, web.</p>
+      <p>- Trong trường hợp khách hàng thanh toán chậm trễ dẫn đến hệ thống email, 
+        tên miền ngắt kết nối và phải xử lý thì phí dịch vụ là 1.200.000 VNĐ</p>
+      <p><strong style="color: #3f78e0;">Thông tin và thời hạn thanh toán:</strong></p>
+      <p>- Thanh toán 100%</p>
+      <p>- Thông tin thanh toán: Tiền mặt hoặc chuyển khoản</p>
+      <p>- Tài khoản thanh toán:</p>
+
+      <div style="margin-left: 10%;">
+          <i><span style="text-decoration: underline;">Chủ tài khoản:</span> VI MINH HONG</i>
+          <br>
+          <i><span style="text-decoration: underline;">Số tài khoản:</span> 007 100 158 7836 - Ngân hàng Vietcombank - CN Hồ Chí Minh</i>
+          <br><br>
+
+          <i><span style="text-decoration: underline;">Chủ tài khoản:</span> CÔNG TY CỔ PHẦN ĐẦU TƯ BIT GROUP</i>
+          <br>
+          <i><span style="text-decoration: underline;">Số tài khoản:</span>1903 617 415 2018 - Ngân hàng  Techcombank - CN Hồ Chí Minh</i>
+          <br><br>
+      </div>
+      <a href="${googleDocsService.pdf_url}" target="_blank"">Tải xuống tệp</a>
+      <p><strong style="color: #3f78e0;">Thông tin liên hệ:</strong></p>
+
+      <div style="margin-left: 10%;">
+        <p>CÔNG TY CỔ PHẦN ĐẦU TƯ BIT GROUP</p>
+        <i>-  <span style="text-decoration: underline;">Địa chỉ:</span> 838 Xô Viết Nghệ Tĩnh, Phường 25, Quận Bình Thạnh, TP.Hồ Chí Minh</i>
+        <br>
+        <i>-  <span style="text-decoration: underline;">VPĐD:</span> 3911, Park 3, Vinhomes Central Park, 208 Nguyễn Hữu Cảnh, Phường 22, Quận Bình Thạnh, TP.Hồ Chí Minh</i>
+        <br>
+        <i>-  <span style="text-decoration: underline;">Hotline:</span> 0774 701 089</i>
+        <br>
+        <i>-  <span style="text-decoration: underline;">Email:</span style="color: #3f78e0;"> BIT@BIT.vn </i>
+    </div>
+    <i>Cảm ơn Quý Công ty đã tin tưởng và lựa chọn dịch vụ của BIT Group!</i>
+    <br><br>
+    <i style="color: #3f78e0;"><h5>TRÂN TRỌNG,</h5></i>
+  </div>

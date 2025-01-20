@@ -1,0 +1,143 @@
+.job-card {
+  display: flex;
+  gap: 20px;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #013a74, #02a346);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(1, 58, 116, 0.12);
+    
+    &::before {
+      transform: scaleX(1);
+    }
+    
+    .title {
+      background: linear-gradient(90deg, #013a74, #02a346);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .logo {
+      transform: scale(1.05);
+    }
+  }
+}
+
+.logo {
+  width: 72px;
+  height: 72px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  transition: transform 0.3s ease;
+  background: #fff;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+.content {
+  flex: 1;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #013a74;
+  margin-bottom: 8px;
+  transition: all 0.3s ease;
+}
+
+.company {
+  font-size: 15px;
+  color: #4b5563;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  &::before {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 4px;
+    background: #02a346;
+    border-radius: 50%;
+  }
+}
+
+.details {
+  display: flex;
+  gap: 24px;
+  font-size: 14px;
+}
+
+.salary {
+  color: #02a346;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  &::before {
+    content: "";
+    display: block;
+    width: 6px;
+    height: 6px;
+    background: #02a346;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+}
+
+.location {
+  color: #013a74;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  &::before {
+    content: "";
+    display: block;
+    width: 6px;
+    height: 6px;
+    background: #013a74;
+    border-radius: 50%;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+} 

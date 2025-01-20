@@ -1,0 +1,14 @@
+.wrapper {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+}
+.container {
+    margin-top: var(--header-height);
+    display: flex;
+}
+
+.content {
+    width: 100%;
+    line-height: 1.6;
+    padding: 0 44px 60px;}

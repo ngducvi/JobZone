@@ -1,0 +1,38 @@
+.wrapper {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+
+    span {
+        font-size: 1.4rem;
+        color: #292929;
+        margin-left: 12px;
+        line-height: 1.6;
+        overflow: hidden;
+        word-wrap: break-word;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+    &:hover {
+        background-color: #f8f8f8;
+    }
+}
+
+.image {
+    --font-size: 3.6rem;
+    font-size: var(--font-size);
+    background: transparent;
+    border-radius: 50%;
+
+    img {
+        width: 32px;
+        height: 32px;
+        object-fit: cover;
+        border-radius: 50%;
+        display: block;
+    }
+}
+
+

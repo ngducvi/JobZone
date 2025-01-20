@@ -1,0 +1,173 @@
+@charset "UTF-8";
+.dashboard {
+  padding: 0 20px;
+}
+.dashboard .overview {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+.dashboard .overview h2 {
+  font-size: 20px;
+  font-weight: bold;
+}
+.dashboard .overview .card {
+  padding: 10px;
+  background-color: #f4f6f9;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+}
+.dashboard .overview .card i {
+  color: var(--primary-color);
+}
+.dashboard .overview .card p {
+  font-size: 14px;
+  color: #666;
+}
+.dashboard .overview .card h3 {
+  font-size: 18px;
+  margin: 0;
+}
+.dashboard .overview .filter {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.dashboard .overview .filter .filterBtn {
+  width: 120px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  background-color: #f0f0f0;
+  transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease; /* Thêm hiệu ứng transform */
+}
+.dashboard .overview .filter .filterBtn:hover {
+  background-color: var();
+  color: var(--button-color);
+  transform: scale(1.1); /* Phóng to nhẹ khi hover */
+}
+.dashboard .overview .filter .filterBtn.active {
+  background-color: var(--button-color);
+  color: white;
+}
+.dashboard .overview .filter .filterBtn.active:hover {
+  background-color: #0056b3; /* Tông đậm hơn của active */
+  transform: scale(1.15); /* Phóng to hơn khi active */
+}
+.dashboard .aiForm {
+  margin-bottom: 20px;
+}
+.dashboard .aiForm .heading {
+  margin-top: 10px;
+  margin-bottom: 20px;
+  font-size: 20px;
+  font-weight: bold;
+}
+.dashboard .aiForm .heading i {
+  color: var(--button-color);
+}
+.dashboard .aiForm .formCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  margin-top: 10px;
+}
+.dashboard .activity i {
+  color: var(--button-color);
+  margin-right: 4px;
+}
+.dashboard .activity h2 {
+  font-size: 20px;
+  font-weight: bold;
+}
+.dashboard .activity p {
+  font-size: 14px;
+  color: #666;
+}
+
+.custom-badge {
+  height: 24px;
+  color: white;
+  background-color: #6F42C1;
+}
+.custom-badge:hover {
+  background: #f8f5fd;
+  color: #6F42C1;
+}
+
+.badge-green {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.badge-blue {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btnaction {
+  background-color: #ffffff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.dashboard-container {
+  width: 100%;
+  padding: 20px;
+}
+
+.profile-section {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.profile-info {
+  margin-left: 20px;
+}
+.profile-info p {
+  font-style: bold;
+}
+
+.username {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.email,
+.pin,
+.expiry-date {
+  color: gray;
+  font-size: 14px;
+}
+
+.chat-button {
+  margin-left: auto;
+  padding: 8px 16px;
+  background-color: #6c5ce7;
+  color: white;
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: bold;
+  text-align: center;
+}
+
+.chat-button:hover {
+  background-color: #5e4ec1;
+}
+
+.formitem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: -5px;
+  margin-left: 5px;
+}/*# sourceMappingURL=Dashboard.module.css.map */

@@ -1,0 +1,567 @@
+.wrapper {
+    width: 1200px;
+    min-height: 100vh;
+    margin-top: 70px;
+    padding: 20px;
+    margin: 0 auto;
+}
+
+.header {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, #013a74, #02a346);
+  padding: 40px;
+  color: white;
+  border-radius: 12px;
+  text-align: center;
+
+  h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  p {
+    font-size: 16px;
+    opacity: 0.9;
+    margin-bottom: 24px;
+  }
+
+  .tags {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+
+    .tag {
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+      }
+    }
+  }
+}
+
+.search-section {
+  max-width: 1200px;
+  margin: 24px auto 0;
+  display: flex;
+  gap: 12px;
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  .icon-wrapper {
+    position: relative;
+
+    &:first-child {
+      flex: 2;
+    }
+
+    &:not(:first-child) {
+      flex: 1;
+    }
+
+    i {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #6b7280;
+      font-size: 16px;
+      z-index: 1;
+    }
+
+    .form-control {
+      height: 40px;
+      padding: 0 12px 0 36px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-size: 14px;
+      background: #f9fafb;
+      width: 100%;
+      transition: all 0.2s ease;
+
+      &:hover {
+        border-color: #d1d5db;
+      }
+
+      &:focus {
+        outline: none;
+        border-color: #00b14f;
+        background: white;
+      }
+
+      &::placeholder {
+        color: #9ca3af;
+      }
+    }
+
+    select.form-control {
+      cursor: pointer;
+      appearance: none;
+      padding-right: 36px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 16px;
+    }
+  }
+
+  .btn-primary {
+    height: 40px;
+    padding: 0 24px;
+    background: #00b14f;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    i {
+      font-size: 14px;
+    }
+
+    &:hover {
+      background: #00a048;
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+}
+
+.categories {
+  margin-top: 24px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  max-width: 1200px;
+
+  .category {
+    padding: 8px 16px;
+    background: white;
+    border-radius: 20px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+
+    &:hover {
+      border-color: #013a74;
+      transform: translateY(-2px);
+    }
+
+    .count {
+      background: #f3f4f6;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+  }
+}
+
+.filter-options {
+  max-width: 1200px;
+  margin: 24px auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+  .filter-group {
+    display: flex;
+    gap: 12px;
+
+    .filter-btn {
+      padding: 8px 16px;
+      border: 1px solid transparent;
+      background: #f9fafb;
+      font-size: 14px;
+      color: #6b7280;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      &:hover:not(.active) {
+        background: #f3f4f6;
+        color: #111827;
+      }
+
+      &.active {
+        background: #00b14f;
+        color: white;
+        font-weight: 500;
+      }
+
+      &:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0, 177, 79, 0.1);
+      }
+
+      &:active {
+        transform: translateY(1px);
+      }
+    }
+  }
+
+  .results-count {
+    font-size: 14px;
+    color: #6b7280;
+
+    span {
+      color: #00b14f;
+      font-weight: 600;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 1024px) {
+  .search-section {
+    flex-wrap: wrap;
+    margin: 24px 20px 0;
+    
+    .icon-wrapper {
+      &:first-child {
+        flex: 100%;
+      }
+      
+      &:not(:first-child) {
+        flex: 1 1 calc(33.333% - 8px);
+        min-width: 200px;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .search-section {
+    flex-direction: column;
+    padding: 12px;
+    gap: 8px;
+
+    .icon-wrapper {
+      width: 100%;
+    }
+
+    .btn-primary {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  .filter-options {
+    flex-direction: column;
+    gap: 16px;
+    margin: 24px 20px;
+    
+    .filter-group {
+      width: 100%;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+  }
+}
+
+.main-content {
+  margin-top: 32px;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 24px;
+  min-height: 800px;
+}
+
+.job-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.job-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  }
+
+  .company-info {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+
+    img {
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      object-fit: contain;
+      border: 1px solid #e5e7eb;
+    }
+
+    .job-details {
+      flex: 1;
+
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 8px;
+      }
+
+      .location {
+        font-size: 14px;
+        color: #6b7280;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 12px;
+
+        i {
+          color: #02a346;
+          font-size: 14px;
+        }
+      }
+
+      .tags {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+
+        span {
+          padding: 4px 12px;
+          background: #f3f4f6;
+          border-radius: 16px;
+          font-size: 13px;
+          color: #374151;
+        }
+      }
+    }
+  }
+
+  .job-meta {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
+    font-size: 14px;
+
+    .salary {
+      color: #02a346;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      i {
+        font-size: 14px;
+      }
+    }
+
+    .deadline {
+      color: #6b7280;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      i {
+        font-size: 14px;
+      }
+    }
+  }
+}
+
+.top-companies {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #e5e7eb;
+  height: fit-content;
+  position: sticky;
+  top: 24px;
+
+  h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .company-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateX(4px);
+
+      h3 {
+        color: #013a74;
+      }
+    }
+
+    img {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      object-fit: contain;
+      border: 1px solid #e5e7eb;
+    }
+
+    .company-info {
+      h3 {
+        font-size: 14px;
+        font-weight: 500;
+        color: #111827;
+        margin-bottom: 4px;
+        transition: color 0.2s ease;
+      }
+
+      span {
+        font-size: 13px;
+        color: #6b7280;
+      }
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 1024px) {
+  .main-content {
+    grid-template-columns: 1fr;
+  }
+
+  .top-companies {
+    position: static;
+    margin-top: 24px;
+  }
+}
+
+// Common form control styles
+.form-control {
+  height: 40px;
+  padding: 0 12px 0 36px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #f9fafb;
+  width: 100%;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #d1d5db;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #00b14f;
+    background: white;
+  }
+}
+
+// Icon wrapper styles
+.icon-wrapper {
+  position: relative;
+
+  i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6b7280;
+    font-size: 16px;
+    z-index: 1;
+  }
+}
+
+// Select styles
+select.form-control {
+  cursor: pointer;
+  appearance: none;
+  padding-right: 36px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+}
+
+// Button styles
+.btn {
+  height: 40px;
+  padding: 0 24px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  white-space: nowrap;
+
+  &.btn-primary {
+    background: #00b14f;
+    color: white;
+
+    &:hover {
+      background: #00a048;
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  i {
+    font-size: 14px;
+  }
+}
+
+// Input group styles
+.input-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+
+  .form-control {
+    flex: 1;
+  }
+}

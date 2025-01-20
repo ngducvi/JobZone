@@ -1,0 +1,193 @@
+@charset "UTF-8";
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 258px; /* Kích thước khi sidebar mở */
+  background-color: var(--white-color);
+  border-right: 1px solid var(--divider-color);
+  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
+  transition: width 0.3s ease, opacity 0.3s ease; /* Thêm hiệu ứng mờ dần khi ẩn */
+  z-index: 30;
+}
+.wrapper.collapsed {
+  width: 0; /* Thu gọn sidebar */
+  opacity: 0; /* Ẩn toàn bộ nội dung */
+  overflow: hidden; /* Đảm bảo không hiển thị nội dung bị tràn */
+}
+@media (min-width: 1025px) {
+  .wrapper {
+    /* Sidebar luôn hiển thị trên máy tính */
+  }
+  .wrapper.collapsed {
+    width: 258px; /* Duy trì kích thước cố định */
+    opacity: 1; /* Hiển thị nội dung */
+  }
+}
+
+.sidebar-toggle {
+  position: fixed;
+  top: 80px;
+  left: 20px;
+  z-index: 31;
+  background-color: var(--button-color);
+  color: var(--white-color);
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: transform 0.3s ease, background 0.3s ease;
+}
+.sidebar-toggle i {
+  font-size: 1.6rem;
+}
+.sidebar-toggle:hover {
+  transform: scale(1.1);
+  background-color: var(--button-hover-color);
+}
+@media (min-width: 1025px) {
+  .sidebar-toggle {
+    display: none; /* Ẩn icon khi màn hình lớn */
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.header i {
+  font-size: 2.2rem;
+  cursor: pointer;
+  transition: transform 0.2s ease; /* Hiệu ứng khi hover icon */
+  /* Ẩn nút x-mark mặc định */
+  display: none;
+}
+.header i:hover {
+  transform: scale(1.2); /* Phóng to nhẹ khi hover */
+}
+
+/* Hiển thị nút x-mark trên tablet và mobile */
+@media (max-width: 1024px) {
+  .header i {
+    display: block; /* Hiển thị nút x-mark */
+  }
+}
+.item-btn {
+  margin: 4px;
+  display: flex;
+  align-items: center;
+  color: #404040;
+  cursor: pointer;
+  height: 72px;
+  width: 250px;
+  padding: 8px;
+  text-decoration: none;
+  transition: background 0.3s, color 0.3s, transform 0.3s;
+}
+.item-btn i {
+  font-size: 2.2rem;
+}
+.item-btn .item-title {
+  margin-left: 10px;
+  opacity: 1; /* Hiển thị chữ khi mở */
+  transition: opacity 0.3s ease;
+  font-size: 16px;
+}
+.item-btn:hover {
+  color: var(--button-color);
+  text-decoration: none;
+  background: #f5f5f5; /* Nền nhẹ nhàng */
+  transform: scale(1.05); /* Phóng to nhẹ */
+}
+.item-btn:hover svg {
+  fill: var(--button-color);
+}
+.item-btn span {
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.item-btn:first-child {
+  margin-top: 0px;
+}
+
+.item-title {
+  margin-left: 10px;
+}
+
+.item-btn.actived {
+  color: var(--white-color);
+  background-color: var(--button-color);
+  border-right: 1px solid var(--divider-color);
+}
+.item-btn.actived svg {
+  fill: var(--white-color);
+}
+
+.info-user {
+  display: flex;
+  align-items: center;
+  padding: 16px; /* Khoảng cách padding */
+  margin-top: auto; /* Đẩy phần này xuống dưới cùng */
+  background-color: #f9f9f9; /* Nền nhạt */
+  border-top: 1px solid var(--divider-color);
+  cursor: pointer;
+  transition: background 0.3s;
+  position: relative;
+}
+.info-user:hover {
+  background-color: #f0f0f0; /* Hiệu ứng khi hover */
+}
+.info-user .avatar {
+  margin-right: 12px;
+}
+.info-user .username {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #404040;
+}
+.info-user .account {
+  font-size: 1.2rem;
+  color: #909090;
+}
+.info-user i {
+  margin-left: auto; /* Đẩy icon sang bên phải */
+  font-size: 1.4rem;
+  color: #909090;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+}
+.actions .register-btn {
+  margin-right: 30px;
+  background: transparent;
+  color: var(--primary-color);
+  font-weight: 500;
+  cursor: pointer;
+}
+.actions .login-btn {
+  flex-shrink: 0;
+  padding: 9px 20px;
+  border-radius: 99px;
+  color: #fff;
+  background-color: var(--button-color);
+  font-size: 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.25s;
+}
+.actions .login-btn:hover {
+  opacity: 0.9;
+}/*# sourceMappingURL=Sidebar.module.css.map */

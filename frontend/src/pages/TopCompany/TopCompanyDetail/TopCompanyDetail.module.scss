@@ -1,0 +1,496 @@
+.wrapper {
+  max-width: 1200px;
+  margin: 60px auto;
+  padding: 0 20px;
+
+  @media (max-width: 768px) {
+    margin: 20px auto;
+    padding: 0 12px;
+  }
+}
+
+.hero-section {
+  margin-bottom: 40px;
+
+  .company-card {
+    background: white;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(1, 58, 116, 0.12);
+    position: relative;
+
+    .company-banner {
+      height: 280px;
+      position: relative;
+      overflow: hidden;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          180deg,
+          rgba(1, 58, 116, 0.4) 0%,
+          rgba(1, 58, 116, 0.95) 100%
+        );
+      }
+
+      @media (max-width: 768px) {
+        height: 200px;
+      }
+    }
+
+    .company-intro {
+      position: relative;
+      margin-top: -100px;
+      padding: 0 40px 40px;
+      z-index: 2;
+
+      .logo-container {
+        position: relative;
+        width: 160px;
+        height: 160px;
+        margin-bottom: 24px;
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          border-radius: 24px;
+          background: white;
+          padding: 12px;
+          box-shadow: 0 8px 24px rgba(1, 58, 116, 0.2);
+        }
+
+        .pulse-effect {
+          position: absolute;
+          inset: -8px;
+          border: 2px solid #02a346;
+          border-radius: 28px;
+          animation: pulse 2s infinite;
+        }
+
+        @media (max-width: 768px) {
+          width: 120px;
+          height: 120px;
+          margin-bottom: 16px;
+        }
+      }
+
+      .company-stats {
+        color: white;
+
+        h1 {
+          font-size: 42px;
+          font-weight: 800;
+          margin-bottom: 24px;
+          color: white;
+          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+          @media (max-width: 768px) {
+            font-size: 28px;
+            margin-bottom: 16px;
+          }
+        }
+
+        .stat-badges {
+          display: flex;
+          gap: 24px;
+          margin-bottom: 32px;
+
+          .badge {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            border-radius: 16px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            color: rgb(0, 0, 0);
+
+            &:hover {
+              background: rgba(255, 255, 255, 0.2);
+              transform: translateY(-2px);
+            }
+
+            i {
+              color: #02a346;
+              font-size: 18px;
+            }
+
+            @media (max-width: 768px) {
+              padding: 8px 16px;
+              font-size: 14px;
+            }
+          }
+
+          @media (max-width: 768px) {
+            flex-direction: column;
+            gap: 12px;
+          }
+        }
+
+        .follow-button {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          padding: 0;
+          border: none;
+          background: transparent;
+          cursor: pointer;
+
+          .button-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 28px;
+            background: #02a346;
+            border-radius: 16px;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+
+            &:hover {
+              background: darken(#02a346, 5%);
+              transform: translateY(-2px);
+            }
+
+            i {
+              font-size: 18px;
+            }
+          }
+
+          .follower-count {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            border-radius: 16px;
+            color: rgb(0, 0, 0);
+            font-size: 15px;
+
+            i {
+              color: #02a346;
+            }
+          }
+
+          &.following .button-content {
+            background: #013a74;
+          }
+
+          @media (max-width: 768px) {
+            flex-direction: column;
+            width: 100%;
+            gap: 12px;
+
+            .button-content {
+              width: 100%;
+              justify-content: center;
+            }
+
+            .follower-count {
+              width: 100%;
+              justify-content: center;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 30px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .info-card {
+    background: white;
+    border-radius: 24px;
+    padding: 32px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 32px rgba(1, 58, 116, 0.08);
+
+    @media (max-width: 768px) {
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #f0f0f0;
+
+      i {
+        font-size: 24px;
+        color: #02a346;
+      }
+
+      h2, h3 {
+        font-size: 24px;
+        font-weight: 700;
+        color: #013a74;
+      }
+
+      @media (max-width: 768px) {
+        margin-bottom: 16px;
+        padding-bottom: 16px;
+
+        h2, h3 {
+          font-size: 20px;
+        }
+      }
+    }
+
+    &.jobs .job-grid {
+      display: grid;
+      gap: 20px;
+
+      .job-card {
+        padding: 24px;
+        border-radius: 16px;
+        border: 2px solid #f0f0f0;
+        transition: all 0.3s ease;
+
+        &:hover {
+          border-color: #02a346;
+          transform: translateY(-2px);
+        }
+
+        .job-title {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 16px;
+
+          i {
+            color: #02a346;
+            font-size: 20px;
+          }
+
+          h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #013a74;
+          }
+        }
+
+        .job-tags {
+          display: flex;
+          gap: 16px;
+          margin-bottom: 20px;
+
+          span {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #444;
+
+            i {
+              color: #02a346;
+            }
+          }
+        }
+
+        .apply-btn {
+          width: 100%;
+          padding: 12px;
+          border: none;
+          border-radius: 12px;
+          background: #013a74;
+          color: white;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+
+          &:hover {
+            background: #02a346;
+          }
+
+          i {
+            font-size: 16px;
+          }
+        }
+
+        @media (max-width: 768px) {
+          padding: 16px;
+
+          .job-title h3 {
+            font-size: 16px;
+          }
+
+          .job-tags {
+            flex-wrap: wrap;
+            gap: 8px;
+
+            span {
+              font-size: 13px;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .sidebar {
+    .contact-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+
+      .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        border-radius: 12px;
+        background: #f0f4f8;
+        color: #013a74;
+        text-decoration: none;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: #02a346;
+          color: white;
+
+          i {
+            color: white;
+          }
+        }
+
+        i {
+          color: #02a346;
+          font-size: 18px;
+          width: 24px;
+        }
+
+        @media (max-width: 768px) {
+          padding: 12px;
+          font-size: 14px;
+        }
+      }
+    }
+
+    .share-buttons {
+    display: flex;
+    flex-direction: column;
+      gap: 12px;
+
+      .share-btn {
+        display: flex;
+    align-items: center;
+        gap: 12px;
+        padding: 16px;
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        &:hover {
+          transform: translateX(8px);
+        }
+
+        &.facebook {
+          background: #013a74;
+        }
+
+        &.linkedin {
+          background: #02a346;
+        }
+
+        &.twitter {
+          background: #013a74;
+        }
+
+        i {
+          font-size: 18px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        flex-direction: row;
+        flex-wrap: wrap;
+
+        .share-btn {
+          flex: 1;
+          min-width: 120px;
+          padding: 12px;
+          justify-content: center;
+
+          span {
+            display: none;
+          }
+
+          i {
+            margin: 0;
+          }
+
+          &:hover {
+            transform: translateY(-2px);
+          }
+        }
+      }
+    }
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// Thêm một số tinh chỉnh cho màn hình siêu nhỏ
+@media (max-width: 375px) {
+  .hero-section {
+    .company-card {
+      .company-intro {
+        .company-stats {
+          h1 {
+            font-size: 24px;
+          }
+        }
+      }
+    }
+  }
+
+  .content-grid {
+    .info-card {
+      padding: 16px;
+    }
+  }
+}

@@ -1,0 +1,122 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 15px;
+  height: 124px;
+  background-color: #f4f6f9;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+
+  &.red {
+    --main-color: #dc3545;
+  }
+
+  &.green {
+    --main-color: #00b894; 
+  }
+
+  &.yellow {
+    --main-color: #d39e00;
+  }
+
+  &.blue {
+    --main-color: #117a8b;
+  }
+
+  &.secondary {
+    --main-color: #6c757d;
+  }
+
+  &.primary {
+    --main-color: var(--primary-color);
+  }
+
+  &.dark {
+    --main-color: #343a40;
+  }
+
+  /* Biểu tượng bên trong */
+  span {
+    --size: 5rem;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--main-color);
+    background-color: #f6f8fa;
+    border-radius: 50%;
+    padding: 16px;
+    border: 1px solid var(--main-color);
+    display: flex;
+    width: var(--size);
+    height: var(--size);
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+
+    i {
+      color: var(--main-color);
+    }
+    &:hover {
+      transform: scale(1.2); /* Phóng to icon */
+    }
+  }
+
+  /* Tiêu đề thẻ */
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-top: 10px;
+  }
+
+  /* Hiệu ứng khi hover vào toàn bộ thẻ */
+  &:hover {
+    transform: translateY(-8px); /* Thẻ nổi lên */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); /* Tăng bóng đổ */
+    background-color: #ffffff; /* Màu nền sáng hơn */
+    border: 1px solid var(--main-color); /* Tăng nổi bật viền */
+
+    /* Thay đổi màu chữ */
+    p,
+    h3 {
+      color: var(--main-color);
+    }
+
+    /* Thêm hiệu ứng cho icon */
+    span {
+      background-color: var(--main-color);
+      border-color: #ffffff;
+      transform: scale(1.3);
+
+      i {
+        color: #ffffff;
+      }
+    }
+  }
+
+  /* Responsive thiết kế cho giao diện điện thoại */
+  @media (max-width: 768px) {
+    flex-direction: row; /* Chuyển sang bố cục ngang */
+    justify-content: flex-start;
+    padding: 10px;
+    height: auto;
+
+    span {
+      --size: 3.5rem;
+      font-size: 20px;
+      padding: 10px;
+      width: var(--size);
+      height: var(--size);
+    }
+
+    h3 {
+      font-size: 14px;
+      margin-top: 0;
+      margin-bottom: 0;
+      margin-left: 10px; /* Thêm khoảng cách giữa icon và chữ */
+    }
+  }
+}

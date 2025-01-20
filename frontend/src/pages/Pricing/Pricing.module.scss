@@ -1,0 +1,147 @@
+.pricing-wrapper {
+    max-width: 120rem;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+    font-family: "Roboto", sans-serif;
+  
+    
+  
+    .pricing-title {
+      text-align: center;
+      font-size: 2.8rem;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 3rem;
+    }
+  
+    .pricing-options {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 3rem;
+  
+      .pricing-card {
+        background: linear-gradient(to bottom right, #ffffff, #f9f9f9);
+        border: 1px solid #e3e3e3;
+        border-radius: 1rem;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+        padding: 3rem 2rem;
+        text-align: center;
+        width: 32rem;
+        transition: all 0.3s ease;
+  
+        &:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+  
+        &.basic-plan {
+          border-top: 6px solid #4caf50;
+        }
+  
+        &.premium-plan {
+          border-top: 6px solid #673ab7;
+        }
+  
+        .plan-title {
+          font-size: 2.2rem;
+          font-weight: 600;
+          color: #444;
+          margin-bottom: 1rem;
+        }
+  
+        .plan-price {
+          font-size: 3.2rem;
+          font-weight: bold;
+          color: #333;
+          margin-bottom: 2rem;
+  
+          span {
+            font-size: 1.6rem;
+            color: #888;
+          }
+        }
+  
+        .plan-details {
+          list-style: none;
+          padding: 0;
+          margin: 0 0 2rem;
+  
+          li {
+            font-size: 1.6rem;
+            color: #666;
+            margin-bottom: 1rem;
+            position: relative;
+            padding-left: 2rem;
+  
+            &:before {
+              content: "✔";
+              position: absolute;
+              left: 0;
+              top: 50%;
+              transform: translateY(-50%);
+              color: #4caf50;
+              font-weight: bold;
+            }
+          }
+        }
+  
+        .btn {
+          font-size: 1.8rem;
+          padding: 1rem 2rem;
+          width: 100%;
+          background-color: var(--button-color, #673ab7);
+          color: #fff;
+          border: none;
+          border-radius: 0.8rem;
+          cursor: pointer;
+          transition: all 0.3s ease;
+  
+          &:hover {
+            // background-color: darken( #673ab7, 10%);
+            opacity: 0.8;
+          }
+        }
+      }
+    }
+  
+    .notes-section {
+      margin-top: 5rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 2.5rem;
+  
+      .note {
+        flex: 1;
+        background: linear-gradient(to right, #ffffff, #f9f9f9);
+        padding: 2.5rem;
+        border: 1px solid #e3e3e3;
+        border-radius: 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+  
+        &:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+        }
+  
+        h4 {
+          font-size: 1.8rem;
+          color: #333;
+          margin-bottom: 1rem;
+        }
+  
+        p {
+          font-size: 1.6rem;
+          color: #555;
+  
+          .warning {
+            color: #d32f2f;
+            font-weight: bold;
+          }
+        }
+      }
+    }
+  }
+  

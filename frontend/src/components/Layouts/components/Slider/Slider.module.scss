@@ -1,0 +1,28 @@
+
+.slider-wrapper {
+    margin-top: 20px;
+    background: linear-gradient(to right, rgb(0, 126, 254), rgb(6, 195, 254));
+    border-radius: 16px;
+    width: 1238px;
+}
+
+.slider-item {
+    height: 270px;
+   
+}
+
+.slider-content {
+    height: 100%;
+    display: flex;
+    margin: 0 36px;
+    justify-content: space-between;
+    align-items: center;
+}
+
+
+.slider-img {
+    height: 100%;
+    object-fit: cover;
+    border-radius: 16px;
+    margin: 16px;
+}

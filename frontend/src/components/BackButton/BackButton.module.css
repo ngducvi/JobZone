@@ -1,0 +1,13 @@
+.sub-title {
+  cursor: pointer;
+  text-transform: uppercase;
+  font-weight: 500;
+  font-size: 1.2rem;
+  color: #808990;
+  margin-left: 12px;
+}
+.sub-title svg {
+  font-size: 1rem;
+  margin-right: 4px;
+  transition: ease 0.3s;
+}/*# sourceMappingURL=BackButton.module.css.map */

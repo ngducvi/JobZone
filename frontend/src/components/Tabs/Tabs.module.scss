@@ -1,0 +1,58 @@
+.tabs {
+  margin-bottom: 24px;
+}
+
+.tab-header {
+  display: flex;
+  gap: 16px;
+  border-bottom: 1px solid #e5e7eb;
+  position: relative;
+  overflow-x: auto;
+  
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.tab {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #6b7280;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+
+  &:hover {
+    color: #013a74;
+  }
+
+  &.active {
+    color: #013a74;
+    border-bottom-color: #02a346;
+    position: relative;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, #013a74, #02a346);
+      animation: slideIn 0.3s ease;
+    }
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}

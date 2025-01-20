@@ -1,0 +1,142 @@
+.footer {
+  // phù hợp #013a74 #02a346
+  background: #013a74;
+  color: #013a74;
+  padding: 60px 0 0;
+  width: 100%;
+  z-index: 100;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 40px;
+}
+
+.footer-section {
+  h3 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #ffffff 0%, #02a346 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  h4 {
+    color: #02a346;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+  }
+
+  p {
+    color: #e5e7eb;
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      margin-bottom: 12px;
+
+      a {
+        color: #e5e7eb;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        font-size: 14px;
+
+        &:hover {
+          color: #02a346;
+          padding-left: 5px;
+        }
+      }
+    }
+  }
+}
+
+.social-links {
+  display: flex;
+  gap: 16px;
+
+  a {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-decoration: none;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #02a346;
+      transform: translateY(-2px);
+    }
+  }
+}
+
+.article-links {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  a {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: #e5e7eb;
+    font-size: 14px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      color: #02a346;
+    }
+
+    .date {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+  }
+}
+
+.footer-bottom {
+  margin-top: 40px;
+  padding: 20px 0;
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
+
+  p {
+    color: #9ca3af;
+    font-size: 14px;
+  }
+}
+
+// Responsive
+@media (max-width: 992px) {
+  .footer-content {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .footer-content {
+    grid-template-columns: 1fr;
+  }
+
+  .footer {
+    padding: 40px 0 0;
+  }
+}

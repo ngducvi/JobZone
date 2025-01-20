@@ -1,0 +1,37 @@
+.animated-text {
+  font-size: 7vw;
+  text-align: center;
+  letter-spacing: -0.06em;
+  width: 100%;
+  font-weight: bold;
+  position: relative;
+  margin: -85px 0;
+  line-height: 1.2;
+  background: radial-gradient(
+    circle at var(--text-mouse-x) var(--text-mouse-y),
+    #ffffff,
+    #02a346
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  transition: background-position 0.3s ease;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    background: inherit;
+    filter: blur(40px) opacity(0.3);
+    z-index: -1;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    --gradient-text-center: rgb(226, 226, 226);
+    --gradient-text-edge: rgba(0, 9, 12, 0.1);
+  }
+
+  @media (max-width: 768px) {
+    font-size: 12vw;
+  }
+}
