@@ -37,4 +37,5 @@ router.get("/suitable-jobs", userController.getAllSuitableJobsByUser.bind(userCo
 router.get("/job-detail/:job_id", userController.getJobDetailByJobId.bind(userController));
 router.get("/companies", userController.getAllCompany.bind(userController));
 router.get("/company-detail/:company_id", userController.getCompanyDetailByCompanyId.bind(userController));
+router.get("/career-handbook/:category_id", userController.getCareerHandbookByCategoryId.bind(userController));
 module.exports = router;

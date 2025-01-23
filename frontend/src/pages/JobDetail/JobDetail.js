@@ -1,7 +1,7 @@
 // JobDetail page
 import React, { useEffect, useState } from "react";
 import { authAPI, userApis } from "~/utils/api";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import classNames from "classnames/bind";
 import styles from "./JobDetail.module.scss";
 import UserInfo from "~/components/UserInfo";
@@ -10,6 +10,7 @@ import PopularKeywords from '~/components/PopularKeywords/PopularKeywords';
 const cx = classNames.bind(styles);
 
 const JobDetail = () => {
+  const navigate = useNavigate();
   const [job, setJob] = useState(null);
   const { id } = useParams();
   const [copied, setCopied] = useState(false);
@@ -31,6 +32,10 @@ const JobDetail = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleCompanyClick = (companyId) => {
+    navigate(`/company-detail/${companyId}`);
+  };
+
   return (
     <div className={cx("wrapper")}>
       <div className={cx("container")}>
@@ -45,12 +50,12 @@ const JobDetail = () => {
               />
               <div className={cx("info")}>
                 <h1 className={cx("job-title")}>{job?.title}</h1>
-                <Link
-                  to={`/company/${job?.Company?.id}`}
+                <button
                   className={cx("company-name")}
+                  onClick={() => handleCompanyClick(company?.company_id)}
                 >
                   {job?.Company?.company_name}
-                </Link>
+                </button>
                 <div className={cx("deadline")}>
                   Hạn nộp hồ sơ: {job?.deadline || "Không thời hạn"}
                 </div>
@@ -168,12 +173,12 @@ const JobDetail = () => {
                 <span>{company?.address || "Hà Nội"}</span>
               </div>
             </div>
-            <Link
-              to={`/company/${job?.Company?.id}`}
+            <button
               className={cx("view-company")}
+              onClick={() => handleCompanyClick(company?.company_id)}
             >
               Xem trang công ty <i className="fas fa-arrow-right"></i>
-            </Link>
+            </button>
           </div>
 
           <div className={cx("job-overview-card")}>

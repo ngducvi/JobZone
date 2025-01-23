@@ -2,10 +2,8 @@ import React, { useContext, useEffect, useState } from "react";
 import classNames from "classnames/bind";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import styles from "./Sidebar.module.scss";
-import { DashboardIcon } from "~/components/Icons";
 import Avatar from "~/components/Avatar";
 import images from "~/assets/images";
-import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import ModalTypeContext from "~/context/ModalTypeContext";
 import SidebarContext from "~/context/SidebarContext";
@@ -118,47 +116,74 @@ const sidebarIcons = [
       {
         icon: <i className="fa-solid fa-compass"></i>,
         title: "Định hướng nghề nghiệp",
-        to: "/career-handbook/orientation"
+        to: "/career-handbook/career-orientation"
       },
       {
         icon: <i className="fa-solid fa-magnifying-glass"></i>,
         title: "Bí kíp tìm việc",
-        to: "/career-handbook/job-tips"
+        to: "/career-handbook/job-hunting"
       },
       {
         icon: <i className="fa-solid fa-sack-dollar"></i>,
         title: "Chế độ lương thưởng",
-        to: "/career-handbook/salary"
+        to: "/career-handbook/compensation"
       },
       {
         icon: <i className="fa-solid fa-graduation-cap"></i>,
         title: "Kiến thức chuyên ngành",
-        to: "/career-handbook/knowledge"
+        to: "/career-handbook/industry-knowledge"
       },
       {
         icon: <i className="fa-solid fa-briefcase"></i>,
         title: "Hành trang nghề nghiệp",
-        to: "/career-handbook/career-tips"
+        to: "/career-handbook/career-preparation"
       },
       {
         icon: <i className="fa-solid fa-chart-line"></i>,
         title: "Thị trường và xu hướng tuyển dụng",
-        to: "/career-handbook/market-trends"
+        to: "/career-handbook/recruitment-trends"
       }
     ]
   },
   {
-    icon: <i className="fa-solid fa-envelope"></i>,
-    title: "Contact",
-    to: "/contact",
-  }
+    icon: <i className="fa-solid fa-toolbox"></i>,
+    title: "Tools",
+    to: "/tools",
+    subMenu: [
+      {
+        // Tinh luong
+        icon: <i className="fa-solid fa-calculator"></i>,
+        title: "Tính lương",
+        to: "/tools/salary-calculator",
+      },
+      // Test DISC
+      {
+        icon: <i className="fa-solid fa-chart-simple"></i>,
+        title: "Test DISC",
+        to: "/tools/test-disc",
+      },
+      // Cong cu tinh lai kep
+      {
+        icon: <i className="fa-solid fa-calculator"></i>,
+        title: "Tính lãi kép",
+        to: "/tools/compound-interest-calculator",
+      },
+      // tinh tien tiet kiem
+      {
+        icon: <i className="fa-solid fa-calculator"></i>,
+        title: "Tính tiền tiết kiệm",
+        to: "/tools/saving-calculator",
+      }
+      
+    ]
+  },
 ];
 
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { modalType, setModalType } = useContext(ModalTypeContext);
-  const { isOpenSidebar, setIsOpenSidebar } = useContext(SidebarContext);
+  const { setIsOpenSidebar } = useContext(SidebarContext);
   const { user, setUser } = useContext(UserContext);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -271,6 +296,7 @@ const Sidebar = () => {
                           >
                             <span>{subItem.title}</span>
                             {subItem.badge && <span className={cx("submenu-badge")}>{subItem.badge}</span>}
+                            {subItem.icon && <span className={cx("submenu-icon")}>{subItem.icon}</span>}
                           </Link>
                         ))}
                     </div>

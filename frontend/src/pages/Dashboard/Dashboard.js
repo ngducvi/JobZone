@@ -15,6 +15,7 @@ import UiLayout from "~/components/UiLayout/UiLayout.js";
 import { Tabs } from "~/components/Tabs";
 import JobCard from '~/components/JobCard/JobCard';
 import LoadingPage from "../LoadingPage/LoadingPage.js";
+import useScrollTop from '~/hooks/useScrollTop';
 const cx = classNames.bind(styles);
 
 const Dashboard = () => {
@@ -97,7 +98,13 @@ const Dashboard = () => {
       // Thêm các job khác...
     ]
   };
-
+  // Thêm useEffect để scroll lên đầu trang
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }, []); // Empty dependency array means this runs once when component mounts
   useEffect(() => {
     const fetchProvinces = async () => {
       try {

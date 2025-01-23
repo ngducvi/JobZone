@@ -477,6 +477,20 @@ class UserController {
       });
     }
   }
+  // SELECT * FROM career_handbook WHERE category_id = '1';
+  async getCareerHandbookByCategoryId(req, res) {
+    try {
+      const careerHandbook = await CareerHandbook.findAll({
+        where: { category_id: req.params.category_id },
+      });
+      return res.json({ careerHandbook });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
   // get all cv templates với category
   async getAllCvTemplates(req, res) {
     const { page = 1, limit = 10 } = req.query;
@@ -721,7 +735,7 @@ class UserController {
 
   // get all career handbook
   async getAllCareerHandbook(req, res) {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 12 } = req.query;
     const offset = (page - 1) * limit;
 
     const careerHandbook = await CareerHandbook.findAndCountAll({

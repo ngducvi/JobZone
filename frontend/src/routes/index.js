@@ -37,6 +37,18 @@ import JobDetail from '~/pages/JobDetail/JobDetail';
 import UpCV from '~/pages/Resume/UpCV/UpCV';
 import JobZoneProfile from '~/pages/Resume/JobZoneProfile/JobZoneProfile';
 import TopCompanyDetail from '~/pages/TopCompany/TopCompanyDetail/TopCompanyDetail';
+
+import JobHunting from '~/pages/CareerHandbook/JobHunting/JobHunting';
+import IndustryKnowledge from '~/pages/CareerHandbook/IndustryKnowledge/IndustryKnowledge';
+import Compensation from '~/pages/CareerHandbook/Compensation/Compensation';
+import RecruitmentTrends from '~/pages/CareerHandbook/RecruitmentTrends/RecruimentTrends';
+import CereerPreparation from '~/pages/CareerHandbook/CareerPreparation/CereerPreparation';
+import CareerOrientation from '~/pages/CareerHandbook/CareerOrientation/CareerOrientation';
+import Tools from '~/pages/Tools/Tools';
+import SalaryCalculator from '~/pages/Tools/SalaryCalculator/SalaryCalculator';
+import CompoundInterestCalculator from '~/pages/Tools/CompoundInterestCalculator/CompoundInterestCalculator';
+import SavingCalculator from '~/pages/Tools/SavingCalculator/SavingCalculator';
+import TestDisc from '~/pages/Tools/TestDisc/TestDisc';
 const publicRoutes = [
     { path: '/', component: Dashboard },
     { path: '/user/verify-email', component: VerifyEmailSuccess, layout: null },
@@ -74,6 +86,17 @@ const publicRoutes = [
     { path: '/403', component: Forbidden, layout: null },
     { path: '/recruiter', component: RecruiterHome, layout: RecruiterLayout},
     { path: '/loading', component: LoadingPage, layout: null },
+    { path: '/career-handbook/job-hunting', component: JobHunting },
+    { path: '/career-handbook/industry-knowledge', component: IndustryKnowledge },
+    { path: '/career-handbook/compensation', component: Compensation },
+    { path: '/career-handbook/recruitment-trends', component: RecruitmentTrends },
+    { path: '/career-handbook/career-preparation', component: CereerPreparation },
+    { path: '/career-handbook/career-orientation', component: CareerOrientation },
+    { path: '/tools', component: Tools },
+    { path: '/tools/salary-calculator', component: SalaryCalculator },
+    { path: '/tools/compound-interest-calculator', component: CompoundInterestCalculator },
+    { path: '/tools/saving-calculator', component: SavingCalculator },
+    { path: '/tools/test-disc', component: TestDisc },
 ];
 
 const privateRoutes = [];

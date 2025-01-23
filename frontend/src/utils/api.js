@@ -65,6 +65,7 @@ export const userApis = {
     getJobDetailByJobId: (job_id) => `/user/job-detail/${job_id}`,
     getAllCompany: '/user/companies',
     getCompanyDetailByCompanyId: (company_id) => `/user/company-detail/${company_id}`,
+    getCareerHandbookByCategoryId: (category_id) => `/user/career-handbook/${category_id}`,
 };
 
 export const usageApis = {

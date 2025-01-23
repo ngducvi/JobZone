@@ -9,6 +9,9 @@ const images = {
     slider_3: require('~/assets/images/slider_3.png'),
     company_1: require('~/assets/images/congty.png'),
     banner : require('~/assets/images/banner.png'),
+    test_disc: require('~/assets/images/disclogo.png'),
+    ai_logo: require('~/assets/images/ai_logo.png'),
+    formresult: require('~/assets/images/results.png'),
 };
 
 export default images;

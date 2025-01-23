@@ -6,6 +6,7 @@ import classNames from "classnames/bind";
 import { authAPI, userApis } from "~/utils/api";
 import { useParams } from "react-router-dom";
 import images from "~/assets/images";
+import { LoadingSpinner, CompanySkeleton } from '~/components/Loading/Loading';
 
 const cx = classNames.bind(styles);
 
@@ -33,7 +34,13 @@ function TopCompanyDetail() {
     setIsFollowing(!isFollowing);
   };
 
-  if (!companyDetail) return <div>Loading...</div>;
+  if (isLoading) {
+    return <CompanySkeleton />;
+  }
+
+  if (!companyDetail) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <div className={cx("wrapper")}>
