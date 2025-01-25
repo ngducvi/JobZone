@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import classNames from "classnames/bind";
 import styles from "./CreateCV.module.scss";
 import { authAPI, userApis } from "~/utils/api";
-import { FaEye, FaDownload, FaSearch, FaFilter } from "react-icons/fa";
+import { FaEye, FaDownload, FaSearch, FaFilter, FaTimes } from "react-icons/fa";
 
 const cx = classNames.bind(styles);
 
@@ -19,6 +19,21 @@ const CreateCV = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [selectedColor, setSelectedColor] = useState('#013a74');
+  const [bgColor, setBgColor] = useState('rgba(240, 247, 255, 0.5)'); // Màu nền mặc định
+  const [cvLanguage, setCvLanguage] = useState("Tiếng Việt");
+  const [cvPosition, setCvPosition] = useState("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const colors = [
+    '#013a74', // Blue
+    '#e91e63', // Pink
+    '#9c27b0', // Purple
+    '#3f51b5', // Indigo
+    '#009688', // Teal
+    '#424242', // Dark Grey
+    '#ff5722'  // Deep Orange
+  ];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -27,6 +42,7 @@ const CreateCV = () => {
         const token = localStorage.getItem("token");
         if (!token) return;
         const response = await authAPI().get(userApis.getAllCvTemplates);
+        console.log(response.data.cvTemplates);
         const responseFields = await authAPI().get(userApis.getAllTemplateFieldsByTemplateId(response.data.cvTemplates[0].template_id));
         console.log(responseFields.data.templateFields);
 
@@ -69,6 +85,71 @@ const CreateCV = () => {
     setShowPreview(true);
   };
 
+  const handleColorChange = (color) => {
+    setSelectedColor(color);
+  };
+
+  const PreviewSidebar = () => {
+    return (
+      <div className={cx("preview-sidebar")}>
+        <div className={cx("sidebar-section")}>
+          <h3>Mẫu CV Trang trọng</h3>
+        </div>
+
+        <div className={cx("sidebar-section")}>
+          <label>Ngôn ngữ</label>
+          <select 
+            value={cvLanguage}
+            onChange={(e) => setCvLanguage(e.target.value)}
+            className={cx("select-input")}
+          >
+            <option value="Tiếng Việt">Tiếng Việt</option>
+            <option value="English">English</option>
+          </select>
+        </div>
+
+        <div className={cx("sidebar-section")}>
+          <label>Vị trí ứng tuyển</label>
+          <select 
+            value={cvPosition}
+            onChange={(e) => setCvPosition(e.target.value)}
+            className={cx("select-input")}
+          >
+            <option value="">Chọn vị trí</option>
+            <option value="dev">Developer</option>
+            <option value="design">Designer</option>
+            {/* Thêm các option khác */}
+          </select>
+        </div>
+
+        <div className={cx("sidebar-section")}>
+          <label>Màu sắc</label>
+          <div className={cx("color-picker")}>
+            {colors.map(color => (
+              <button
+                key={color}
+                className={cx("color-btn", { active: selectedColor === color })}
+                style={{ backgroundColor: color }}
+                onClick={() => handleColorChange(color)}
+              >
+                {selectedColor === color && <span>✓</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className={cx("sidebar-actions")}>
+          <button className={cx("action-btn", "primary")}>
+            Dùng mẫu này
+          </button>
+          <button className={cx("action-btn", "secondary")} >
+            Đóng lại
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   const PreviewModal = ({ template, onClose }) => {
     const [formData, setFormData] = useState({});
     const [templateFields, setTemplateFields] = useState([]);
@@ -80,6 +161,13 @@ const CreateCV = () => {
             userApis.getAllTemplateFieldsByTemplateId(template.template_id)
           );
           setTemplateFields(response.data.templateFields);
+          
+          // Khởi tạo formData với placeholder values
+          const initialData = {};
+          response.data.templateFields.forEach(field => {
+            initialData[field.field_name] = field.field_placeholder || '';
+          });
+          setFormData(initialData);
         } catch (error) {
           console.error("Error fetching template fields:", error);
         }
@@ -97,17 +185,22 @@ const CreateCV = () => {
     const renderTemplate = () => {
       let html = template.template_html;
       
+      // Thay thế các placeholder bằng giá trị thực
       Object.keys(formData).forEach(key => {
-        html = html.replace(
-          new RegExp(`{{${key}}}`, 'g'), 
-          formData[key] || ''
-        );
+        const placeholder = `{{${key}}}`;
+        const value = formData[key] || '';
+        html = html.replace(new RegExp(placeholder, 'g'), value);
       });
 
       return html;
     };
 
     const TemplateStyle = () => {
+      // Thay thế các biến màu trong CSS
+      const customCSS = template.template_css
+        .replace(/\$primary-color/g, selectedColor)
+        .replace(/\$background-color/g, bgColor);
+      
       return (
         <style>
           {`
@@ -118,83 +211,56 @@ const CreateCV = () => {
               box-sizing: border-box;
             }
             
-            /* CSS từ database */
-            ${template.template_css}
-            
-            /* CSS cho form inputs */
-            [contenteditable="true"] {
-              outline: none;
-              padding: 2px;
-              transition: all 0.3s;
-            }
-            
-            [contenteditable="true"]:hover {
-              background: rgba(0, 0, 0, 0.05);
-            }
-            
-            [contenteditable="true"]:focus {
-              background: rgba(0, 0, 0, 0.1);
-            }
+            /* CSS từ database với màu tùy chỉnh */
+            ${customCSS}
           `}
         </style>
       );
     };
 
+    const renderFields = () => {
+      return templateFields.map(field => (
+        <div key={field.field_id} className={cx("form-field")}>
+          <label>{field.field_label}</label>
+          {field.field_type === 'textarea' ? (
+            <textarea
+              value={formData[field.field_name] || ''}
+              onChange={e => handleInputChange(field.field_name, e.target.value)}
+              placeholder={field.field_placeholder}
+            />
+          ) : field.field_type === 'date' ? (
+            <input
+              type="date"
+              value={formData[field.field_name] || ''}
+              onChange={e => handleInputChange(field.field_name, e.target.value)}
+            />
+          ) : (
+            <input
+              type="text"
+              value={formData[field.field_name] || ''}
+              onChange={e => handleInputChange(field.field_name, e.target.value)}
+              placeholder={field.field_placeholder}
+            />
+          )}
+        </div>
+      ));
+    };
+
     return (
       <div className={cx("preview-modal-overlay")} onClick={onClose}>
         <div className={cx("preview-modal")} onClick={e => e.stopPropagation()}>
+          <button className={cx("close-button")} onClick={onClose}>
+            <FaTimes />
+          </button>
           <div className={cx("preview-content")}>
-            <div className={cx("preview-cv")}>
+            <div className={cx("preview-main")}>
               <TemplateStyle />
-              
               <div 
-                className={cx("cv-preview")}
-                dangerouslySetInnerHTML={{ 
-                  __html: renderTemplate()
-                    .replace(
-                      /<(div|span|p|h1|h2|h3)([^>]*)>/g, 
-                      '<$1$2 contenteditable="true">'
-                    ) 
-                }}
+                className={cx("cv-preview")} 
+                dangerouslySetInnerHTML={{ __html: renderTemplate() }} 
               />
             </div>
-
-            <div className={cx("preview-sidebar")}>
-              <h2 className={cx("preview-title")}>
-                {template.template_name}
-              </h2>
-
-              <div className={cx("preview-form")}>
-                <div className={cx("form-group")}>
-                  <label>Ngôn ngữ</label>
-                  <select defaultValue="Tiếng Việt">
-                    <option>Tiếng Việt</option>
-                    <option>English</option>
-                  </select>
-                </div>
-
-                <div className={cx("form-group")}>
-                  <label>Màu sắc</label>
-                  <div className={cx("color-options")}>
-                    <button className={cx("color-btn", "active")} style={{background: "#013a74"}}></button>
-                    <button className={cx("color-btn")} style={{background: "#02a346"}}></button>
-                    <button className={cx("color-btn")} style={{background: "#4A90E2"}}></button>
-                    <button className={cx("color-btn")} style={{background: "#9C27B0"}}></button>
-                    <button className={cx("color-btn")} style={{background: "#2E7D32"}}></button>
-                    <button className={cx("color-btn")} style={{background: "#455A64"}}></button>
-                  </div>
-                </div>
-
-                <div className={cx("preview-actions")}>
-                  <button className={cx("use-template-btn")}>
-                    <FaDownload /> Dùng mẫu này
-                  </button>
-                  <button className={cx("close-btn")} onClick={onClose}>
-                    Đóng lại
-                  </button>
-                </div>
-              </div>
-            </div>
+            <PreviewSidebar />
           </div>
         </div>
       </div>

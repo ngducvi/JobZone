@@ -19,7 +19,12 @@ function TestDisc() {
   const [allAnswers, setAllAnswers] = useState([]);
   const [result, setResult] = useState(null);
   const [timeLeft, setTimeLeft] = useState(10 * 60); // 10 phút tính bằng giây
-
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }, []); // Empty dependency array means this runs once when component mounts
   const dataquestion = [
     {
       id: 1,
@@ -720,6 +725,8 @@ function TestDisc() {
   };
 
   const renderTest = () => (
+    // sử dụng useScrollTop();
+    
     <div className={cx("test-section")}>
       <div className={cx("timer")}>
         <div className={cx("timer-content", { warning: timeLeft <= 60 })}>
