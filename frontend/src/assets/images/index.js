@@ -12,6 +12,7 @@ const images = {
     test_disc: require('~/assets/images/disclogo.png'),
     ai_logo: require('~/assets/images/ai_logo.png'),
     formresult: require('~/assets/images/results.png'),
+    cv_template_1: require('~/assets/images/mautemplate.png'),
 };
 
 export default images;

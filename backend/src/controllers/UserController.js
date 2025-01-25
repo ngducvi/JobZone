@@ -25,6 +25,7 @@ const TemplateFields = require("../models/TemplateFields");
 const UserCv = require("../models/UserCv");
 const CandidateCv = require("../models/CandidateCv");
 const Category = require("../models/Category");
+const CvFieldValues = require("../models/CvFieldValues");
 
 class UserController {
   constructor() {}
@@ -491,6 +492,7 @@ class UserController {
       });
     }
   }
+  
   // get all cv templates với category
   async getAllCvTemplates(req, res) {
     const { page = 1, limit = 20 } = req.query;
@@ -555,6 +557,32 @@ class UserController {
         where: { template_id: req.params.template_id },
       });
       return res.json({ templateFields });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
+  // get all cv field values by cv_id
+  async getAllCvFieldValuesByCvId(req, res) {
+    try {
+      const cvFieldValues = await CvFieldValues.findAll({
+        where: { cv_id: req.params.cv_id },
+      });
+      return res.json({ cvFieldValues });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
+  // get template by template_id
+  async getTemplateById(req, res) {
+    try {
+      const template = await CvTemplates.findByPk(req.params.template_id);
+      return res.json({ template });
     } catch (error) {
       return res.status(500).send({
         message: error.message,

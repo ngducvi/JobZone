@@ -5,6 +5,7 @@ import styles from "./ManagerCV.module.scss";
 import { FaUpload, FaEdit, FaEye, FaTrash, FaDownload } from "react-icons/fa";
 import { authAPI, userApis } from "~/utils/api";
 import Suitablejob from "~/components/Suitablejob/Suitablejob";
+import { useNavigate } from "react-router-dom";
 const cx = classNames.bind(styles);
 
 const ManagerCV = () => {
@@ -12,6 +13,7 @@ const ManagerCV = () => {
   const [userCv, setUserCv] = useState([]);
   const [candidateCv, setCandidateCv] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -93,8 +95,23 @@ const ManagerCV = () => {
                         <img src={cv.cv_thumbnail || "/images/cv-preview.png"} alt="CV Preview" />
                       </div>
                       <div className={cx("cv-actions")}>
-                        <button className={cx("action-btn")}><FaEye /> Xem</button>
-                        <button className={cx("action-btn")}><FaEdit /> Chỉnh sửa</button>
+                        <button 
+                          className={cx("action-btn")}
+                          onClick={() => navigate('/user/see-cv', { state: { cv_id: cv.cv_id, template_id: cv.template_id } })}
+                        >
+                          <FaEye /> Xem
+                        </button>
+                        <button 
+                          className={cx("action-btn")}
+                          onClick={() => navigate('/user/use-templates', { 
+                            state: { 
+                              template: cv.template,
+                              formData: cv.formData 
+                            }
+                          })}
+                        >
+                          <FaEdit /> Chỉnh sửa
+                        </button>
                       </div>
                     </div>
                     <div className={cx("cv-info")}>
@@ -136,11 +153,24 @@ const ManagerCV = () => {
                         />
                       </div>
                       <div className={cx("cv-actions")}>
-                        <button className={cx("action-btn")}>
+                        <button 
+                          className={cx("action-btn")}
+                          onClick={() => {
+                            navigate('/user/see-cv', { state: { cv_id: cv.cv_id, template_id: cv.template_id } });
+                          }}
+                        >
                           <FaEye /> Xem
                         </button>
-                        <button className={cx("action-btn")}>
-                          <FaTrash /> Xóa
+                        <button 
+                          className={cx("action-btn")}
+                          onClick={() => navigate('/user/use-templates', { 
+                            state: { 
+                              template: cv.template,
+                              formData: cv.formData 
+                            }
+                          })}
+                        >
+                          <FaEdit /> Chỉnh sửa
                         </button>
                       </div>
                     </div>

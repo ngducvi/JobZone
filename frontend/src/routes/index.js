@@ -49,6 +49,8 @@ import SalaryCalculator from '~/pages/Tools/SalaryCalculator/SalaryCalculator';
 import CompoundInterestCalculator from '~/pages/Tools/CompoundInterestCalculator/CompoundInterestCalculator';
 import SavingCalculator from '~/pages/Tools/SavingCalculator/SavingCalculator';
 import TestDisc from '~/pages/Tools/TestDisc/TestDisc';
+import UseTemplates from '~/pages/Resume/CreateCV/UseTemplates/UseTemplates';
+import SeeCv from '~/pages/Resume/SeeCv/SeeCv';
 const publicRoutes = [
     { path: '/', component: Dashboard },
     { path: '/user/verify-email', component: VerifyEmailSuccess, layout: null },
@@ -76,7 +78,9 @@ const publicRoutes = [
     { path: '/user/jobs-viewed', component: ViewdJob },
     { path: '/user/create-cv', component: CreateCV },
     { path: '/user/manager-cv', component: ManagerCV },
+    { path: '/user/see-cv', component: SeeCv, layout: null },
     { path: '/user/job-zone-profile', component: JobZoneProfile },
+    { path: '/user/use-templates', component: UseTemplates },
     { path: '/jobs/:id', component: JobDetail },
     { path: '/company-detail/:company', component: TopCompanyDetail },
     { path: '/user/up-cv', component: UpCV },

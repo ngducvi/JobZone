@@ -3,6 +3,7 @@ import classNames from "classnames/bind";
 import styles from "./CreateCV.module.scss";
 import { authAPI, userApis } from "~/utils/api";
 import { FaEye, FaDownload, FaSearch, FaFilter, FaTimes } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const cx = classNames.bind(styles);
 
@@ -24,6 +25,7 @@ const CreateCV = () => {
   const [cvLanguage, setCvLanguage] = useState("Tiếng Việt");
   const [cvPosition, setCvPosition] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const navigate = useNavigate();
 
   const colors = [
     '#013a74', // Blue
@@ -87,6 +89,17 @@ const CreateCV = () => {
 
   const handleColorChange = (color) => {
     setSelectedColor(color);
+  };
+
+  const handleUseTemplate = (template) => {
+    // Chuyển hướng đến trang UseTemplates với template được chọn
+    navigate(`/user/use-templates`, { 
+      state: { 
+        template,
+        selectedColor,
+        bgColor 
+      }
+    });
   };
 
   const PreviewSidebar = () => {
@@ -368,7 +381,10 @@ const CreateCV = () => {
                         >
                           <FaEye /> Xem trước
                         </button>
-                        <button className={cx("use-template-btn")}>
+                        <button 
+                          className={cx("use-template-btn")}
+                          onClick={() => handleUseTemplate(template)}
+                        >
                           <FaDownload /> Sử dụng mẫu này
                         </button>
                       </div>
@@ -400,9 +416,6 @@ const CreateCV = () => {
                   <p className={cx("template-description")}>
                     {template.template_description}
                   </p>
-                  <button className={cx("use-template-btn")}>
-                    <FaDownload /> Sử dụng mẫu này
-                  </button>
                 </div>
               </div>
             ))

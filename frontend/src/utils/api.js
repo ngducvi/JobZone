@@ -58,7 +58,6 @@ export const userApis = {
     getAllAppliedJobsByUser: '/user/applied-jobs',
     getAllViewedJobsByUser: '/user/viewed-jobs',
     getAllCvTemplates: '/user/cv-templates',
-    getAllTemplateFieldsByTemplateId: (template_id) => `/user/template-fields/${template_id}`,
     getAllUserCvByUserId: '/user/user-cvs',
     getAllCandidateCvByUserId: '/user/candidate-cvs',
     getAllSuitableJobsByUser:'/user/suitable-jobs',
@@ -66,6 +65,9 @@ export const userApis = {
     getAllCompany: '/user/companies',
     getCompanyDetailByCompanyId: (company_id) => `/user/company-detail/${company_id}`,
     getCareerHandbookByCategoryId: (category_id) => `/user/career-handbook/${category_id}`,
+    getAllTemplateFieldsByTemplateId: (template_id) => `/user/template-fields/${template_id}`,
+    getAllCvFieldValuesByCvId: (cv_id) => `/user/cv-field-values/${cv_id}`,
+    getTemplateById: (template_id) => `/user/cv-templates/${template_id}`,
 };
 
 export const usageApis = {

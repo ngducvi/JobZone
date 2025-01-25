@@ -30,7 +30,6 @@ router.get("/saved-jobs", userController.getAllSavedJobsByUser.bind(userControll
 router.get("/applied-jobs", userController.getAllAppliedJobsByUser.bind(userController));
 router.get("/viewed-jobs", userController.getAllViewedJobsByUser.bind(userController));
 router.get("/cv-templates", userController.getAllCvTemplates.bind(userController));
-router.get("/template-fields/:template_id", userController.getAllTemplateFieldsByTemplateId.bind(userController));
 router.get("/user-cvs", userController.getAllUserCvByUserId.bind(userController));
 router.get("/candidate-cvs", userController.getAllCandidateCvByUserId.bind(userController));
 router.get("/suitable-jobs", userController.getAllSuitableJobsByUser.bind(userController));
@@ -38,4 +37,7 @@ router.get("/job-detail/:job_id", userController.getJobDetailByJobId.bind(userCo
 router.get("/companies", userController.getAllCompany.bind(userController));
 router.get("/company-detail/:company_id", userController.getCompanyDetailByCompanyId.bind(userController));
 router.get("/career-handbook/:category_id", userController.getCareerHandbookByCategoryId.bind(userController));
+router.get("/template-fields/:template_id", userController.getAllTemplateFieldsByTemplateId.bind(userController));
+router.get("/cv-field-values/:cv_id", userController.getAllCvFieldValuesByCvId.bind(userController));
+router.get("/cv-templates/:template_id", userController.getTemplateById.bind(userController));
 module.exports = router;
