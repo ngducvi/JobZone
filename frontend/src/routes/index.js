@@ -51,6 +51,7 @@ import SavingCalculator from '~/pages/Tools/SavingCalculator/SavingCalculator';
 import TestDisc from '~/pages/Tools/TestDisc/TestDisc';
 import UseTemplates from '~/pages/Resume/CreateCV/UseTemplates/UseTemplates';
 import SeeCv from '~/pages/Resume/SeeCv/SeeCv';
+import TestTemplate from '~/pages/TestTemplate/TestTemplate';
 const publicRoutes = [
     { path: '/', component: Dashboard },
     { path: '/user/verify-email', component: VerifyEmailSuccess, layout: null },
@@ -101,6 +102,7 @@ const publicRoutes = [
     { path: '/tools/compound-interest-calculator', component: CompoundInterestCalculator },
     { path: '/tools/saving-calculator', component: SavingCalculator },
     { path: '/tools/test-disc', component: TestDisc },
+    { path: '/test-template', component: TestTemplate, layout: null },
 ];
 
 const privateRoutes = [];

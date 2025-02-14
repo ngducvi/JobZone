@@ -18,6 +18,7 @@ export const adminApis = {
     getCountModels: '/admin/model/count-all', 
     getCountPayments: '/admin/transaction/count-all',
     getCountGiftCodes: '/admin/gift-code/count-all',  
+    getCountJobs: '/admin/job/count-all',
     getAllWallets: '/admin/wallet/all', 
     getAllCandidates: '/admin/candidate/all',
     getAllCompanies: '/admin/company/all',
@@ -25,6 +26,7 @@ export const adminApis = {
     getAllJobs: '/admin/job/all',
     getAllRecruiterCompanies: '/admin/recruiter-companies/all',
     getAllCareerHandbooks: '/admin/career-handbook/all',
+    updateStatusRecruiterCompany: (id) => `/admin/recruiter-companies/update-status/${id}`,
 };
 
 export const userApis = {

@@ -696,6 +696,7 @@ class UserController {
       });
     }
   }
+
   // get job detail by job_id
   async getJobDetailByJobId(req, res) {
     try {

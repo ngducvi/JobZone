@@ -2,7 +2,9 @@ const { Model, DataTypes } = require('sequelize');
 const sequelize = require('../config/database'); // Assuming you have a sequelize instance setup
 const User = require('./User');
 const Company = require('./Company');
-
+// -- Thêm cột status
+// ALTER TABLE `recruiter_companies` 
+// ADD COLUMN `status` ENUM('pending','active','rejected') DEFAULT 'pending';
 
 class RecruiterCompanies extends Model {}
 RecruiterCompanies.init({
@@ -27,6 +29,12 @@ RecruiterCompanies.init({
             key: 'company_id',
         },
     },
+    status: {
+        type: DataTypes.ENUM('pending','active','rejected'),
+        allowNull: false,
+        defaultValue: 'pending',
+    },
+    
 }, {
     sequelize,
     modelName: 'RecruiterCompanies',

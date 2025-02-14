@@ -15,7 +15,7 @@ const menuItems = [
     color: "#4f46e5"
   },
   {
-    to: "/user/resume",
+    to: "/user/manager-cv",
     icon: "fa-regular fa-file-lines",
     title: "Hồ sơ & CV",
     description: "Quản lý CV và thông tin nghề nghiệp",

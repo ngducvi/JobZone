@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 import styles from "./Candidate.module.scss";
 import { adminApis, authAPI } from "~/utils/api";
 import { NextPageIcon, PrevPageIcon } from "~/components/Icons";
+import useScrollTop from '~/hooks/useScrollTop';
 
 const cx = classNames.bind(styles);
 
@@ -24,7 +25,12 @@ function Candidate() {
         fetchData();
     }, [activePage]);
 
-
+    useEffect(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }, []);
   return <div>
     <h1>Candidate</h1>
   </div>;

@@ -1,21 +1,147 @@
 /* Home.module.scss */
 
 .home-container {
-  padding: 20px;
-  background-color: #fefefe;
+  padding: 24px;
+  background: linear-gradient(135deg, #f6f9fc 0%, #ffffff 100%);
   min-height: 100vh;
 
-  // Định nghĩa chung cho heading
-  .heading {
-    font-size: 25px;
+  h1 {
+    font-size: 2.2rem;
     font-weight: 700;
-    margin-bottom: 20px;
+    background: linear-gradient(135deg, #013a74 0%, #0056b3 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1.5rem;
   }
 
-  // Style cho tiêu đề form
-  .header-container {
-    display: flex;
-    align-items: center;
+  .card {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    color: #fff;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+
+    &:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+
+      .icon-wrapper {
+        transform: scale(1.1) rotate(10deg);
+      }
+    }
+
+    .card-body {
+      height: 140px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      &:hover::before {
+        opacity: 1;
+      }
+
+      .quantity {
+        font-size: 2.4rem;
+        font-weight: 800;
+        margin-bottom: 8px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+
+      .icon-wrapper {
+        font-size: 3.2rem;
+        opacity: 0.9;
+        transition: all 0.4s ease;
+      }
+    }
+
+    .more-info {
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(5px);
+      font-size: 0.9rem;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.2);
+        
+        svg {
+          transform: translateX(5px);
+        }
+      }
+    }
+
+    &.bg-info {
+      background: linear-gradient(135deg, #0396FF 0%, #ABDCFF 100%);
+    }
+
+    &.bg-success {
+      background: linear-gradient(135deg, #43A047 0%, #66BB6A 100%);
+    }
+
+    &.bg-dark {
+      background: linear-gradient(135deg, #434343 0%, #000000 100%);
+    }
+  }
+
+  .chart-container {
+    margin-top: 2rem;
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+
+    h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #013a74;
+      margin-bottom: 1.5rem;
+    }
+
+    .chart-left {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .chart-right {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    }
   }
 
   // Định dạng layout lưới cho card
@@ -25,91 +151,10 @@
     gap: 20px;
   }
 
-  // Style card
-  .card {
-    position: relative;
-    border-radius: 10px;
-    overflow: hidden;
-    color: #fff;
-    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease-in-out;
-
-    &:hover {
-      transform: translateY(-10px);
-      box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2);
-    }
-
-    .card-body {
-      height: 130px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px;
-
-      .quantity {
-        font-size: 2.0rem;
-        font-weight: 700;
-        margin-bottom: 5px;
-      }
-
-      .title {
-        font-size: 1.8rem;
-        font-weight: 700;
-        opacity: 0.9;
-        text-transform: uppercase;
-      }
-
-      .icon-wrapper {
-        font-size: 3rem;
-        opacity: 0.8;
-      }
-    }
-
-    // Style phần thông tin thêm
-    .more-info {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      padding: 10px;
-      background-color: rgba(0, 0, 0, 0.15);
-      text-align: center;
-      font-size: 0.9rem;
-      color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      text-decoration: none;
-
-      span {
-        margin-right: 5px;
-      }
-
-      svg {
-        transition: transform 0.3s ease-in-out;
-      }
-
-      &:hover svg {
-        transform: translateX(5px);
-      }
-    }
-
-    // Gradient cho từng loại card
-    &.bg-info {
-      background: linear-gradient(135deg, #17a2b8 0%, #1fb9d6 50%, #2ccbee 100%);
-    }
-
-    &.bg-success {
-      background: linear-gradient(135deg, #28a745 0%, #2ec75c 50%, #34d399 100%);
-    }
-
-    &.bg-warning {
-      background: linear-gradient(135deg, #ffc107 0%, #ffcc33 50%, #fddb3a 100%);
-    }
-
-    &.bg-dark {
-      background: linear-gradient(135deg, #343a40 0%, #3e464d 50%, #2c3e50 100%);
-    }
+  // Style cho tiêu đề form
+  .header-container {
+    display: flex;
+    align-items: center;
   }
 
   // Chế độ dark mode và light mode

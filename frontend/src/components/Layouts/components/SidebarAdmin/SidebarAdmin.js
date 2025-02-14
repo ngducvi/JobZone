@@ -15,6 +15,7 @@ import Modal from "~/components/Modal";
 
 const cx = classNames.bind(styles);
 
+// Di chuyển sidebarIcons ra ngoài component
 const sidebarIcons = [
   {
     id: "dashboard",
@@ -42,7 +43,6 @@ const sidebarIcons = [
     title: "Quản lý người dùng",
     to: "/admin/users",
     subMenu: [
-
       {
         title: "Danh sách người dùng",
         to: "/admin/users",
@@ -59,7 +59,6 @@ const sidebarIcons = [
         title: "Phân quyền",
         to: "/admin/users/roles",
       },
-
     ],
   },
   // quản lý công ty
@@ -93,12 +92,7 @@ const sidebarIcons = [
     title: "Quản lý bài viết",
     to: "/admin/career-handbook",
   },
-  // quản lý cài đặt hệ thống
-  {
-    icon: <i className="fa-solid fa-gear"></i>,
-    title: "Cài đặt hệ thống",
-    to: "/admin/settings",
-  },
+
 ];
 
 const SidebarAdmin = () => {

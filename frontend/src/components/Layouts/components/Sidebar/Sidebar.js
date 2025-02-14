@@ -105,6 +105,11 @@ const sidebarIcons = [
         to: "/user/job-zone-profile",
         authRequired: true
       },
+      {
+        title: "Test Template",
+        to: "/test-template",
+        authRequired: false
+      },
     ]
   },
   // career handbook

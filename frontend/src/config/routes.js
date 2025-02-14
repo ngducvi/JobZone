@@ -3,6 +3,7 @@ const routes = {
     dashboard: '/admin/dashboard/',
     user: '/admin/users/',
     payment: '/admin/payments/',
+    job: '/admin/job',
     giftcode: '/admin/giftcodes/',
     model: '/admin/models/',
     blogAdmin: '/blogs/',

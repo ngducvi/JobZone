@@ -25,4 +25,6 @@ router.get("/category/all", adminController.getAllCategories.bind(adminControlle
 router.get("/job/all", adminController.getAllJobs.bind(adminController));
 router.get("/recruiter-companies/all", adminController.getAllRecruiterCompanies.bind(adminController));
 router.get("/career-handbook/all", adminController.getAllCareerHandbooks.bind(adminController));
+router.patch("/recruiter-companies/update-status/:id", adminController.updateStatusRecruiterCompany.bind(adminController));
+router.get("/job/count-all", adminController.countAllJobs.bind(adminController));
 module.exports = router;
