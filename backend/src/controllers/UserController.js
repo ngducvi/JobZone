@@ -26,9 +26,18 @@ const UserCv = require("../models/UserCv");
 const CandidateCv = require("../models/CandidateCv");
 const Category = require("../models/Category");
 const CvFieldValues = require("../models/CvFieldValues");
+const CandidateLanguages = require("../models/CandidateLanguages");
+const CandidateExperiences = require("../models/CandidateExperiences");
+const CandidateEducation = require("../models/CandidateEducation");
+const CandidateCertifications = require("../models/CandidateCertifications");
+const CandidateProjects = require("../models/CandidateProjects");
 
 class UserController {
-  constructor() {}
+  constructor() {
+    this.generateEducationId = () => {
+      return 'edu-' + Math.random().toString(36).substr(2, 9);
+    };
+  }
   async getCurrentUser(req, res) {
     try {
       const user = await User.findByPk(req.user.id);
@@ -492,7 +501,7 @@ class UserController {
       });
     }
   }
-  
+
   // get all cv templates với category
   async getAllCvTemplates(req, res) {
     const { page = 1, limit = 20 } = req.query;
@@ -529,8 +538,8 @@ class UserController {
       totalPages: Math.ceil(cvTemplates.count / limit),
     });
   }
- 
-  // get all company 
+
+  // get all company
   async getAllCompany(req, res) {
     const { page = 1, limit = 10 } = req.query;
     const offset = (page - 1) * limit;
@@ -710,18 +719,18 @@ class UserController {
       });
     }
   }
- // get company detail by company_id
- async getCompanyDetailByCompanyId(req, res) {
-  try {
-    const company = await Company.findByPk(req.params.company_id);
-    return res.json({ company });
-  } catch (error) {
-    return res.status(500).send({
-      message: error.message,
-      code: -1,
-    });
+  // get company detail by company_id
+  async getCompanyDetailByCompanyId(req, res) {
+    try {
+      const company = await Company.findByPk(req.params.company_id);
+      return res.json({ company });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1,
+      });
+    }
   }
-}
   // get all viewed jobs by user
   async getAllViewedJobsByUser(req, res) {
     const { page = 1, limit = 10 } = req.query;
@@ -868,6 +877,164 @@ class UserController {
       code: 1,
       candidate,
     });
+  }
+  // get all candidate languages
+  async getAllCandidateLanguages(req, res) {
+    const candidateLanguages = await CandidateLanguages.findAll();
+    return res.status(200).send({
+      message: "Thông tin chi tiết hồ sơ ứng viên",
+      code: 1,
+      candidateLanguages,
+    });
+  }
+  // get candidate languages by candidate_id
+  async getCandidateLanguagesByCandidateId(req, res) {
+    try {
+      const candidateLanguages = await CandidateLanguages.findAll({
+        where: { candidate_id: req.params.candidate_id },
+      });
+      return res.status(200).send({
+        message: "Thông tin chi tiết hồ sơ ứng viên",
+        code: 1,
+        candidateLanguages,
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
+  // get candidate experiences by candidate_id
+  async getCandidateExperiencesByCandidateId(req, res) {
+    try {
+      const candidateExperiences = await CandidateExperiences.findAll({
+        where: { candidate_id: req.params.candidate_id },
+      });
+      return res.status(200).send({
+        message: "Thông tin chi tiết hồ sơ ứng viên",
+        code: 1,
+        candidateExperiences,
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
+  // get candidate education by candidate_id
+  async getCandidateEducationByCandidateId(req, res) {
+    try {
+      const candidateEducation = await CandidateEducation.findAll({
+        where: { candidate_id: req.params.candidate_id },
+      });
+      return res.status(200).send({
+        message: "Thông tin chi tiết hồ sơ ứng viên",
+        code: 1,
+        candidateEducation,
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
+  // get all candidate education 
+  // get candidate certifications by candidate_id
+  async getCandidateCertificationsByCandidateId(req, res) {
+    try {
+      const candidateCertifications = await CandidateCertifications.findAll({
+        where: { candidate_id: req.params.candidate_id },
+      });
+      return res.status(200).send({
+        message: "Thông tin chi tiết hồ sơ ứng viên",
+        code: 1,
+        candidateCertifications,
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
+  // get candidate projects by candidate_id
+  async getCandidateProjectsByCandidateId(req, res) {
+    try {
+      const candidateProjects = await CandidateProjects.findAll({
+        where: { candidate_id: req.params.candidate_id },
+      });
+      return res.status(200).send({
+        message: "Thông tin chi tiết hồ sơ ứng viên",
+        code: 1,
+        candidateProjects,
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
+  
+  // edit candidate education
+  async editCandidateEducation(req, res) {
+    try {
+      const education_id = req.params.id; // Lấy id từ params
+      const updateData = req.body;
+      
+      const candidateEducation = await CandidateEducation.findByPk(education_id);
+      
+      if (!candidateEducation) {
+        return res.status(404).send({
+          message: "Không tìm thấy thông tin học vấn",
+          code: -1
+        });
+      }
+
+      await candidateEducation.update(updateData);
+      
+      return res.status(200).send({
+        message: "Cập nhật thông tin học vấn thành công",
+        code: 1,
+        candidateEducation
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
+
+  async createCandidateEducationWithCandidateId(req, res) {
+    try {
+      const candidateEducation = await CandidateEducation.create({
+        id: this.generateEducationId(),
+        candidate_id: req.params.candidate_id,
+        institution: req.body.institution,
+        degree: req.body.degree,
+        field_of_study: req.body.field_of_study,
+        start_date: req.body.start_date,
+        end_date: req.body.end_date,
+        grade: req.body.grade,
+        activities: req.body.activities
+      });
+
+      return res.status(200).send({
+        message: "Tạo thông tin học vấn thành công",
+        code: 1,
+        candidateEducation
+      });
+    } catch (error) {
+      console.error("Error creating education:", error);
+      return res.status(500).send({
+        message: error.message,
+        code: -1
+      });
+    }
   }
 }
 

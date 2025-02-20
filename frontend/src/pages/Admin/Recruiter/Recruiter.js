@@ -16,6 +16,10 @@ function Recruiter() {
     const [selectedRecruiter, setSelectedRecruiter] = useState(null);
     const [showStatusModal, setShowStatusModal] = useState(false);
     const [activeTab, setActiveTab] = useState('active');
+    const [permissions, setPermissions] = useState({
+        canEdit: true,
+        canDelete: false  // Set false để ẩn chức năng xóa
+    });
 
     const fetchData = async () => {
         try {
@@ -240,9 +244,9 @@ function Recruiter() {
                         </button>
                     </div>
 
-                    <button className={cx('add-btn')}>
+                    {/* <button className={cx('add-btn')}>
                         <FaUser /> Thêm nhà tuyển dụng
-                    </button>
+                    </button> */}
                 </div>
 
                 <div className={cx('content')}>
@@ -328,12 +332,16 @@ function Recruiter() {
                                                 {item.status === 'rejected' && 'Từ chối'}
                                             </div>
                                             <div className={cx('actions')}>
-                                                <button className={cx('action-btn', 'edit')}>
-                                                    Chỉnh sửa
-                                                </button>
-                                                <button className={cx('action-btn', 'delete')}>
-                                                    Xóa
-                                                </button>
+                                                {permissions.canEdit && (
+                                                    <button className={cx('action-btn', 'edit')}>
+                                                        Chỉnh sửa
+                                                    </button>
+                                                )}
+                                                {permissions.canDelete && (
+                                                    <button className={cx('action-btn', 'delete')}>
+                                                        Xóa
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

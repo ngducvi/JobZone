@@ -40,4 +40,12 @@ router.get("/career-handbook/:category_id", userController.getCareerHandbookByCa
 router.get("/template-fields/:template_id", userController.getAllTemplateFieldsByTemplateId.bind(userController));
 router.get("/cv-field-values/:cv_id", userController.getAllCvFieldValuesByCvId.bind(userController));
 router.get("/cv-templates/:template_id", userController.getTemplateById.bind(userController));
+router.get("/candidate-languages", userController.getAllCandidateLanguages.bind(userController));
+router.get("/candidate-languages/:candidate_id", userController.getCandidateLanguagesByCandidateId.bind(userController));
+router.get("/candidate-experiences/:candidate_id", userController.getCandidateExperiencesByCandidateId.bind(userController));
+router.get("/candidate-education/:candidate_id", userController.getCandidateEducationByCandidateId.bind(userController));
+router.get("/candidate-certifications/:candidate_id", userController.getCandidateCertificationsByCandidateId.bind(userController));
+router.get("/candidate-projects/:candidate_id", userController.getCandidateProjectsByCandidateId.bind(userController));
+router.put('/candidate-education/edit/:id', userController.editCandidateEducation);
+router.post('/candidate-education/:candidate_id', userController.createCandidateEducationWithCandidateId.bind(userController));
 module.exports = router;

@@ -28,6 +28,7 @@ function Users() {
         });
         setUserData(result.data.users);
         setTotalPages(result.data.totalPages);
+        console.log(result.data.users);
       } catch (error) {
         console.error("Error fetching data:", error);
       }

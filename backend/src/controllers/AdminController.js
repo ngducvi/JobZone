@@ -177,10 +177,10 @@ class AdminController {
     try {
       const { page = 1, limit = 10, status } = req.query;
       const offset = (page - 1) * limit;
-      
+
       // Base query
       const whereClause = status ? { status } : {};
-      
+
       // Get filtered jobs with pagination
       const jobs = await Job.findAndCountAll({
         where: whereClause,
@@ -188,23 +188,23 @@ class AdminController {
         offset,
         order: [["created_at", "DESC"]],
       });
-      
+
       // Get counts for each status
       const counts = {
-        active: await Job.count({ where: { status: 'Active' } }),
-        pending: await Job.count({ where: { status: 'Pending' } }),
-        closed: await Job.count({ where: { status: 'Closed' } })
+        active: await Job.count({ where: { status: "Active" } }),
+        pending: await Job.count({ where: { status: "Pending" } }),
+        closed: await Job.count({ where: { status: "Closed" } }),
       };
-      
+
       return res.json({
         jobs: jobs.rows,
         totalPages: Math.ceil(jobs.count / limit),
-        counts
+        counts,
       });
     } catch (error) {
       console.error("Error:", error);
       return res.status(500).json({
-        message: "Internal server error", 
+        message: "Internal server error",
         error: error.message,
       });
     }
@@ -460,9 +460,53 @@ class AdminController {
       if (!recruiterCompany) {
         return res.status(404).json({ error: "Recruiter company not found" });
       }
-    recruiterCompany.status = status;
-    await recruiterCompany.save();
+      recruiterCompany.status = status;
+      await recruiterCompany.save();
       return res.json({ recruiterCompany });
+    } catch (error) {
+      console.error("Error:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message,
+      });
+    }
+  }
+  async editJob(req, res) {
+    const { id } = req.params;
+    const { title, description, salary, location, company_id, status, deadline, quantity, rank, education, experience } =
+      req.body;
+    try {
+      const job = await Job.findByPk(id);
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+      job.title = title;
+      job.description = description;
+      job.salary = salary;
+      job.location = location;
+      job.company_id = company_id;
+      job.status = status;
+      job.deadline = deadline;
+      job.quantity = quantity;
+      job.rank = rank;
+      job.education = education;
+      job.experience = experience;
+      await job.save();
+      return res.json({ job });
+    } catch (error) {
+      console.error("Error:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message,
+      });
+    }
+  }
+  // get company detail by company id
+  async getCompanyDetailByCompanyId(req, res) {
+    const { id } = req.params;
+    try {
+      const company = await Company.findByPk(id);
+      return res.json({ company });
     } catch (error) {
       console.error("Error:", error);
       return res.status(500).json({
@@ -483,6 +527,23 @@ class AdminController {
       careerHandbooks: careerHandbooks.rows,
       totalPages: Math.ceil(careerHandbooks.count / limit),
     });
+  }
+  
+  async getUserDetail(req, res) {
+    const { id } = req.params;
+    try {
+      const user = await User.findByPk(id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      return res.json({ user });
+    } catch (error) {
+      console.error("Error:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message,
+      });
+    }
   }
 }
 module.exports = new AdminController();

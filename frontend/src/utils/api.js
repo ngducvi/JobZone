@@ -27,6 +27,9 @@ export const adminApis = {
     getAllRecruiterCompanies: '/admin/recruiter-companies/all',
     getAllCareerHandbooks: '/admin/career-handbook/all',
     updateStatusRecruiterCompany: (id) => `/admin/recruiter-companies/update-status/${id}`,
+    editJob: (id) => `/admin/jobs/${id}`,
+    getCompanyDetailByCompanyId: (id) => `/admin/company/detail/${id}`,
+    getUserDetail: (id) => `/admin/user/detail/${id}`,
 };
 
 export const userApis = {
@@ -70,6 +73,14 @@ export const userApis = {
     getAllTemplateFieldsByTemplateId: (template_id) => `/user/template-fields/${template_id}`,
     getAllCvFieldValuesByCvId: (cv_id) => `/user/cv-field-values/${cv_id}`,
     getTemplateById: (template_id) => `/user/cv-templates/${template_id}`,
+    getAllCandidateLanguages: '/user/candidate-languages',
+    getCandidateLanguagesByCandidateId: (candidate_id) => `/user/candidate-languages/${candidate_id}`,
+    getCandidateExperiencesByCandidateId: (candidate_id) => `/user/candidate-experiences/${candidate_id}`,
+    getCandidateEducationByCandidateId: (candidate_id) => `/user/candidate-education/${candidate_id}`,
+    getCandidateCertificationsByCandidateId: (candidate_id) => `/user/candidate-certifications/${candidate_id}`,
+    getCandidateProjectsByCandidateId: (candidate_id) => `/user/candidate-projects/${candidate_id}`,
+    editCandidateEducation: (education_id) => `/user/candidate-education/edit/${education_id}`,
+    createCandidateEducationWithCandidateId: (candidate_id) => `/user/candidate-education/${candidate_id}`,
 };
 
 export const usageApis = {
