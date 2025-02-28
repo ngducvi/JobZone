@@ -52,6 +52,15 @@ import TestDisc from '~/pages/Tools/TestDisc/TestDisc';
 import UseTemplates from '~/pages/Resume/CreateCV/UseTemplates/UseTemplates';
 import SeeCv from '~/pages/Resume/SeeCv/SeeCv';
 import TestTemplate from '~/pages/TestTemplate/TestTemplate';
+import CvLibrary from '~/pages/CvLibrary/CvLibrary';
+import RecruiterCVManagement from '~/pages/Recruiter/CVManagement/RecruiterCVManagement';
+import RecruiterCampaigns from '~/pages/Recruiter/Campaigns/RecruiterCampaigns';
+import RecruiterJobs from '~/pages/Recruiter/Jobs/RecruiterJobs';
+import RecruiterReports from '~/pages/Recruiter/Reports/RecruiterReports';
+import RecruiterMyServices from '~/pages/Recruiter/MyServices/RecruiterMyServices';
+import RecruiterSettings from '~/pages/Recruiter/Settings/RecruiterSettings';
+
+
 const publicRoutes = [
     { path: '/', component: Dashboard },
     { path: '/user/verify-email', component: VerifyEmailSuccess, layout: null },
@@ -79,6 +88,7 @@ const publicRoutes = [
     { path: '/user/jobs-viewed', component: ViewdJob },
     { path: '/user/create-cv', component: CreateCV },
     { path: '/user/manager-cv', component: ManagerCV },
+    { path: '/user/cv-library', component: CvLibrary },
     { path: '/user/see-cv', component: SeeCv, layout: null },
     { path: '/user/job-zone-profile', component: JobZoneProfile },
     { path: '/user/use-templates', component: UseTemplates },
@@ -90,6 +100,12 @@ const publicRoutes = [
     { path: '/404', component: NotFound, layout: null },
     { path: '/403', component: Forbidden, layout: null },
     { path: '/recruiter', component: RecruiterHome, layout: RecruiterLayout},
+    { path: '/recruiter/cv-management', component: RecruiterCVManagement , layout: RecruiterLayout},
+    { path: '/recruiter/campaigns', component: RecruiterCampaigns , layout: RecruiterLayout},
+    { path: '/recruiter/jobs', component: RecruiterJobs , layout: RecruiterLayout},
+    { path: '/recruiter/reports', component: RecruiterReports , layout: RecruiterLayout},
+    { path: '/recruiter/my-services', component: RecruiterMyServices , layout: RecruiterLayout},
+    { path: '/recruiter/settings', component: RecruiterSettings , layout: RecruiterLayout},
     { path: '/loading', component: LoadingPage, layout: null },
     { path: '/career-handbook/job-hunting', component: JobHunting },
     { path: '/career-handbook/industry-knowledge', component: IndustryKnowledge },

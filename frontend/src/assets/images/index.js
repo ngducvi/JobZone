@@ -13,6 +13,7 @@ const images = {
     ai_logo: require('~/assets/images/ai_logo.png'),
     formresult: require('~/assets/images/results.png'),
     cv_template_1: require('~/assets/images/mautemplate.png'),
+    company_info: require('~/assets/images/fpt_logo.png'),
 };
 
 export default images;

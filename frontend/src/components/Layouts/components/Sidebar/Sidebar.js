@@ -9,7 +9,7 @@ import ModalTypeContext from "~/context/ModalTypeContext";
 import SidebarContext from "~/context/SidebarContext";
 import UserContext from "~/context/UserContext";
 import { authAPI, userApis } from "~/utils/api";
-import Modal from "~/components/Modal";
+import Modal from "~/components/Modal/Modal";
 
 const cx = classNames.bind(styles);
 
@@ -90,14 +90,9 @@ const sidebarIcons = [
         authRequired: false
       },
       {
-        title: "Hướng dẫn viết CV theo ngành nghề",
-        to: "/jobs/cv-guide",
-        authRequired: false
-      },
-      {
         title: "Thư viện CV theo ngành nghề",
         badge: "MỚI",
-        to: "/jobs/cv-templates",
+        to: "/user/cv-library",
         authRequired: false
       },
       {
@@ -277,36 +272,39 @@ const Sidebar = () => {
           <div className={cx("nav-container", { active: isMobileMenuOpen })}>
             <ul className={cx("nav-list")}>
               {userSidebarIcons.map((item, index) => (
-                <li key={index}>
-                  <Link
-                    to={item.to}
-                    className={cx("nav-item", {
-                      active: item.to === location.pathname || 
-                             (item.subMenu && item.subMenu.some(sub => sub.to === location.pathname)),
-                    })}
-                  >
-                    {item.title}
-                  </Link>
-                  {item.subMenu && (
-                    <div className={cx("submenu")}>
-                      {item.subMenu
-                        .filter(subItem => !subItem.authRequired || token)
-                        .map((subItem, subIndex) => (
-                          <Link
-                            key={subIndex}
-                            to={subItem.to}
-                            className={cx("submenu-item", {
-                              active: subItem.to === location.pathname
-                            })}
-                          >
-                            <span>{subItem.title}</span>
-                            {subItem.badge && <span className={cx("submenu-badge")}>{subItem.badge}</span>}
-                            {subItem.icon && <span className={cx("submenu-icon")}>{subItem.icon}</span>}
-                          </Link>
-                        ))}
-                    </div>
-                  )}
-                </li>
+                (!item.authRequired || (item.authRequired && user?.role === 'user')) && (
+                  <li key={index}>
+                    <Link
+                      to={item.to}
+                      className={cx("nav-item", {
+                        active: item.to === location.pathname || 
+                               (item.subMenu && item.subMenu.some(sub => sub.to === location.pathname)),
+                      })}
+                    >
+                      {/* {item.icon} */}
+                      <span className={cx("item-title")}>{item.title}</span>
+                      {item.subMenu && (
+                        <div className={cx("submenu")}>
+                          {item.subMenu
+                            .filter(subItem => !subItem.authRequired || token)
+                            .map((subItem, subIndex) => (
+                              <Link
+                                key={subIndex}
+                                to={subItem.to}
+                                className={cx("submenu-item", {
+                                  active: subItem.to === location.pathname
+                                })}
+                              >
+                                <span>{subItem.title}</span>
+                                {subItem.badge && <span className={cx("submenu-badge")}>{subItem.badge}</span>}
+                                {subItem.icon && <span className={cx("submenu-icon")}>{subItem.icon}</span>}
+                              </Link>
+                            ))}
+                        </div>
+                      )}
+                    </Link>
+                  </li>
+                )
               ))}
             </ul>
 

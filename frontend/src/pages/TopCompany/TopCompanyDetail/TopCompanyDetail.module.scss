@@ -11,6 +11,7 @@
 
 .hero-section {
   margin-bottom: 40px;
+  position: relative;
 
   .company-card {
     background: white;
@@ -20,7 +21,7 @@
     position: relative;
 
     .company-banner {
-      height: 280px;
+      height: 320px;
       position: relative;
       overflow: hidden;
 
@@ -28,6 +29,11 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
+        transition: transform 0.3s ease;
+
+        &:hover {
+          transform: scale(1.05);
+        }
       }
 
       .overlay {
@@ -35,26 +41,37 @@
         inset: 0;
         background: linear-gradient(
           180deg,
-          rgba(1, 58, 116, 0.4) 0%,
+          rgba(1, 58, 116, 0.2) 0%,
           rgba(1, 58, 116, 0.95) 100%
         );
+        backdrop-filter: blur(4px);
       }
 
-      @media (max-width: 768px) {
-        height: 200px;
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100px;
+        background: linear-gradient(
+          to top,
+          rgba(255, 255, 255, 1),
+          rgba(255, 255, 255, 0)
+        );
       }
     }
 
     .company-intro {
       position: relative;
-      margin-top: -100px;
+      margin-top: -180px;
       padding: 0 40px 40px;
       z-index: 2;
 
       .logo-container {
         position: relative;
-        width: 160px;
-        height: 160px;
+        width: 180px;
+        height: 180px;
         margin-bottom: 24px;
 
         img {
@@ -63,8 +80,14 @@
           object-fit: contain;
           border-radius: 24px;
           background: white;
-          padding: 12px;
+          padding: 16px;
           box-shadow: 0 8px 24px rgba(1, 58, 116, 0.2);
+          transition: all 0.3s ease;
+
+          &:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(1, 58, 116, 0.3);
+          }
         }
 
         .pulse-effect {
@@ -74,28 +97,17 @@
           border-radius: 28px;
           animation: pulse 2s infinite;
         }
-
-        @media (max-width: 768px) {
-          width: 120px;
-          height: 120px;
-          margin-bottom: 16px;
-        }
       }
 
       .company-stats {
-        color: white;
-
         h1 {
           font-size: 42px;
           font-weight: 800;
           margin-bottom: 24px;
-          color: white;
-          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-
-          @media (max-width: 768px) {
-            font-size: 28px;
-            margin-bottom: 16px;
-          }
+          background: linear-gradient(45deg, #013a74, #02a346);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .stat-badges {
@@ -107,33 +119,34 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 12px 20px;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(8px);
+            padding: 12px 24px;
+            background: white;
+            border: 1px solid rgba(1, 58, 116, 0.1);
             border-radius: 16px;
             font-size: 15px;
             transition: all 0.3s ease;
-            color: rgb(0, 0, 0);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
             &:hover {
-              background: rgba(255, 255, 255, 0.2);
               transform: translateY(-2px);
+              box-shadow: 0 8px 16px rgba(1, 58, 116, 0.1);
+              border-color: #013a74;
+
+              i {
+                transform: scale(1.1);
+              }
             }
 
             i {
               color: #02a346;
-              font-size: 18px;
+              font-size: 20px;
+              transition: all 0.3s ease;
             }
 
-            @media (max-width: 768px) {
-              padding: 8px 16px;
-              font-size: 14px;
+            span {
+              color: #374151;
+              font-weight: 500;
             }
-          }
-
-          @media (max-width: 768px) {
-            flex-direction: column;
-            gap: 12px;
           }
         }
 
@@ -141,26 +154,24 @@
           display: flex;
           align-items: center;
           gap: 16px;
-          padding: 0;
-          border: none;
-          background: transparent;
-          cursor: pointer;
 
           .button-content {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 14px 28px;
-            background: #02a346;
+            padding: 14px 32px;
+            background: linear-gradient(45deg, #013a74, #02a346);
             border-radius: 16px;
             color: white;
             font-weight: 600;
             font-size: 16px;
             transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
 
             &:hover {
-              background: darken(#02a346, 5%);
               transform: translateY(-2px);
+              box-shadow: 0 8px 20px rgba(1, 58, 116, 0.2);
             }
 
             i {
@@ -172,35 +183,24 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 14px 20px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(8px);
+            padding: 14px 24px;
+            background: white;
+            border: 1px solid rgba(1, 58, 116, 0.1);
             border-radius: 16px;
-            color: rgb(0, 0, 0);
+            color: #374151;
             font-size: 15px;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+
+            &:hover {
+              transform: translateY(-2px);
+              border-color: #02a346;
+            }
 
             i {
               color: #02a346;
-            }
-          }
-
-          &.following .button-content {
-            background: #013a74;
-          }
-
-          @media (max-width: 768px) {
-            flex-direction: column;
-            width: 100%;
-            gap: 12px;
-
-            .button-content {
-              width: 100%;
-              justify-content: center;
-            }
-
-            .follower-count {
-              width: 100%;
-              justify-content: center;
+              font-size: 16px;
             }
           }
         }
@@ -262,93 +262,131 @@
 
     &.jobs .job-grid {
       display: grid;
-      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+      margin-top: 24px;
 
       .job-card {
-        padding: 24px;
-        border-radius: 16px;
-        border: 2px solid #f0f0f0;
-        transition: all 0.3s ease;
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid #e5e7eb;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
 
         &:hover {
-          border-color: #02a346;
-          transform: translateY(-2px);
-        }
+          transform: translateY(-4px);
+          box-shadow: 0 12px 24px rgba(1, 58, 116, 0.12);
+          border-color: #013a74;
 
-        .job-title {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          margin-bottom: 16px;
-
-          i {
-            color: #02a346;
-            font-size: 20px;
-          }
-
-          h3 {
-            font-size: 18px;
-            font-weight: 600;
-            color: #013a74;
+          .job-title {
+            background: linear-gradient(45deg, #013a74, #02a346);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
           }
         }
 
-        .job-tags {
+        .job-header {
           display: flex;
           gap: 16px;
-          margin-bottom: 20px;
+          margin-bottom: 16px;
+
+          .company-logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+            padding: 4px;
+
+            img {
+              width: 100%;
+              height: 100%;
+              object-fit: contain;
+            }
+          }
+
+          .job-info {
+            flex: 1;
+
+            .job-title {
+              font-size: 16px;
+              font-weight: 600;
+              color: #111827;
+              margin-bottom: 4px;
+              transition: all 0.3s ease;
+            }
+
+            .company-name {
+              color: #6b7280;
+              font-size: 14px;
+            }
+          }
+        }
+
+        .job-meta {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+          margin-bottom: 16px;
 
           span {
             display: flex;
             align-items: center;
             gap: 8px;
+            color: #374151;
             font-size: 14px;
-            color: #444;
 
             i {
+              color: #013a74;
+              font-size: 14px;
+              width: 16px;
+            }
+          }
+        }
+
+        .job-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-bottom: 20px;
+
+          .tag {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 13px;
+            font-weight: 500;
+
+            &.working-time {
+              background: rgba(1, 58, 116, 0.1);
+              color: #013a74;
+            }
+
+            &.rank {
+              background: rgba(2, 163, 70, 0.1);
               color: #02a346;
             }
-          }
-        }
 
-        .apply-btn {
-          width: 100%;
-          padding: 12px;
-          border: none;
-          border-radius: 12px;
-          background: #013a74;
-          color: white;
-          font-weight: 600;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          cursor: pointer;
-          transition: all 0.3s ease;
-
-          &:hover {
-            background: #02a346;
-          }
-
-          i {
-            font-size: 16px;
-          }
-        }
-
-        @media (max-width: 768px) {
-          padding: 16px;
-
-          .job-title h3 {
-            font-size: 16px;
-          }
-
-          .job-tags {
-            flex-wrap: wrap;
-            gap: 8px;
-
-            span {
-              font-size: 13px;
+            &.urgent {
+              background: #fff7ed;
+              color: #ea580c;
             }
+          }
+        }
+
+        .job-actions {
+          display: flex;
+          gap: 12px;
+          margin-top: auto;
+
+          .save-btn {
+            flex: 1;
+          }
+
+          .apply-btn {
+            flex: 2;
           }
         }
       }
@@ -491,6 +529,232 @@
   .content-grid {
     .info-card {
       padding: 16px;
+    }
+  }
+}
+
+.save-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #374151;
+  position: relative;
+  overflow: hidden;
+
+  i {
+    font-size: 16px;
+    transition: all 0.3s ease;
+  }
+
+  .default-text {
+    transition: all 0.3s ease;
+  }
+
+  .hover-text {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: all 0.3s ease;
+    color: #dc2626;
+  }
+
+  &:not(.saved) {
+    &:hover {
+      border-color: #013a74;
+      color: #013a74;
+
+      i {
+        color: #013a74;
+      }
+    }
+  }
+
+  &.saved {
+    background: #013a74;
+    color: white;
+    border-color: #013a74;
+    animation: saveAnimation 0.3s ease;
+
+    &:hover {
+      background: #fff;
+      border-color: #dc2626;
+      color: #dc2626;
+
+      i {
+        color: #dc2626;
+      }
+
+      .default-text {
+        opacity: 0;
+      }
+      
+      .hover-text {
+        opacity: 1;
+      }
+    }
+  }
+}
+
+@keyframes saveAnimation {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+// Common button styles
+.primary-btn {
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(45deg, #013a74, #02a346);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(1, 58, 116, 0.2);
+  }
+
+  i {
+    font-size: 14px;
+  }
+}
+
+// Thêm styles cho phân trang
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e7eb;
+
+  .page-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    background: white;
+    color: #374151;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover:not(.disabled) {
+      border-color: #013a74;
+      color: #013a74;
+      transform: translateY(-2px);
+    }
+
+    &.active {
+      background: linear-gradient(45deg, #013a74, #02a346);
+      color: white;
+      border: none;
+    }
+
+    &.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      
+      &:hover {
+        transform: none;
+      }
+    }
+
+    i {
+      font-size: 14px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    gap: 4px;
+    
+    .page-btn {
+      width: 36px;
+      height: 36px;
+      font-size: 14px;
+    }
+  }
+}
+
+// Animation cho chuyển trang
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.job-grid {
+  .job-card {
+    animation: fadeIn 0.3s ease forwards;
+  }
+}
+
+// Responsive styles
+@media (max-width: 768px) {
+  .hero-section {
+    .company-card {
+      .company-banner {
+        height: 240px;
+      }
+
+      .company-intro {
+        margin-top: -140px;
+        padding: 0 20px 20px;
+
+        .logo-container {
+          width: 140px;
+          height: 140px;
+        }
+
+        .company-stats {
+          h1 {
+            font-size: 32px;
+          }
+
+          .stat-badges {
+            flex-direction: column;
+            gap: 12px;
+          }
+
+          .follow-button {
+            flex-direction: column;
+            width: 100%;
+
+            .button-content,
+            .follower-count {
+              width: 100%;
+              justify-content: center;
+            }
+          }
+        }
+      }
     }
   }
 }

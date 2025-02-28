@@ -125,6 +125,12 @@
         background: rgba(1, 58, 116, 0.05);
         color: #013a74;
       }
+
+      @media (max-width: 768px) {
+        font-size: 24px;
+        width: 40px;
+        height: 40px;
+      }
     }
   }
 }
@@ -190,6 +196,16 @@
       height: 20px;
       background: #02a346;
       border-radius: 0 3px 3px 0;
+    }
+  }
+
+  &.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    
+    &:hover {
+      background: transparent;
+      color: #4b5563;
     }
   }
 }
@@ -282,3 +298,36 @@
     padding: 16px;
     border-bottom: 1px solid #e5e7eb;
   }
+
+// Thêm styles cho mobile menu button
+.mobile-menu-button {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #013a74;
+  color: white;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 997;
+
+  @media (max-width: 768px) {
+    display: flex;
+  }
+
+  &:hover {
+    background: #024b94;
+  }
+}
+
+.coming-soon {
+  font-size: 11px;
+  color: #6b7280;
+  margin-left: 4px;
+  font-style: italic;
+}

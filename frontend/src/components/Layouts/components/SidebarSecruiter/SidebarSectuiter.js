@@ -1,6 +1,7 @@
 import React, { useContext, useEffect } from "react";
 import classNames from "classnames/bind";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
 import styles from "./SidebarSectuiter.module.scss";
 import { DashboardIcon } from "~/components/Icons";
@@ -12,7 +13,7 @@ import ModalTypeContext from "~/context/ModalTypeContext";
 import SidebarContext from "~/context/SidebarContext";
 import UserContext from "~/context/UserContext";
 import { authAPI, userApis } from "~/utils/api";
-import Modal from "~/components/Modal";
+import Modal from "~/components/Modal/Modal";
 
 const cx = classNames.bind(styles);
 
@@ -22,25 +23,14 @@ const sidebarIcons = [
     title: "Bảng tin",
     to: "/recruiter",
   },
-  {
-    icon: <i className="fa-solid fa-location-crosshairs"></i>,
-    title: "TopCV Insights",
-    to: "/recruiter/insights",
-  },
-  {
-    icon: <i className="fa-solid fa-gift"></i>,
-    title: "TopCV Rewards",
-    to: "/recruiter/rewards",
-  },
-  {
-    icon: <i className="fa-solid fa-arrows-rotate"></i>,
-    title: "Đổi quà",
-    to: "/recruiter/exchange",
-  },
+
+ 
   {
     icon: <i className="fa-solid fa-robot"></i>,
     title: "Toppy AI - Đề xuất",
     to: "/recruiter/ai-suggest",
+    disabled: true,
+    comingSoon: true,
   },
   {
     icon: <i className="fa-solid fa-file-lines"></i>,
@@ -72,6 +62,7 @@ const sidebarIcons = [
     icon: <i className="fa-solid fa-chart-line"></i>,
     title: "Báo cáo tuyển dụng",
     to: "/recruiter/reports",
+    disabled: true,
   },
   {
     icon: <i className="fa-solid fa-cart-shopping"></i>,
@@ -83,16 +74,7 @@ const sidebarIcons = [
     title: "Dịch vụ của tôi",
     to: "/recruiter/my-services",
   },
-  {
-    icon: <i className="fa-solid fa-qrcode"></i>,
-    title: "Mã ưu đãi",
-    to: "/recruiter/promo-codes",
-  },
-  {
-    icon: <i className="fa-solid fa-clock-rotate-left"></i>,
-    title: "Theo dõi đơn hàng",
-    to: "/recruiter/orders",
-  },
+  
   {
     icon: <i className="fa-solid fa-calendar"></i>,
     title: "Lịch sử hoạt động",
@@ -134,7 +116,7 @@ const SidebarSectuiter = () => {
       try {
         const response = await authAPI().get(userApis.getCurrentUser);
         setUser(response.data.user);
-        console.log("user-data ", response.data);
+        // console.log("user-data ", response.data);
       } catch (error) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
@@ -171,19 +153,32 @@ const SidebarSectuiter = () => {
       </div>
       <ul className={cx("list")}>
         {sidebarIcons.map((item, index) => (
-          <li key={index}>
-            <Link
-              to={item.to}
-              className={cx("item-btn", {
-                actived: item.to === location.pathname,
-              })}
-              // onClick={() => handleItemClick(item.to)}
-            >
-              {item.icon}
-              <span className={cx("item-title")}>{item.title}</span>
-              {item.badge && <span className={cx("badge")}>{item.badge}</span>}
-            </Link>
-          </li>
+          (!item.authRequired || (item.authRequired && user?.role === 'recruiter')) && (
+            <li key={index}>
+              <Link
+                to={item.disabled ? "#" : item.to}
+                className={cx("item-btn", {
+                  actived: item.to === location.pathname,
+                  disabled: item.disabled,
+                })}
+                onClick={(e) => {
+                  if (item.disabled) {
+                    e.preventDefault();
+                    toast.info(item.comingSoon ? 
+                      "Tính năng sẽ sớm ra mắt!" : 
+                      "Tính năng đang được phát triển!");
+                  }
+                }}
+              >
+                {item.icon}
+                <span className={cx("item-title")}>
+                  {item.title}
+                  {item.comingSoon && <small className={cx("coming-soon")}> (Sắp ra mắt)</small>}
+                </span>
+                {item.badge && <span className={cx("badge")}>{item.badge}</span>}
+              </Link>
+            </li>
+          )
         ))}
       </ul>
       <div className={cx("info-user")}>
@@ -216,7 +211,7 @@ const SidebarSectuiter = () => {
             </button>
             <button
               className={cx("login-btn")}
-              onClick={() => setModalType("loginEmail")}
+              onClick={() => setModalType("LoginRecruiter")}
             >
               Đăng nhập
             </button>

@@ -297,6 +297,78 @@
           }
         }
       }
+
+      .save-button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid #e5e7eb;
+        background: white;
+        color: #374151;
+        position: relative;
+        overflow: hidden;
+
+        i {
+          font-size: 16px;
+          transition: color 0.3s ease;
+        }
+
+        .default-text,
+        .hover-text {
+          transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .hover-text {
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%) translateY(100%);
+          opacity: 0;
+        }
+
+        &:hover {
+          border-color: #dc2626;
+          color: #dc2626;
+
+          i {
+            color: #dc2626;
+          }
+        }
+
+        &.saved {
+          background: #013a74;
+          color: white;
+          border-color: #013a74;
+
+          i {
+            color: white;
+          }
+
+          &:hover {
+            background: #dc2626;
+            border-color: #dc2626;
+
+            .default-text {
+              transform: translateY(-100%);
+              opacity: 0;
+            }
+
+            .hover-text {
+              transform: translateX(-50%) translateY(0);
+              opacity: 1;
+            }
+
+            i {
+              color: white;
+            }
+          }
+        }
+      }
     }
   }
 }

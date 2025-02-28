@@ -6,23 +6,34 @@ import classNames from "classnames/bind";
 import { authAPI, userApis } from "~/utils/api";
 import { useParams } from "react-router-dom";
 import images from "~/assets/images";
-import { LoadingSpinner, CompanySkeleton } from '~/components/Loading/Loading';
+import { LoadingSpinner, CompanySkeleton } from "~/components/Loading/Loading";
+import { useNavigate } from "react-router-dom";
 
 const cx = classNames.bind(styles);
 
 function TopCompanyDetail() {
+  const navigate = useNavigate();
   const { company } = useParams();
-    const [companyDetail, setCompanyDetail] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
+  const [companyDetail, setCompanyDetail] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [jobs, setJobs] = useState([]);
+  const [savedStatus, setSavedStatus] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const jobsPerPage = 6;
 
-    useEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await authAPI().get(
           userApis.getCompanyDetailByCompanyId(company)
         );
-            setCompanyDetail(response.data.company);
+        const jobsResponse = await authAPI().get(
+          userApis.getAllJobsByCompanyId(company)
+        );
+        setCompanyDetail(response.data.company);
+        console.log(response.data.company);
+        setJobs(jobsResponse.data.jobs);
       } catch (error) {
         console.error("Error fetching company detail:", error);
       }
@@ -30,8 +41,71 @@ function TopCompanyDetail() {
     fetchData();
   }, [company]);
 
+  useEffect(() => {
+    const fetchSavedStatus = async () => {
+      try {
+        const savedResponse = await authAPI().get(
+          userApis.getAllSavedJobsByUser
+        );
+        const initialSavedStatus = {};
+        savedResponse.data.savedJobs.forEach((job) => {
+          initialSavedStatus[job.job_id] = true;
+        });
+        setSavedStatus(initialSavedStatus);
+      } catch (error) {
+        console.error("Error fetching saved status:", error);
+      }
+    };
+    fetchSavedStatus();
+  }, []);
+
   const handleFollow = () => {
     setIsFollowing(!isFollowing);
+  };
+
+  const handleSaveJob = async (e, jobId) => {
+    e.stopPropagation();
+    if (!jobId) return;
+
+    try {
+      if (savedStatus[jobId]) {
+        await authAPI().delete(userApis.unsaveJob(jobId));
+        setSavedStatus((prev) => ({ ...prev, [jobId]: false }));
+      } else {
+        await authAPI().post(userApis.saveJob(jobId));
+        setSavedStatus((prev) => ({ ...prev, [jobId]: true }));
+      }
+      window.dispatchEvent(new Event("user-data-update"));
+    } catch (error) {
+      console.error("Error toggling job save status:", error);
+      if (error.response?.data?.message === "Bạn đã lưu công việc này rồi") {
+        setSavedStatus((prev) => ({ ...prev, [jobId]: true }));
+      }
+    }
+  };
+
+  const handleJobClick = async (jobId) => {
+    try {
+      await authAPI().post(userApis.addViewedJob(jobId));
+      navigate(`/jobs/${jobId}`);
+    } catch (error) {
+      console.error("Error handling job click:", error);
+    }
+  };
+
+  // Tính toán jobs cho trang hiện tại
+  const indexOfLastJob = currentPage * jobsPerPage;
+  const indexOfFirstJob = indexOfLastJob - jobsPerPage;
+  const currentJobs = jobs.slice(indexOfFirstJob, indexOfLastJob);
+  const totalPages = Math.ceil(jobs.length / jobsPerPage);
+
+  // Thêm hàm xử lý chuyển trang
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({
+      top: document.querySelector(`.${cx('job-grid')}`).offsetTop - 100,
+      behavior: 'smooth'
+    });
   };
 
   if (isLoading) {
@@ -50,13 +124,13 @@ function TopCompanyDetail() {
             <img src={companyDetail?.banner || images.banner} alt="Banner" />
             <div className={cx("overlay")}></div>
           </div>
-          
+
           <div className={cx("company-intro")}>
             <div className={cx("logo-container")}>
               <img src={companyDetail?.logos || images.company_1} alt="Logo" />
               <div className={cx("pulse-effect")}></div>
             </div>
-            
+
             <div className={cx("company-stats")}>
               <h1>{companyDetail?.company_name}</h1>
               <div className={cx("stat-badges")}>
@@ -70,20 +144,9 @@ function TopCompanyDetail() {
                 </div>
                 <div className={cx("badge", "jobs")}>
                   <i className="fas fa-briefcase-clock"></i>
-                  <span>12 Vị trí đang tuyển</span>
+                  <span>{jobs.length} Vị trí đang tuyển</span>
                 </div>
               </div>
-              
-              <button className={cx("follow-button", { following: isFollowing })} onClick={handleFollow}>
-                <div className={cx("button-content")}>
-                  <i className={`fas fa-${isFollowing ? 'check-circle' : 'plus-circle'}`}></i>
-                  <span>{isFollowing ? 'Đã theo dõi' : 'Theo dõi công ty'}</span>
-                </div>
-                <div className={cx("follower-count")}>
-                  <i className="fas fa-user-group"></i>
-                  <span>2.5k</span>
-                </div>
-              </button>
             </div>
           </div>
         </div>
@@ -96,33 +159,122 @@ function TopCompanyDetail() {
               <i className="fas fa-building-circle-check"></i>
               <h2>Giới thiệu công ty</h2>
             </div>
-            <div className={cx("card-content")} dangerouslySetInnerHTML={{ __html: companyDetail?.description }} />
+            <div
+              className={cx("card-content")}
+              dangerouslySetInnerHTML={{ __html: companyDetail?.description }}
+            />
           </div>
-
           <div className={cx("info-card", "jobs")}>
             <div className={cx("card-header")}>
               <i className="fas fa-briefcase-clock"></i>
               <h2>Vị trí đang tuyển</h2>
             </div>
             <div className={cx("job-grid")}>
-              {[1, 2, 3].map((_, index) => (
-                <div key={index} className={cx("job-card")}>
-                  <div className={cx("job-title")}>
-                    <i className="fas fa-code-branch"></i>
-                    <h3>Senior Frontend Developer</h3>
+              {currentJobs.map((job, index) => (
+                <div
+                  key={index}
+                  className={cx("job-card")}
+                  onClick={() => handleJobClick(job.job_id)}
+                >
+                  <div className={cx("job-header")}>
+                    <div className={cx("company-logo")}>
+                      <img
+                        src={companyDetail?.logos || images.company_1}
+                        alt="Logo"
+                      />
+                    </div>
+                    <div className={cx("job-info")}>
+                      <h3 className={cx("job-title")}>{job?.title}</h3>
+                      <div className={cx("company-name")}>
+                        {companyDetail?.company_name}
+                      </div>
+                    </div>
                   </div>
+
+                  <div className={cx("job-meta")}>
+                    <span>
+                      <i className="fas fa-sack-dollar"></i>
+                      {job?.salary}
+                    </span>
+                    <span>
+                      <i className="fas fa-location-dot"></i>
+                      {job?.location}
+                    </span>
+                    <span>
+                      <i className="fas fa-briefcase"></i>
+                      {job?.experience}
+                    </span>
+                    <span>
+                      <i className="fas fa-clock"></i>
+                      {job?.working_time}
+                    </span>
+                  </div>
+
                   <div className={cx("job-tags")}>
-                    <span><i className="fas fa-money-bill-wave"></i>15-20 triệu</span>
-                    <span><i className="fas fa-location-dot"></i>Hà Nội</span>
-                    <span><i className="fas fa-clock"></i>Full time</span>
+                    <span className={cx("tag", "working-time")}>
+                      {job?.working_time}
+                    </span>
+                    <span className={cx("tag", "rank")}>{job?.rank}</span>
+                    {job?.status === "Pending" && (
+                      <span className={cx("tag", "urgent")}>Gấp</span>
+                    )}
                   </div>
-                  <button className={cx("apply-btn")}>
-                    <i className="fas fa-paper-plane"></i>
-                    Ứng tuyển ngay
-                  </button>
+
+                  <div className={cx("job-actions")}>
+                    <button
+                      className={cx("save-btn", {
+                        saved: savedStatus[job.job_id],
+                      })}
+                      onClick={(e) => handleSaveJob(e, job.job_id)}
+                    >
+                      <i
+                        className={`fa${savedStatus[job.job_id] ? "s" : "r"} fa-bookmark`}
+                      ></i>
+                      <span className={cx("default-text")}>
+                        {savedStatus[job.job_id] ? "Đã Lưu" : "Lưu Tin"}
+                      </span>
+                      <span className={cx("hover-text")}>
+                        {savedStatus[job.job_id] ? "Hủy Lưu" : "Lưu Tin"}
+                      </span>
+                    </button>
+                    <button className={cx("apply-btn", "primary-btn")}>
+                      <i className="fas fa-paper-plane"></i>
+                      {job?.status === "Pending" ? "Ứng tuyển ngay" : "Đã đóng"}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
+
+            {totalPages > 1 && (
+              <div className={cx("pagination")}>
+                <button 
+                  className={cx("page-btn", { disabled: currentPage === 1 })}
+                  onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <i className="fas fa-chevron-left"></i>
+                </button>
+                
+                {[...Array(totalPages)].map((_, index) => (
+                  <button
+                    key={index}
+                    className={cx("page-btn", { active: currentPage === index + 1 })}
+                    onClick={() => handlePageChange(index + 1)}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+                
+                <button 
+                  className={cx("page-btn", { disabled: currentPage === totalPages })}
+                  onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  <i className="fas fa-chevron-right"></i>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -133,17 +285,26 @@ function TopCompanyDetail() {
               <h3>Thông tin liên hệ</h3>
             </div>
             <div className={cx("contact-list")}>
-              <a href={companyDetail?.website} className={cx("contact-item", "website")}>
-                <i className="fas fa-globe-asia"></i>
-                <span>{companyDetail?.website}</span>
-              </a>
+              {companyDetail?.website && (
+                <a
+                  href={companyDetail.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cx("contact-item", "website")}
+                >
+                  <i className="fas fa-globe-asia"></i>
+                  <span>{companyDetail.website}</span>
+                </a>
+              )}
+              
               <div className={cx("contact-item", "address")}>
                 <i className="fas fa-map-location-dot"></i>
-                <span>{companyDetail?.address}</span>
+                <span>{companyDetail?.address || "Chưa cập nhật địa chỉ"}</span>
               </div>
+              
               <div className={cx("contact-item", "size")}>
                 <i className="fas fa-chart-network"></i>
-                <span>{companyDetail?.company_emp} nhân viên</span>
+                <span>{companyDetail?.company_emp || "0"} nhân viên</span>
               </div>
             </div>
           </div>
@@ -154,18 +315,35 @@ function TopCompanyDetail() {
               <h3>Chia sẻ thông tin</h3>
             </div>
             <div className={cx("share-buttons")}>
-              <button className={cx("share-btn", "facebook")}>
+              <a
+                href={`https://www.facebook.com/sharer/sharer.php?u=${window.location.href}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cx("share-btn", "facebook")}
+              >
                 <i className="fab fa-facebook"></i>
                 <span>Facebook</span>
-              </button>
-              <button className={cx("share-btn", "linkedin")}>
+              </a>
+              
+              <a
+                href={`https://www.linkedin.com/sharing/share-offsite/?url=${window.location.href}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cx("share-btn", "linkedin")}
+              >
                 <i className="fab fa-linkedin"></i>
                 <span>LinkedIn</span>
-              </button>
-              <button className={cx("share-btn", "twitter")}>
+              </a>
+              
+              <a
+                href={`https://twitter.com/intent/tweet?url=${window.location.href}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cx("share-btn", "twitter")}
+              >
                 <i className="fab fa-twitter"></i>
                 <span>Twitter</span>
-              </button>
+              </a>
             </div>
           </div>
         </aside>

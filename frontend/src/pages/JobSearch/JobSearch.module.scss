@@ -51,6 +51,7 @@
       &:focus {
         outline: none;
         border-color: #013a74;
+        box-shadow: 0 0 0 2px rgba(1, 58, 116, 0.1);
       }
     }
   }
@@ -65,10 +66,27 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
 
-    &:hover {
+    &:hover:not(:disabled) {
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(1, 58, 116, 0.2);
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    &.searching {
+      background: #64748b;
+      
+      i {
+        animation: spin 1s linear infinite;
+      }
     }
   }
 }
@@ -178,6 +196,96 @@
       transform: translateY(0);
     }
   }
+
+  .categories-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 2px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 2px;
+      
+      &:hover {
+        background: #a1a1a1;
+      }
+    }
+  }
+
+  .radio-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(1, 58, 116, 0.05);
+    }
+
+    input {
+      margin-right: 12px;
+    }
+
+    .category-info {
+      flex: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .category-name {
+        font-size: 14px;
+        color: #374151;
+      }
+
+      .job-count {
+        font-size: 12px;
+        color: #64748b;
+        background: #f1f5f9;
+        padding: 2px 8px;
+        border-radius: 12px;
+      }
+    }
+  }
+
+  .show-more-categories {
+    width: 100%;
+    padding: 8px;
+    background: none;
+    border: none;
+    color: #013a74;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      color: #02a346;
+    }
+
+    i {
+      font-size: 12px;
+      transition: transform 0.2s ease;
+    }
+
+    &:hover i {
+      transform: translateY(2px);
+    }
+  }
 }
 
 @keyframes fadeInUp {
@@ -188,6 +296,15 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 
@@ -202,12 +319,61 @@
   .active-filters {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
 
-    span {
-      font-size: 15px;
-      font-weight: 500;
-      color: #374151;
+    .filter-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      span {
+        color: #374151;
+        font-weight: 500;
+
+        &.jobs-counter {
+          color: #64748b;
+          font-weight: normal;
+          font-size: 14px;
+        }
+      }
+    }
+
+    .filter-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+
+      .filter-tag {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        background: #f1f5f9;
+        border-radius: 16px;
+        font-size: 13px;
+        color: #64748b;
+
+        .remove-tag {
+          background: none;
+          border: none;
+          color: #94a3b8;
+          font-size: 16px;
+          cursor: pointer;
+          padding: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          transition: all 0.2s;
+
+          &:hover {
+            background: #e2e8f0;
+            color: #475569;
+          }
+        }
+      }
     }
   }
 
@@ -374,4 +540,342 @@
       background: rgba(1, 58, 116, 0.05);
     }
   }
+
+  .date-filter-info {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    span {
+      font-size: 14px;
+      color: #374151;
+
+      &.job-count {
+        font-size: 12px;
+        color: #64748b;
+        background: #f1f5f9;
+        padding: 2px 8px;
+        border-radius: 12px;
+      }
+    }
+  }
+
+  .experience-info {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    span {
+      font-size: 14px;
+      color: #374151;
+
+      &.job-count {
+        font-size: 12px;
+        color: #64748b;
+        background: #f1f5f9;
+        padding: 2px 8px;
+        border-radius: 12px;
+      }
+    }
+  }
+}
+
+.jobs {
+  .job-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    background: white;
+    padding: 24px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: slideIn 0.5s ease-out forwards;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(1, 58, 116, 0.15);
+      border-color: #013a74;
+
+      .job-title {
+        background: linear-gradient(45deg, #013a74, #02a346);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .save-job {
+        animation: pulse 1.5s infinite;
+      }
+    }
+
+    .company-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      flex-shrink: 0;
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: scale(1.05);
+        border-color: #013a74;
+      }
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+    }
+
+    .job-info {
+      flex: 1;
+
+      .job-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 4px;
+        line-height: 1.4;
+        transition: all 0.3s ease;
+        position: relative;
+
+        &:after {
+          content: '';
+          position: absolute;
+          bottom: -2px;
+          left: 0;
+          width: 0;
+          height: 2px;
+          background: linear-gradient(45deg, #013a74, #02a346);
+          transition: width 0.3s ease;
+        }
+
+        &:hover:after {
+          width: 100%;
+        }
+      }
+
+      .company-name {
+        color: #6b7280;
+        font-size: 14px;
+        margin-bottom: 12px;
+        transition: color 0.3s ease;
+
+        &:hover {
+          color: #013a74;
+        }
+      }
+
+      .job-meta {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 12px;
+
+        span {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: #6b7280;
+          font-size: 14px;
+          transition: all 0.3s ease;
+
+          &:hover {
+            color: #013a74;
+            transform: translateX(2px);
+          }
+
+          i {
+            color: #013a74;
+            font-size: 14px;
+            transition: transform 0.3s ease;
+          }
+
+          &:hover i {
+            transform: scale(1.1);
+          }
+        }
+      }
+
+      .tags {
+        display: flex;
+        gap: 8px;
+
+        .tag {
+          padding: 4px 12px;
+          border-radius: 16px;
+          font-size: 13px;
+          font-weight: 500;
+          transition: all 0.3s ease;
+
+          &.full-time {
+            background: rgba(1, 58, 116, 0.1);
+            color: #013a74;
+
+            &:hover {
+              background: rgba(1, 58, 116, 0.2);
+            }
+          }
+
+          &.private {
+            background: rgba(2, 163, 70, 0.1);
+            color: #02a346;
+
+            &:hover {
+              background: rgba(2, 163, 70, 0.2);
+            }
+          }
+
+          &.urgent {
+            background: #fff7ed;
+            color: #ea580c;
+
+            &:hover {
+              background: #ffedd5;
+            }
+          }
+        }
+      }
+    }
+
+    .save-job {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: white;
+      border: 1px solid #e5e7eb;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+
+      i {
+        font-size: 16px;
+        transition: all 0.3s ease;
+      }
+
+      .tooltip {
+        position: absolute;
+        top: -30px;
+        right: 0;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+      }
+
+      &:hover {
+        transform: scale(1.1);
+        
+        .tooltip {
+          opacity: 1;
+          visibility: visible;
+        }
+      }
+
+      &.saved {
+        background: #013a74;
+        color: white;
+        border-color: #013a74;
+        animation: saveAnimation 0.3s ease;
+
+        &:hover {
+          background: #dc2626;
+          border-color: #dc2626;
+        }
+      }
+    }
+  }
+}
+
+.show-more-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 0;
+  text-align: center;
+
+  .jobs-count {
+    color: #64748b;
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+
+  .progress-bar {
+    width: 100%;
+    max-width: 400px;
+    height: 4px;
+    background: #e2e8f0;
+    border-radius: 2px;
+    margin-bottom: 16px;
+    overflow: hidden;
+
+    .progress {
+      height: 100%;
+      background: #013a74;
+      transition: width 0.3s ease;
+    }
+  }
+
+  .show-more-btn {
+    background: none;
+    border: none;
+    color: #013a74;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 8px 16px;
+    transition: all 0.3s ease;
+    text-decoration: underline;
+
+    &:hover {
+      color: #02a346;
+    }
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(1, 58, 116, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(1, 58, 116, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(1, 58, 116, 0);
+  }
+}
+
+@keyframes saveAnimation {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }

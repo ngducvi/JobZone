@@ -8,9 +8,9 @@ import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaGraduationCap, FaBriefca
 const cx = classNames.bind(styles);
 
 function Candidate() {
-  const [activePage, setActivePage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [candidateData, setCandidateData] = useState([]);
+    const [activePage, setActivePage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [candidateData, setCandidateData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userDetails, setUserDetails] = useState({});
 
@@ -28,15 +28,15 @@ function Candidate() {
   };
 
   // Fetch candidates
-  const fetchData = async () => {
+    const fetchData = async () => {
     try {
       setLoading(true);
-      const result = await authAPI().get(adminApis.getAllCandidates, {
-        params: { page: activePage },
-      });
-      setCandidateData(result.data.candidates);
+        const result = await authAPI().get(adminApis.getAllCandidates, {
+            params: { page: activePage },
+        });
+        setCandidateData(result.data.candidates);
       console.log(result.data.candidates);
-      setTotalPages(result.data.totalPages);
+        setTotalPages(result.data.totalPages);
 
       // Fetch user details for each candidate
       result.data.candidates.forEach(candidate => {
@@ -51,9 +51,9 @@ function Candidate() {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [activePage]);
+    useEffect(() => {
+        fetchData();
+    }, [activePage]);
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {

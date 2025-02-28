@@ -60,6 +60,11 @@ User.init({
         type: DataTypes.INTEGER,
         defaultValue: 1
     },
+    plan: {
+        type: DataTypes.ENUM('Basic', 'Pro', 'ProMax'),
+        allowNull: false,
+        defaultValue: 'Basic'
+    },
 }, {
     sequelize,
     modelName: 'User',

@@ -130,12 +130,34 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      margin-bottom: 24px;
+  
+      .actions {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+      }
+  
+      .clear-all-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        background: #fee2e2;
+        color: #dc2626;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+  
+        &:hover {
+          background: #fecaca;
+        }
+  
+        i {
+          font-size: 14px;
+        }
+      }
   
       .total-jobs {
         font-size: 15px;
@@ -275,6 +297,10 @@
         }
   
         .job-actions {
+          display: flex;
+          gap: 12px;
+          align-items: center;
+  
           .apply-btn {
             width: 100%;
             padding: 12px;
@@ -296,9 +322,108 @@
               transform: translateY(0);
             }
           }
+  
+          .delete-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid #e5e7eb;
+            background: white;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+  
+            &:hover {
+              background: #fee2e2;
+              color: #dc2626;
+              border-color: #dc2626;
+            }
+          }
         }
       }
     }
+  }
+  
+  .save-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+    background: white;
+    color: #374151;
+    position: relative;
+    overflow: hidden;
+  
+    i {
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+  
+    .default-text {
+      transition: all 0.3s ease;
+    }
+  
+    .hover-text {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: all 0.3s ease;
+      color: #dc2626;
+    }
+  
+    // Nút chưa lưu
+    &:not(.saved) {
+      &:hover {
+        border-color: #013a74;
+        color: #013a74;
+  
+        i {
+          color: #013a74;
+        }
+      }
+    }
+  
+    // Nút đã lưu
+    &.saved {
+      background: #013a74;
+      color: white;
+      border-color: #013a74;
+      animation: saveAnimation 0.3s ease;
+  
+      &:hover {
+        background: #fff;
+        border-color: #dc2626;
+        color: #dc2626;
+  
+        i {
+          color: #dc2626;
+        }
+  
+        .default-text {
+          opacity: 0;
+        }
+        
+        .hover-text {
+          opacity: 1;
+        }
+      }
+    }
+  }
+  
+  @keyframes saveAnimation {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
   }
   
   // Animations

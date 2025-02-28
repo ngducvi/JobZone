@@ -8,6 +8,7 @@ const sequelize = require('./src/config/database');
 const UsageRoute = require('./src/routes/UsageRoute');
 const GiftCodeRoute = require('./src/routes/GiftCodeRoute');
 const AdminRoute = require('./src/routes/AdminRoute');
+const Recruiter = require('./src/routes/RecruiterRoute')
 async function createDatabase() {
   try {
       // Sync all models defined in sequelize
@@ -59,6 +60,7 @@ app.use('/api/v1/openai', openAIRoute);
 app.use('/api/v1/user', UserRoute);
 app.use('/api/v1/vnpay', VnPayRoute);
 app.use('/api/v1/admin', AdminRoute);
+app.use('/api/v1/recruiter', Recruiter);
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   createDatabase();

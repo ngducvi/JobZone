@@ -37,6 +37,18 @@ class UserController {
     this.generateEducationId = () => {
       return 'edu-' + Math.random().toString(36).substr(2, 9);
     };
+    this.generateExperienceId = () => {
+      return 'exp-' + Math.random().toString(36).substr(2, 9);
+    };
+    this.generateLanguagesId = () => {
+      return 'lang-' + Math.random().toString(36).substr(2, 9);
+    };
+    this.generateCertificationsId = () => {
+      return 'cert-' + Math.random().toString(36).substr(2, 9);
+    };
+    this.generateProjectsId = () => {
+      return 'proj-' + Math.random().toString(36).substr(2, 9);
+    };
   }
   async getCurrentUser(req, res) {
     try {
@@ -345,6 +357,22 @@ class UserController {
       code: 1,
       categoriesPost,
     });
+  }
+  // get all categories
+  async getAllCategories(req, res) {
+    try {
+      const categories = await Category.findAll();
+      return res.status(200).send({
+        message: "Thông tin chi tiết hồ sơ ứng viên",
+      code: 1,
+      categories,
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1,
+      });
+    }
   }
 
   async getAllPaymentTransactions(req, res) {
@@ -711,7 +739,26 @@ class UserController {
     try {
       const job = await Job.findByPk(req.params.job_id);
       const company = await Company.findByPk(job.company_id);
-      return res.json({ job, company });
+      // get title,logo of company from company_id bên trong job:
+      const companyId = company.company_id;
+      const companyName = company.company_name;
+      const companyLogo = company.logo;
+      const companySize = company.size;
+      const companyIndustry = company.industry;
+      const companyAddress = company.address;
+      return res.json({ job, companyId, companyName, companyLogo, companySize, companyIndustry, companyAddress });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
+  // get all jobs by company_id
+  async getAllJobsByCompanyId(req, res) {
+    try {
+      const jobs = await Job.findAll({ where: { company_id: req.params.company_id } });
+      return res.json({ jobs });
     } catch (error) {
       return res.status(500).send({
         message: error.message,
@@ -751,8 +798,25 @@ class UserController {
         job: jobDetail,
       };
     });
+    // get title of company from company_id
+    const companyIds = savedJobsWithDetails.map(
+      (savedJob) => savedJob.job.company_id
+    );
+    const companies = await Company.findAll({
+      where: { company_id: companyIds },
+    });
+    const viewedJobsWithCompanies = savedJobsWithDetails.map((savedJob) => {
+      const company = companies.find(
+        (c) => c.company_id === savedJob.job.company_id
+      );
+      return {
+        ...savedJob,
+        company_name: company.company_name,
+        company_logo: company.logo,
+      };
+    });
     return res.json({
-      viewedJobs: savedJobsWithDetails,
+      viewedJobs: viewedJobsWithCompanies,
       totalPages: Math.ceil(viewedJobs.count / limit),
     });
   }
@@ -765,8 +829,37 @@ class UserController {
       limit,
       offset,
     });
+    const jobIds = appliedJobs.rows.map((appliedJob) => appliedJob.job_id);
+    const jobs = await Job.findAll({
+      where: { job_id: jobIds },
+    });
+    const appliedJobsWithDetails = appliedJobs.rows.map((appliedJob) => {
+      const jobDetail = jobs.find((j) => j.job_id === appliedJob.job_id);
+      return {
+        ...appliedJob.toJSON(),
+        job: jobDetail,
+      };
+    });
+    // get title of company from company_id
+    const companyIds = appliedJobsWithDetails.map(
+      (appliedJob) => appliedJob.job.company_id
+    );
+    const companies = await Company.findAll({
+      where: { company_id: companyIds },
+    });
+    const appliedJobsWithCompanies = appliedJobsWithDetails.map((appliedJob) => {
+      const company = companies.find(
+        (c) => c.company_id === appliedJob.job.company_id
+      );
+      return {
+        ...appliedJob,
+        company_name: company.company_name,
+        company_logo: company.logo,
+      };
+    });
+
     return res.json({
-      appliedJobs: appliedJobs.rows,
+      appliedJobs: appliedJobsWithCompanies,
       totalPages: Math.ceil(appliedJobs.count / limit),
     });
   }
@@ -941,7 +1034,6 @@ class UserController {
       });
     }
   }
-  // get all candidate education 
   // get candidate certifications by candidate_id
   async getCandidateCertificationsByCandidateId(req, res) {
     try {
@@ -979,6 +1071,135 @@ class UserController {
     }
   }
   
+  // create candidate education with candidate_id
+  async createCandidateEducationWithCandidateId(req, res) {
+    try {
+      const candidateEducation = await CandidateEducation.create({
+        id: this.generateEducationId(),
+        candidate_id: req.params.candidate_id,
+        institution: req.body.institution,
+        degree: req.body.degree,
+        field_of_study: req.body.field_of_study,
+        start_date: req.body.start_date,
+        end_date: req.body.end_date,
+        grade: req.body.grade,
+        activities: req.body.activities
+      });
+
+      return res.status(200).send({
+        message: "Tạo thông tin học vấn thành công",
+        code: 1,
+        candidateEducation
+      });
+    } catch (error) {
+      console.error("Error creating education:", error);
+      return res.status(500).send({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
+
+  // create candidate experience with candidate_id
+  async createCandidateExperienceWithCandidateId(req, res) {
+    try {
+      console.log('Sending data:', req.body); // Log data trước khi gửi
+      const candidateExperience = await CandidateExperiences.create({
+        id: this.generateExperienceId(),
+        candidate_id: req.params.candidate_id,
+        company_name: req.body.company_name,
+        job_title: req.body.job_title,
+        job_description: req.body.job_description,
+        achievements: req.body.achievements,
+        start_date: req.body.start_date,
+        end_date: req.body.end_date,
+        position: req.body.position // Thêm position
+      });
+      return res.status(200).send({
+        message: "Tạo thông tin kinh nghiệm thành công",
+        code: 1,
+        candidateExperience,
+      });
+    } catch (error) {
+      console.error('Error details:', error); // Log chi tiết lỗi
+      return res.status(500).send({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
+  // create candidate certifications with candidate_id
+  async createCandidateCertificationsWithCandidateId(req, res) {
+    try {
+      const candidateCertifications = await CandidateCertifications.create({
+        id: this.generateCertificationsId(),
+        candidate_id: req.params.candidate_id,
+        certification_name: req.body.certification_name,
+        issuing_organization: req.body.issuing_organization,
+        issue_date: req.body.issue_date,
+        expiry_date: req.body.expiry_date,
+        credential_id: req.body.credential_id,
+        credential_url: req.body.credential_url
+      });
+      return res.status(200).send({
+        message: "Tạo thông tin chứng chỉ thành công",
+        code: 1,
+        candidateCertifications
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
+  // create candidate projects with candidate_id
+  async createCandidateProjectsWithCandidateId(req, res) {
+    try {
+      const candidateProjects = await CandidateProjects.create({
+        id: this.generateProjectsId(),
+        candidate_id: req.params.candidate_id,
+        project_name: req.body.project_name,
+        description: req.body.description,
+        start_date: req.body.start_date,
+        end_date: req.body.end_date,
+        role: req.body.role,
+        technologies_used: req.body.technologies_used,
+        project_url: req.body.project_url
+      });
+      return res.status(200).send({
+        message: "Tạo thông tin dự án thành công",
+        code: 1,
+        candidateProjects
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
+  // create candidate languages with candidate_id
+  async createCandidateLanguagesWithCandidateId(req, res) {
+    try {
+      const candidateLanguages = await CandidateLanguages.create({
+        id: this.generateLanguagesId(),
+        candidate_id: req.params.candidate_id,
+        language: req.body.language,
+        proficiency: req.body.proficiency
+      });
+      return res.status(200).send({
+        message: "Tạo thông tin ngôn ngữ thành công",
+        code: 1,
+        candidateLanguages
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
   // edit candidate education
   async editCandidateEducation(req, res) {
     try {
@@ -1008,29 +1229,528 @@ class UserController {
       });
     }
   }
-
-  async createCandidateEducationWithCandidateId(req, res) {
+  // edit candidate projects
+  async editCandidateProjects(req, res) {
     try {
-      const candidateEducation = await CandidateEducation.create({
-        id: this.generateEducationId(),
-        candidate_id: req.params.candidate_id,
-        institution: req.body.institution,
-        degree: req.body.degree,
-        field_of_study: req.body.field_of_study,
-        start_date: req.body.start_date,
-        end_date: req.body.end_date,
-        grade: req.body.grade,
-        activities: req.body.activities
-      });
-
+      const projects_id = req.params.id;
+      const updateData = req.body;
+      const candidateProjects = await CandidateProjects.findByPk(projects_id);
+      await candidateProjects.update(updateData);
       return res.status(200).send({
-        message: "Tạo thông tin học vấn thành công",
+        message: "Cập nhật thông tin dự án thành công",
         code: 1,
-        candidateEducation
+        candidateProjects
       });
     } catch (error) {
-      console.error("Error creating education:", error);
       return res.status(500).send({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
+  // edit candidate certifications
+  async editCandidateCertifications(req, res) {
+    try {
+      const certifications_id = req.params.id;
+      const updateData = req.body;
+      const candidateCertifications = await CandidateCertifications.findByPk(certifications_id);
+      await candidateCertifications.update(updateData);
+      return res.status(200).send({
+        message: "Cập nhật thông tin chứng chỉ thành công",
+        code: 1,
+        candidateCertifications
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
+  // edit candidate 
+  async editCandidate(req, res) {
+    try {
+      const candidate_id = req.params.id;
+      const updateData = req.body;
+      const candidate = await Candidate.findByPk(candidate_id);
+      await candidate.update(updateData);
+      return res.status(200).send({
+        message: "Cập nhật thông tin ứng viên thành công",
+        code: 1,
+        candidate
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
+
+
+  // edit candidate languages
+  async editCandidateLanguages(req, res) {
+    try {
+      const languages_id = req.params.id;
+      const updateData = req.body;
+      const candidateLanguages = await CandidateLanguages.findByPk(languages_id);
+      await candidateLanguages.update(updateData);
+      return res.status(200).send({
+        message: "Cập nhật thông tin ngôn ngữ thành công",
+        code: 1,
+        candidateLanguages
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
+  // edit candidate experience
+  async editCandidateExperience(req, res) {
+    try {
+      const experience_id = req.params.id;
+      const updateData = req.body;
+      const candidateExperience = await CandidateExperiences.findByPk(experience_id);
+      await candidateExperience.update(updateData);
+    return res.status(200).send({
+        message: "Cập nhật thông tin kinh nghiệm thành công",
+        code: 1,
+        candidateExperience,
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
+   // edit is_searchable and is_actively_searching
+  async editIsSearchableAndIsActivelySearching(req, res) {
+    try {
+      const candidate_id = req.params.id;
+      const updateData = req.body;
+      const candidate = await Candidate.findByPk(candidate_id);
+      await candidate.update(updateData);
+      return res.status(200).send({
+        message: "Cập nhật thông tin ứng viên thành công",
+        code: 1,
+        candidate
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
+  // delete candidate languages by id
+  async deleteCandidateLanguagesById(req, res) {
+    try {
+      const languages_id = req.params.id;
+      const candidateLanguages = await CandidateLanguages.findByPk(languages_id);
+      await candidateLanguages.destroy();
+      return res.status(200).send({
+        message: "Xóa thông tin ngôn ngữ thành công",
+        code: 1
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
+  // delete candidate projects by id
+  async deleteCandidateProjectsById(req, res) {
+    try {
+      const projects_id = req.params.id;
+      const candidateProjects = await CandidateProjects.findByPk(projects_id);
+      await candidateProjects.destroy();
+      return res.status(200).send({
+        message: "Xóa thông tin dự án thành công",
+        code: 1
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
+  // delete candidate certifications by id
+  async deleteCandidateCertificationsById(req, res) {
+    try {
+      const certifications_id = req.params.id;
+      const candidateCertifications = await CandidateCertifications.findByPk(certifications_id);
+      await candidateCertifications.destroy();
+      return res.status(200).send({
+        message: "Xóa thông tin chứng chỉ thành công",
+        code: 1
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
+  // delete candidate experience by id
+  async deleteCandidateExperienceById(req, res) {
+    try {
+      const experience_id = req.params.id;
+      const candidateExperience = await CandidateExperiences.findByPk(experience_id);
+      await candidateExperience.destroy();
+      return res.status(200).send({
+        message: "Xóa thông tin kinh nghiệm thành công",
+        code: 1
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
+  // delete candidate education by id
+  async deleteCandidateEducationById(req, res) {
+    try {
+      const education_id = req.params.id;
+      const candidateEducation = await CandidateEducation.findByPk(education_id);
+      await candidateEducation.destroy();
+      return res.status(200).send({
+        message: "Xóa thông tin học vấn thành công",
+        code: 1
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
+  // lọc theo các điều kiện
+  async filterJobs(req, res) {
+    try {
+      const {
+        category_id,
+        experience,
+        salary,
+        working_time,
+        working_location,
+        datePosted,
+        location,
+        rank,
+        education
+      } = req.query;
+
+      let whereClause = {};
+
+      // Filter by category
+      if (category_id && category_id !== 'all') {
+        whereClause.category_id = category_id;
+      }
+
+      // Filter by experience
+      if (experience && experience !== 'all') {
+        whereClause.experience = experience;
+      }
+
+      // Filter by working time
+      if (working_time && working_time !== 'all') {
+        whereClause.working_time = working_time;
+      }
+
+      // Filter by working location
+      if (working_location && working_location !== 'all') {
+        whereClause.working_location = working_location;
+      }
+
+      // Filter by location
+      if (location) {
+        whereClause.location = {
+          [Op.like]: `%${location}%`
+        };
+      }
+
+      // Filter by rank
+      if (rank && rank !== 'all') {
+        whereClause.rank = rank;
+      }
+
+      // Filter by education
+      if (education && education !== 'all') {
+        whereClause.education = education;
+      }
+
+      // Filter by date posted
+      if (datePosted && datePosted !== 'all') {
+        const now = new Date();
+        switch (datePosted) {
+          case 'last_hour':
+            whereClause.created_at = {
+              [Op.gte]: new Date(now - 60 * 60 * 1000)
+            };
+            break;
+          case 'last_24h':
+            whereClause.created_at = {
+              [Op.gte]: new Date(now - 24 * 60 * 60 * 1000)
+            };
+            break;
+          case 'last_7d':
+            whereClause.created_at = {
+              [Op.gte]: new Date(now - 7 * 24 * 60 * 60 * 1000)
+            };
+            break;
+          case 'last_14d':
+            whereClause.created_at = {
+              [Op.gte]: new Date(now - 14 * 24 * 60 * 60 * 1000)
+            };
+            break;
+          case 'last_30d':
+            whereClause.created_at = {
+              [Op.gte]: new Date(now - 30 * 24 * 60 * 60 * 1000)
+            };
+            break;
+        }
+      }
+
+      // Filter by salary range
+      if (salary && salary !== 'all') {
+        whereClause.salary = salary;
+      }
+
+      const jobs = await Job.findAll({
+        where: whereClause,
+        order: [['created_at', 'DESC']]
+      });
+
+      return res.json({
+        jobs: jobs,
+        totalJobs: jobs.length
+      });
+
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
+  // Lưu job
+  async saveJob(req, res) {
+    try {
+      const userId = req.user.id;
+      const jobId = req.params.job_id;
+
+      // Kiểm tra job có tồn tại không
+      const job = await Job.findByPk(jobId);
+      if (!job) {
+        return res.status(404).json({
+          message: "Không tìm thấy công việc",
+          code: -1
+        });
+      }
+
+      // Kiểm tra xem đã lưu chưa
+      const existingSave = await SavedJob.findOne({
+        where: {
+          user_id: userId,
+          job_id: jobId
+        }
+      });
+
+      if (existingSave) {
+        return res.status(400).json({
+          message: "Bạn đã lưu công việc này rồi",
+          code: -1
+        });
+      }
+
+      // Tạo bản ghi mới
+      const savedJob = await SavedJob.create({
+        saved_id: `saved-${Date.now()}`,
+        user_id: userId,
+        job_id: jobId,
+        saved_date: new Date()
+      });
+
+      res.status(201).json({
+        message: "Lưu công việc thành công",
+        code: 1,
+        savedJob
+      });
+
+    } catch (error) {
+      res.status(500).json({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
+
+  // Bỏ lưu job
+  async unsaveJob(req, res) {
+    try {
+      const userId = req.user.id;
+      const jobId = req.params.job_id;
+
+      const result = await SavedJob.destroy({
+        where: {
+          user_id: userId,
+          job_id: jobId
+        }
+      });
+
+      if (result === 0) {
+        return res.status(404).json({
+          message: "Không tìm thấy công việc đã lưu",
+          code: -1
+        });
+      }
+
+      res.status(200).json({
+        message: "Bỏ lưu công việc thành công",
+        code: 1
+      });
+
+    } catch (error) {
+      res.status(500).json({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
+
+  // Kiểm tra job đã được lưu chưa
+  async isJobSaved(req, res) {
+    try {
+      const userId = req.user.id;
+      const jobId = req.params.job_id;
+
+      const savedJob = await SavedJob.findOne({
+        where: {
+          user_id: userId,
+          job_id: jobId
+        }
+      });
+
+      res.status(200).json({
+        isSaved: !!savedJob,
+        code: 1
+      });
+
+    } catch (error) {
+      res.status(500).json({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
+
+  // Thêm job vào lịch sử xem
+  async addViewedJob(req, res) {
+    try {
+      const userId = req.user.id;
+      const jobId = req.params.job_id;
+
+      // Kiểm tra job có tồn tại không
+      const job = await Job.findByPk(jobId);
+      if (!job) {
+        return res.status(404).json({
+          message: "Không tìm thấy công việc",
+          code: -1
+        });
+      }
+
+      // Kiểm tra xem đã xem job này chưa
+      const existingView = await ViewedJob.findOne({
+        where: {
+          user_id: userId,
+          job_id: jobId
+        }
+      });
+
+      if (existingView) {
+        // Nếu đã xem rồi thì cập nhật thời gian xem
+        await existingView.update({
+          viewed_date: new Date()
+        });
+      } else {
+        // Nếu chưa xem thì tạo mới
+        await ViewedJob.create({
+          viewed_id: `viewed-${Date.now()}`,
+          user_id: userId,
+          job_id: jobId,
+          viewed_date: new Date()
+        });
+      }
+
+      res.status(200).json({
+        message: "Đã thêm vào lịch sử xem",
+        code: 1
+      });
+
+    } catch (error) {
+      res.status(500).json({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
+
+  // Xóa tất cả lịch sử xem
+  async clearViewedJobs(req, res) {
+    try {
+      const userId = req.user.id;
+
+      await ViewedJob.destroy({
+        where: {
+          user_id: userId
+        }
+      });
+
+      res.status(200).json({
+        message: "Đã xóa toàn bộ lịch sử xem",
+        code: 1
+      });
+
+    } catch (error) {
+      res.status(500).json({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
+
+  // Xóa một job khỏi lịch sử xem
+  async deleteViewedJob(req, res) {
+    try {
+      const userId = req.user.id;
+      const jobId = req.params.job_id;
+
+      const result = await ViewedJob.destroy({
+        where: {
+          user_id: userId,
+          job_id: jobId
+        }
+      });
+
+      if (result === 0) {
+        return res.status(404).json({
+          message: "Không tìm thấy job trong lịch sử xem",
+          code: -1
+        });
+      }
+
+      res.status(200).json({
+        message: "Đã xóa job khỏi lịch sử xem",
+        code: 1
+      });
+
+    } catch (error) {
+      res.status(500).json({
         message: error.message,
         code: -1
       });

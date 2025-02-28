@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import classNames from "classnames/bind";
 import styles from "./Login.module.scss";
 import InputWrapper from "~/components/InputWrapper";
@@ -7,10 +7,12 @@ import { ErrorIcon } from "~/components/Icons";
 import api, { userApis } from "~/utils/api";
 import Spinner from "~/components/Spinner";
 import { toast } from "react-toastify";
+import UserContext from '~/context/UserContext';
 
 const cx = classNames.bind(styles);
 
 function Login() {
+  const { user } = useContext(UserContext);
   const [username, setUsername] = useState({
     value: "",
     error: "",
@@ -34,6 +36,12 @@ function Login() {
         account: username.value,
         password: password.value,
       });
+
+      if (response.data.user.role !== 'user' && response.data.user.role !== 'admin') {
+        setErrorMessage("Bạn không có quyền truy cập vào tài khoản này.");
+        setIsSubmitting(false);
+        return;
+      }
 
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("user", JSON.stringify(response.data.user));
@@ -68,6 +76,7 @@ function Login() {
 
   return (
     <form autoComplete="off" onSubmit={handleSubmit}>
+      <h1>Đăng nhập User</h1>
       <InputWrapper>
         <div className={cx("label-group")}>
           <label className={cx("label")}>Tên đăng nhập</label>

@@ -22,6 +22,7 @@ const TopJob = () => {
   const [totalPages, setTotalPages] = useState(1)
   const [jobs, setJobs] = useState([])
   const [selectedLocation, setSelectedLocation] = useState("random")
+  const [savedStatus, setSavedStatus] = useState({});
 
   const getRandomAvatarId = () => Math.floor(Math.random() * 1000) + 1
 
@@ -46,12 +47,59 @@ const TopJob = () => {
       console.error("Error fetching jobs:", error)
     }
   }
-  const handleJobClick = (jobId) => {
-    navigate(`/jobs/${jobId}`);
+
+  const handleJobClick = async (jobId) => {
+    try {
+      await authAPI().post(userApis.addViewedJob(jobId));
+      navigate(`/jobs/${jobId}`);
+    } catch (error) {
+      console.error('Error adding to viewed jobs:', error);
+      navigate(`/jobs/${jobId}`);
+    }
   };
+
+  const handleSaveJob = async (e, jobId) => {
+    e.stopPropagation(); // Ngăn chặn việc chuyển trang khi click vào nút save
+    if (!jobId) {
+      console.error('Invalid job ID');
+      return;
+    }
+
+    try {
+      if (savedStatus[jobId]) {
+        await authAPI().delete(userApis.unsaveJob(jobId));
+        setSavedStatus(prev => ({...prev, [jobId]: false}));
+      } else {
+        await authAPI().post(userApis.saveJob(jobId));
+        setSavedStatus(prev => ({...prev, [jobId]: true}));
+      }
+    } catch (error) {
+      console.error("Error toggling job save status:", error);
+      if (error.response?.data?.message === 'Bạn đã lưu công việc này rồi') {
+        setSavedStatus(prev => ({...prev, [jobId]: true}));
+      }
+    }
+  };
+
   useEffect(() => {
     fetchData()
   }, [activePage, selectedLocation])
+
+  useEffect(() => {
+    const fetchSavedStatus = async () => {
+      try {
+        const response = await authAPI().get(userApis.getAllSavedJobsByUser);
+        const initialSavedStatus = {};
+        response.data.savedJobs.forEach(job => {
+          initialSavedStatus[job.job_id] = true;
+        });
+        setSavedStatus(initialSavedStatus);
+      } catch (error) {
+        console.error("Error fetching saved status:", error);
+      }
+    };
+    fetchSavedStatus();
+  }, []);
 
   return (
     <div className={cx('wrapper')}>
@@ -80,7 +128,9 @@ const TopJob = () => {
       {/* Job Grid */}
       <div className={cx('job-grid')}>
         {jobs.map((job) => (
-          <div key={job.job_id} className={cx('job-card')}>
+          <div key={job.job_id} 
+               className={cx('job-card')}
+               onClick={() => handleJobClick(job.job_id)}>
             <div className={cx('company-logo')}>
               <img src={job.company_logo} alt={job.company_name} />
             </div>
@@ -114,8 +164,11 @@ const TopJob = () => {
                 ))}
               </div>
             </div>
-            <button className={cx('save-btn')}>
-              <i className="fa-regular fa-heart"></i>
+            <button 
+              className={cx('save-btn', { 'saved': savedStatus[job.job_id] })}
+              onClick={(e) => handleSaveJob(e, job.job_id)}
+            >
+              <i className={`fa-${savedStatus[job.job_id] ? 'solid' : 'regular'} fa-heart`}></i>
             </button>
           </div>
         ))}

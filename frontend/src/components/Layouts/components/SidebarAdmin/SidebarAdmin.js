@@ -11,7 +11,7 @@ import ModalTypeContext from "~/context/ModalTypeContext";
 import SidebarContext from "~/context/SidebarContext";
 import UserContext from "~/context/UserContext";
 import { authAPI, userApis } from "~/utils/api";
-import Modal from "~/components/Modal";
+import Modal from "~/components/Modal/Modal";
 
 const cx = classNames.bind(styles);
 

@@ -1,0 +1,19 @@
+const express = require('express');
+const userController = require('../controllers/UserController');
+const recruiterController = require('../controllers/RecruiterController');
+const jwtMiddleware = require('../middleware/JWTMiddleware');
+const router = express.Router();
+
+router.post('/register', recruiterController.registerUser.bind(userController));
+router.post('/login', recruiterController.login.bind(userController));
+// router.get('/verify-email', userController.verifyEmail.bind(userController));
+// router.get('/reset-password', userController.resetPassword.bind(userController));
+// router.post('/forget-password', userController.forgetPassword.bind(userController));
+// router.post('/change-password', userController.changePassword.bind(userController));
+router.use(jwtMiddleware(["recruiter"]));
+router.get('/current-user', recruiterController.getCurrentUser.bind(recruiterController));
+router.get('/recruiter-companies', recruiterController.getAllRecruiterCompanies.bind(recruiterController));
+router.get('/dashboard-stats', recruiterController.getDashboardStats.bind(recruiterController));
+router.get('/jobs/:company_id', recruiterController.getAllJobsByCompanyId.bind(recruiterController));
+router.get('/job-applications/:job_id', recruiterController.getAllJobApplicationsByJobId.bind(recruiterController));
+module.exports = router;

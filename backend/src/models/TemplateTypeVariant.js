@@ -27,14 +27,7 @@ TemplateTypeVariant.init(
         key: "type_id",
       },
     },
-    variant_html: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
-    variant_css: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
+   
     variant_thumbnail: {
       type: DataTypes.STRING,
       allowNull: true,

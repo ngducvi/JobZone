@@ -268,37 +268,35 @@ $bg-hover: #f3f4f6;
 
   .save-btn {
     position: absolute;
-    top: 12px;
-    right: 12px;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    border: 1px solid rgba($primary-color, 0.1);
-    background: white;
-    color: $text-light;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 20px;
+    color: #64748b;
+    transition: all 0.3s ease;
+    padding: 8px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
 
     &:hover {
-      background: linear-gradient(135deg, $primary-color, $secondary-color);
-      color: white;
-      border-color: transparent;
-      transform: scale(1.1);
-      box-shadow: 0 4px 12px rgba($primary-color, 0.2);
-
-      i {
-        animation: pulse 1s infinite;
-      }
+      background: rgba(0, 0, 0, 0.05);
     }
 
-    i {
-      font-size: 14px;
-      transition: all 0.3s ease;
+    &.saved {
+      color: #dc2626;
+      animation: saveAnimation 0.3s ease;
     }
   }
+}
+
+@keyframes saveAnimation {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }
 
 // Pagination

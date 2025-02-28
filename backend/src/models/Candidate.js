@@ -2,6 +2,9 @@ const { Model, DataTypes } = require('sequelize');
 const sequelize = require('../config/database'); //
 const User = require('./User');
 
+// ALTER TABLE `candidates`
+// ADD COLUMN `is_searchable` TINYINT(1) DEFAULT 1 COMMENT 'Cho phép nhà tuyển dụng tìm thấy hồ sơ',
+// ADD COLUMN `is_actively_searching` TINYINT(1) DEFAULT 1 COMMENT 'Đang tích cực tìm việc';
 class Candidate extends Model {}
 Candidate.init({
     candidate_id: {
@@ -113,6 +116,15 @@ Candidate.init({
         type: DataTypes.STRING,
         allowNull: true,
     },
+    is_searchable: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+    },
+    is_actively_searching: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+    },
+
 }, {
     sequelize,
     modelName: 'Candidate',

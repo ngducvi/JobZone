@@ -7,6 +7,7 @@ import styles from "./JobDetail.module.scss";
 import UserInfo from "~/components/UserInfo";
 import images from "~/assets/images";
 import PopularKeywords from '~/components/PopularKeywords/PopularKeywords';
+import useScrollTop from '~/hooks/useScrollTop';
 const cx = classNames.bind(styles);
 
 const JobDetail = () => {
@@ -15,17 +16,41 @@ const JobDetail = () => {
   const { id } = useParams();
   const [copied, setCopied] = useState(false);
   const [company, setCompany] = useState(null);
+  const [savedStatus, setSavedStatus] = useState(false);
+  
 
   useEffect(() => {
     const fetchData = async () => {
       const response = await authAPI().get(userApis.getJobDetailByJobId(id));
       setJob(response.data.job);
-      setCompany(response.data.company);
-      console.log(response.data);
+      setCompany(response.data);
     }
     fetchData();
   }, [id]);
 
+  useEffect(() => {
+    const checkSavedStatus = async () => {
+      try {
+        const savedResponse = await authAPI().get(userApis.getAllSavedJobsByUser);
+        const isJobSaved = savedResponse.data.savedJobs.some(
+          savedJob => savedJob.job_id === id
+        );
+        setSavedStatus(isJobSaved);
+      } catch (error) {
+        console.error("Error checking saved status:", error);
+      }
+    };
+    if (id) {
+      checkSavedStatus();
+    }
+  }, [id]);
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }, []); 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
@@ -36,6 +61,24 @@ const JobDetail = () => {
     navigate(`/company-detail/${companyId}`);
   };
 
+  const handleSaveJob = async () => {
+    try {
+      if (savedStatus) {
+        await authAPI().delete(userApis.unsaveJob(id));
+        setSavedStatus(false);
+      } else {
+        await authAPI().post(userApis.saveJob(id));
+        setSavedStatus(true);
+      }
+      window.dispatchEvent(new Event('user-data-update'));
+    } catch (error) {
+      console.error("Error toggling save status:", error);
+      if (error.response?.data?.message === 'Bạn đã lưu công việc này rồi') {
+        setSavedStatus(true);
+      }
+    }
+  };
+
   return (
     <div className={cx("wrapper")}>
       <div className={cx("container")}>
@@ -44,7 +87,7 @@ const JobDetail = () => {
           <div className={cx("job-header")}>
             <div className={cx("company-info")}>
               <img
-                src={job?.Company?.logo || images.company_1}
+                src={company?.companyLogo || images.company_1}
                 alt=""
                 className={cx("company-logo")}
               />
@@ -54,21 +97,26 @@ const JobDetail = () => {
                   className={cx("company-name")}
                   onClick={() => handleCompanyClick(company?.company_id)}
                 >
-                  {job?.Company?.company_name}
+                  <i className="fas fa-building"></i>
+                  {company?.companyName || "Công ty ABC"}
                 </button>
                 <div className={cx("deadline")}>
+                  <i className="far fa-clock"></i>
                   Hạn nộp hồ sơ: {job?.deadline || "Không thời hạn"}
                 </div>
               </div>
             </div>
             <div className={cx("action-buttons")}>
-              <button className={cx("apply-btn")}>
+              <button className={cx("apply-btn", "primary-btn")}>
                 <i className="fas fa-paper-plane"></i>
                 Ứng tuyển ngay
               </button>
-              <button className={cx("save-btn")}>
-                <i className="far fa-heart"></i>
-                Lưu tin
+              <button 
+                className={cx("save-btn", "secondary-btn", { saved: savedStatus })}
+                onClick={handleSaveJob}
+              >
+                <i className={`fa${savedStatus ? 's' : 'r'} fa-bookmark`}></i>
+                {savedStatus ? 'Đã Lưu' : 'Lưu Tin'}
               </button>
             </div>
           </div>
@@ -76,21 +124,21 @@ const JobDetail = () => {
           <div className={cx("job-overview")}>
             <div className={cx("overview-item")}>
               <i className="fas fa-sack-dollar"></i>
-              <div>
+              <div className={cx("overview-content")}>
                 <label>Mức lương</label>
                 <span>{job?.salary || "Thỏa thuận"}</span>
               </div>
             </div>
             <div className={cx("overview-item")}>
               <i className="fas fa-map-marker-alt"></i>
-              <div>
+              <div className={cx("overview-content")}>
                 <label>Địa điểm</label>
                 <span>{job?.location}</span>
               </div>
             </div>
             <div className={cx("overview-item")}>
               <i className="fas fa-briefcase"></i>
-              <div>
+              <div className={cx("overview-content")}>
                 <label>Kinh nghiệm</label>
                 <span>{job?.experience || "Không yêu cầu"}</span>
               </div>
@@ -141,9 +189,12 @@ const JobDetail = () => {
                 <i className="fas fa-paper-plane"></i>
                 Ứng tuyển ngay
               </button>
-              <button className={cx("save-btn")}>
-                <i className="far fa-heart"></i>
-                Lưu tin
+              <button 
+                className={cx("save-btn", "secondary-btn", { saved: savedStatus })}
+                onClick={handleSaveJob}
+              >
+                <i className={`fa${savedStatus ? 's' : 'r'} fa-bookmark`}></i>
+                {savedStatus ? 'Đã Lưu' : 'Lưu Tin'}
               </button>
             </div>
             <div className={cx("report-btn")}>
@@ -152,30 +203,127 @@ const JobDetail = () => {
               đúng hoặc có dấu hiệu lừa đảo, hãy phản ánh với chúng tôi.
             </div>
           </div>
+
+          <div className={cx("job-analysis")}>
+            <div className={cx("analysis-card")}>
+              <div className={cx("card-header")}>
+                <i className="fas fa-chart-line"></i>
+                <h3>Phân tích mức độ phù hợp</h3>
+                <span className={cx("match-rate")}>
+                  <i className="fas fa-star"></i>
+                  80% phù hợp
+                </span>
+              </div>
+
+              <div className={cx("analysis-content")}>
+                <div className={cx("analysis-item")}>
+                  <div className={cx("question")}>
+                    <i className="fas fa-check-circle"></i>
+                    <span>Bạn phù hợp bao nhiêu % với việc làm này?</span>
+                  </div>
+                  <div className={cx("progress-bar")}>
+                    <div 
+                      className={cx("progress")} 
+                      style={{ width: "80%" }}
+                    ></div>
+                  </div>
+                  <span className={cx("percentage")}>80%</span>
+                </div>
+
+                <div className={cx("analysis-item")}>
+                  <div className={cx("question")}>
+                    <i className="fas fa-exclamation-circle"></i>
+                    <span>Đâu là điểm ít phù hợp nhất trong CV của bạn?</span>
+                  </div>
+                  <div className={cx("weakness-points")}>
+                    <div className={cx("point")}>
+                      <i className="fas fa-times"></i>
+                      <span>Thiếu kinh nghiệm về Docker</span>
+                    </div>
+                    <div className={cx("point")}>
+                      <i className="fas fa-times"></i>
+                      <span>Chưa có chứng chỉ AWS</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={cx("analysis-item")}>
+                  <div className={cx("question")}>
+                    <i className="fas fa-lightbulb"></i>
+                    <span>Kỹ năng nào của bạn phù hợp, kỹ năng nào cần thiếu so với yêu cầu của NTD?</span>
+                  </div>
+                  <div className={cx("skills-analysis")}>
+                    <div className={cx("matching-skills")}>
+                      <h4>Kỹ năng phù hợp</h4>
+                      <div className={cx("skill-tags")}>
+                        <span className={cx("tag", "match")}>
+                          <i className="fas fa-check"></i>
+                          ReactJS
+                        </span>
+                        <span className={cx("tag", "match")}>
+                          <i className="fas fa-check"></i>
+                          JavaScript
+                        </span>
+                        <span className={cx("tag", "match")}>
+                          <i className="fas fa-check"></i>
+                          HTML/CSS
+                        </span>
+                      </div>
+                    </div>
+                    <div className={cx("missing-skills")}>
+                      <h4>Kỹ năng còn thiếu</h4>
+                      <div className={cx("skill-tags")}>
+                        <span className={cx("tag", "missing")}>
+                          <i className="fas fa-times"></i>
+                          Docker
+                        </span>
+                        <span className={cx("tag", "missing")}>
+                          <i className="fas fa-times"></i>
+                          AWS
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={cx("upgrade-cta")}>
+                  <button className={cx("upgrade-btn")}>
+                    <i className="fas fa-crown"></i>
+                    Xem ngay phân tích chi tiết
+                  </button>
+                  <span className={cx("price")}>
+                    <span className={cx("original")}>20.000 VND</span>
+                    <span className={cx("discount")}>10.000 VND</span>
+                    <span className={cx("discount-tag")}>-50%</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Right Column - Company Info */}
         <div className={cx("company-profile")}>
           <div className={cx("company-card")}>
-            <img src={company?.logo || images.company_1} alt="" />
-            <h3>{company?.company_name}</h3>
+            <img src={company?.companyLogo || images.company_1} alt="" />
+            <h3>{company?.companyName}</h3>
             <div className={cx("company-meta")}>
               <div>
                 <i className="fas fa-user-friends"></i>
-                <span>{company?.size || "100-499 nhân viên"}</span>
+                <span>{company?.companySize || "100-499 nhân viên"}</span>
               </div>
               <div>
                 <i className="fas fa-briefcase"></i>
-                <span>{company?.industry || "Bán lẻ - Hàng tiêu dùng - FMCG"} </span>
+                <span>{company?.companyIndustry || "Bán lẻ - Hàng tiêu dùng - FMCG"} </span>
               </div>
               <div>
                 <i className="fas fa-map-marker-alt"></i>
-                <span>{company?.address || "Hà Nội"}</span>
+                <span>{company?.companyAddress || "Hà Nội"}</span>
               </div>
             </div>
             <button
               className={cx("view-company")}
-              onClick={() => handleCompanyClick(company?.company_id)}
+              onClick={() => handleCompanyClick(company?.companyId)}
             >
               Xem trang công ty <i className="fas fa-arrow-right"></i>
             </button>

@@ -53,6 +53,7 @@ export const userApis = {
     changePassword: '/user/change-password/',
     refreshToken: '/api/refresh-token/',
     getAllCandidateProfile: '/user/candidate-profile',
+    getAllCategories: '/user/categories',
     getCandidateProfile: (id) => `/user/candidate-profile/${id}`,
     getAllCategoriesPost: '/user/categories-post',
     getAllCareerHandbooks: '/user/career-handbook',
@@ -76,11 +77,56 @@ export const userApis = {
     getAllCandidateLanguages: '/user/candidate-languages',
     getCandidateLanguagesByCandidateId: (candidate_id) => `/user/candidate-languages/${candidate_id}`,
     getCandidateExperiencesByCandidateId: (candidate_id) => `/user/candidate-experiences/${candidate_id}`,
-    getCandidateEducationByCandidateId: (candidate_id) => `/user/candidate-education/${candidate_id}`,
+    
     getCandidateCertificationsByCandidateId: (candidate_id) => `/user/candidate-certifications/${candidate_id}`,
     getCandidateProjectsByCandidateId: (candidate_id) => `/user/candidate-projects/${candidate_id}`,
+    // candidate education
     editCandidateEducation: (education_id) => `/user/candidate-education/edit/${education_id}`,
     createCandidateEducationWithCandidateId: (candidate_id) => `/user/candidate-education/${candidate_id}`,
+    getCandidateEducationByCandidateId: (candidate_id) => `/user/candidate-education/${candidate_id}`,
+    deleteCandidateEducationById: (education_id) => `/user/candidate-education/${education_id}`,
+
+    // Experience APIs
+    createCandidateExperienceWithCandidateId: (candidate_id) => `/user/candidate-experience/${candidate_id}`,
+    editCandidateExperience: (experience_id) => `/user/candidate-experience/edit/${experience_id}`,
+    deleteCandidateExperienceById: (experience_id) => `/user/candidate-experience/${experience_id}`,
+    // Languages APIs
+    createCandidateLanguagesWithCandidateId: (candidate_id) => `/user/candidate-languages/${candidate_id}`,
+    editCandidateLanguages: (languages_id) => `/user/candidate-languages/edit/${languages_id}`,
+    deleteCandidateLanguagesById: (languages_id) => `/user/candidate-languages/${languages_id}`,
+
+    // Certifications APIs
+    createCandidateCertificationsWithCandidateId: (candidate_id) => `/user/candidate-certifications/${candidate_id}`,
+    editCandidateCertifications: (certifications_id) => `/user/candidate-certifications/edit/${certifications_id}`,
+    deleteCandidateCertificationsById: (certifications_id) => `/user/candidate-certifications/${certifications_id}`,
+    // Projects APIs
+    createCandidateProjectsWithCandidateId: (candidate_id) => `/user/candidate-projects/${candidate_id}`,
+    editCandidateProjects: (projects_id) => `/user/candidate-projects/edit/${projects_id}`,
+    deleteCandidateProjectsById: (projects_id) => `/user/candidate-projects/${projects_id}`,
+    editCandidate: (candidate_id) => `/user/candidate/edit/${candidate_id}`,
+    // edit is_searchable and is_actively_searching
+    editIsSearchableAndIsActivelySearching: (candidate_id) => `/user/candidate/is-searchable-and-is-actively-searching/${candidate_id}`,
+    filterJobs: '/user/jobs/filter',
+    
+    saveJob: (jobId) => `/user/jobs/save/${jobId}`,
+    unsaveJob: (jobId) => `/user/jobs/unsave/${jobId}`,
+    isJobSaved: (jobId) => `/user/jobs/is-saved/${jobId}`,
+    // viewed job
+    addViewedJob: (jobId) => `/user/jobs/view/${jobId}`,
+    clearViewedJobs: '/user/viewed-jobs/clear',
+    deleteViewedJob: (jobId) => `/user/viewed-jobs/${jobId}`,
+    getAllJobsByCompanyId: (companyId) => `/user/jobs/company/${companyId}`,
+};
+
+
+export const recruiterApis = {
+    getCurrentUser: '/recruiter/current-user',
+    register: '/recruiter/register',
+    login: '/recruiter/login',
+    getAllRecruiterCompanies: '/recruiter/recruiter-companies',
+    getDashboardStats: '/recruiter/dashboard-stats',
+    getAllJobsByCompanyId: (company_id) => `/recruiter/jobs/${company_id}`,
+    getAllJobApplicationsByJobId: (job_id) => `/recruiter/job-applications/${job_id}`,
 };
 
 export const usageApis = {

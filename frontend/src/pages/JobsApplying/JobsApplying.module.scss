@@ -181,34 +181,27 @@
         background: white;
         border-radius: 12px;
         padding: 24px;
+        margin-bottom: 16px;
         border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         transition: all 0.3s ease;
-        animation: slideUp 0.5s ease;
   
         &:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.1);
-          border-color: #013a74;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
   
         .job-header {
           display: flex;
           align-items: center;
-          gap: 20px;
+          gap: 16px;
           margin-bottom: 20px;
   
-          img {
+          .company-logo {
             width: 64px;
             height: 64px;
-            border-radius: 12px;
-            object-fit: contain;
-            padding: 8px;
-            border: 1px solid #e5e7eb;
-            transition: transform 0.3s ease;
-  
-            &:hover {
-              transform: scale(1.05);
-            }
+            border-radius: 8px;
+            object-fit: cover;
           }
   
           .job-title {
@@ -218,12 +211,7 @@
               font-size: 18px;
               font-weight: 600;
               color: #111827;
-              margin-bottom: 6px;
-              transition: color 0.2s ease;
-  
-              &:hover {
-                color: #013a74;
-              }
+              margin-bottom: 4px;
             }
   
             p {
@@ -232,23 +220,83 @@
             }
           }
   
-          .unsave-btn {
-            background: none;
-            border: none;
-            color: #013a74;
-            cursor: pointer;
-            font-size: 20px;
-            transition: all 0.2s ease;
-            width: 40px;
-            height: 40px;
+          .application-status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
             display: flex;
             align-items: center;
-            justify-content: center;
-            border-radius: 8px;
+            gap: 8px;
+            transition: all 0.3s ease;
   
-            &:hover {
-              background: #f3f4f6;
-              transform: scale(1.1);
+            // Đang xét duyệt
+            &.đang.xét.duyệt {
+              background: #FFF4DE;
+              color: #FF9F43;
+              border: 1px solid #FFE5BC;
+  
+              &::before {
+                content: '';
+                display: inline-block;
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: #FF9F43;
+                animation: pulse 1.5s infinite;
+              }
+            }
+  
+            // Chờ phỏng vấn
+            &.chờ.phỏng.vấn {
+              background: #EAE8FD;
+              color: #7367F0;
+              border: 1px solid #D2CEFF;
+  
+              &::before {
+                content: '';
+                display: inline-block;
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: #7367F0;
+                animation: pulse 1.5s infinite;
+              }
+            }
+  
+            // Đã phỏng vấn
+            &.đã.phỏng.vấn {
+              background: #E4F8F8;
+              color: #00CFE8;
+              border: 1px solid #B8EEFF;
+            }
+  
+            // Đạt phỏng vấn
+            &.đạt.phỏng.vấn {
+              background: #E4F8F0;
+              color: #28C76F;
+              border: 1px solid #C3F3E0;
+            }
+  
+            // Đã nhận
+            &.đã.nhận {
+              background: #DFF7E9;
+              color: #28C76F;
+              border: 1px solid #A8ECC7;
+            }
+  
+            // Đã từ chối
+            &.đã.từ.chối {
+              background: #FFE5E5;
+              color: #EA5455;
+              border: 1px solid #FFD1D1;
+            }
+  
+            // Hết hạn
+            &.hết.hạn {
+              background: #F1F1F1;
+              color: #82868B;
+              border: 1px solid #E4E4E4;
             }
           }
         }
@@ -256,16 +304,13 @@
         .job-info {
           display: flex;
           gap: 24px;
-          margin-bottom: 24px;
-          padding: 16px;
-          background: #f9fafb;
-          border-radius: 8px;
+          margin-bottom: 20px;
   
           .info-item {
             display: flex;
             align-items: center;
             gap: 8px;
-            color: #4b5563;
+            color: #4B5563;
             font-size: 14px;
   
             i {
@@ -274,26 +319,21 @@
           }
         }
   
-        .job-actions {
-          .apply-btn {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #013a74, #02a346);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .application-info {
+          display: flex;
+          justify-content: space-between;
+          padding-top: 16px;
+          border-top: 1px solid #e5e7eb;
+          color: #6B7280;
+          font-size: 14px;
   
-            &:hover {
-              transform: translateY(-2px);
-              box-shadow: 0 8px 16px -4px rgba(1, 58, 116, 0.2);
-            }
+          .resume-info, .last-update {
+            display: flex;
+            align-items: center;
+            gap: 8px;
   
-            &:active {
-              transform: translateY(0);
+            i {
+              color: #013a74;
             }
           }
         }
@@ -341,6 +381,23 @@
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+  
+  @keyframes pulse {
+    0% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(255, 159, 67, 0.7);
+    }
+    
+    70% {
+      transform: scale(1);
+      box-shadow: 0 0 0 10px rgba(255, 159, 67, 0);
+    }
+    
+    100% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(255, 159, 67, 0);
     }
   }
   
