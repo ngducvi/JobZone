@@ -23,8 +23,11 @@ const sidebarIcons = [
     title: "Bảng tin",
     to: "/recruiter",
   },
-
- 
+  {
+    icon: <i className="fa-solid fa-magnifying-glass"></i>,
+    title: "Tìm kiếm ứng viên",
+    to: "/recruiter/search-candidate",
+  },
   {
     icon: <i className="fa-solid fa-robot"></i>,
     title: "Toppy AI - Đề xuất",
@@ -137,8 +140,18 @@ const SidebarSectuiter = () => {
   };
 
   const handleToggleSidebar = () => {
-    setIsOpenSidebar(!isOpenSidebar); // Toggle trạng thái sidebar
+    setIsOpenSidebar(!isOpenSidebar);
+    // Lưu trạng thái vào localStorage để giữ nguyên khi refresh
+    localStorage.setItem("sidebarOpen", !isOpenSidebar);
   };
+
+  // Thêm useEffect để lấy trạng thái sidebar từ localStorage khi component mount
+  useEffect(() => {
+    const savedState = localStorage.getItem("sidebarOpen");
+    if (savedState !== null) {
+      setIsOpenSidebar(savedState === "true");
+    }
+  }, []);
 
   return (
     <div className={cx("wrapper", { collapsed: !isOpenSidebar })}>

@@ -304,6 +304,8 @@ CREATE TABLE `candidates` (
   `employment_type` enum('Full-time','Part-time','Contract','Freelance','Internship') DEFAULT NULL,
   `notice_period` varchar(50) DEFAULT NULL,
   `availability_status` enum('Immediately','In 1 month','In 2 months','In 3 months') DEFAULT NULL,
+  `is_searchable` tinyint(1) DEFAULT '1',
+  `is_actively_searching` tinyint(1) DEFAULT '1',
   PRIMARY KEY (`candidate_id`),
   KEY `user_id` (`user_id`),
   CONSTRAINT `candidates_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE

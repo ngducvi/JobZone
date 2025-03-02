@@ -84,4 +84,7 @@ router.delete('/viewed-jobs/clear', userController.clearViewedJobs.bind(userCont
 router.delete('/viewed-jobs/:job_id', userController.deleteViewedJob.bind(userController));
 // get all jobs by company_id
 router.get('/jobs/company/:company_id', userController.getAllJobsByCompanyId.bind(userController));
+router.post('/apply-job', userController.applyForJob.bind(userController));
+router.get('/check-application-status/:job_id', userController.checkApplicationStatus.bind(userController));
+router.post('/withdraw-application', userController.withdrawApplication.bind(userController));
 module.exports = router;

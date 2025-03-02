@@ -8,15 +8,18 @@ import UserInfo from "~/components/UserInfo";
 import images from "~/assets/images";
 import PopularKeywords from '~/components/PopularKeywords/PopularKeywords';
 import useScrollTop from '~/hooks/useScrollTop';
+import { toast } from "react-toastify";
 const cx = classNames.bind(styles);
 
 const JobDetail = () => {
   const navigate = useNavigate();
   const [job, setJob] = useState(null);
   const { id } = useParams();
+  console.log(id);
   const [copied, setCopied] = useState(false);
   const [company, setCompany] = useState(null);
   const [savedStatus, setSavedStatus] = useState(false);
+  const [appliedStatus, setAppliedStatus] = useState(false);
   
 
   useEffect(() => {
@@ -46,6 +49,19 @@ const JobDetail = () => {
   }, [id]);
 
   useEffect(() => {
+    const checkAppliedStatus = async () => {
+      try {
+        const response = await authAPI().get(userApis.checkApplicationStatus(id));
+        setAppliedStatus(response.data.applied);
+      } catch (error) {
+        console.error("Error checking application status:", error);
+      }
+    };
+
+    checkAppliedStatus();
+  }, [id]);
+
+  useEffect(() => {
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
@@ -66,9 +82,25 @@ const JobDetail = () => {
       if (savedStatus) {
         await authAPI().delete(userApis.unsaveJob(id));
         setSavedStatus(false);
+        toast.success("Đã hủy lưu công việc!", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
       } else {
         await authAPI().post(userApis.saveJob(id));
         setSavedStatus(true);
+        toast.success("Đã lưu công việc thành công!", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
       }
       window.dispatchEvent(new Event('user-data-update'));
     } catch (error) {
@@ -76,6 +108,56 @@ const JobDetail = () => {
       if (error.response?.data?.message === 'Bạn đã lưu công việc này rồi') {
         setSavedStatus(true);
       }
+    }
+  };
+
+  const handleApplyJob = async () => {
+    try {
+      await authAPI().post(userApis.applyJob, { job_id: id });
+      toast.success("Nộp đơn thành công!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      setAppliedStatus(true);
+    } catch (error) {
+      console.error("Error applying for job:", error);
+      toast.error("Có lỗi xảy ra khi nộp đơn.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    }
+  };
+
+  const handleWithdrawApplication = async () => {
+    try {
+      await authAPI().post(userApis.withdrawApplication, { job_id: id });
+      toast.success("Đơn ứng tuyển đã được hủy thành công!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      setAppliedStatus(false);
+    } catch (error) {
+      console.error("Error withdrawing application:", error);
+      toast.error("Có lỗi xảy ra khi hủy đơn ứng tuyển.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     }
   };
 
@@ -107,10 +189,23 @@ const JobDetail = () => {
               </div>
             </div>
             <div className={cx("action-buttons")}>
-              <button className={cx("apply-btn", "primary-btn")}>
-                <i className="fas fa-paper-plane"></i>
-                Ứng tuyển ngay
-              </button>
+              {appliedStatus ? (
+                <div className={cx("applied-status")}>
+                  <button className={cx("apply-btn", "primary-btn")} disabled>
+                    <i className="fas fa-check"></i>
+                    Đã ứng tuyển
+                  </button>
+                  <button className={cx("withdraw-btn", "secondary-btn")} onClick={handleWithdrawApplication}>
+                    <i className="fas fa-times"></i>
+                    Hủy ứng tuyển
+                  </button>
+                </div>
+              ) : (
+                <button className={cx("apply-btn", "primary-btn")} onClick={handleApplyJob}>
+                  <i className="fas fa-paper-plane"></i>
+                  Ứng tuyển ngay
+                </button>
+              )}
               <button 
                 className={cx("save-btn", "secondary-btn", { saved: savedStatus })}
                 onClick={handleSaveJob}

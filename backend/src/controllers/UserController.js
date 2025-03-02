@@ -49,6 +49,9 @@ class UserController {
     this.generateProjectsId = () => {
       return 'proj-' + Math.random().toString(36).substr(2, 9);
     };
+    this.generateApplicationId = () => {
+      return 'app-' + Math.random().toString(36).substr(2, 9);
+    };
   }
   async getCurrentUser(req, res) {
     try {
@@ -1753,6 +1756,126 @@ class UserController {
       res.status(500).json({
         message: error.message,
         code: -1
+      });
+    }
+  }
+
+  // Thêm vào UserController
+  async applyForJob(req, res) {
+    const { job_id } = req.body;
+    const userId = req.user.id;
+
+    try {
+      // Kiểm tra xem công việc có tồn tại không
+      const job = await Job.findByPk(job_id);
+      if (!job) {
+        return res.status(404).json({
+          message: "Không tìm thấy công việc",
+          code: -1,
+        });
+      }
+
+      // Kiểm tra xem ứng viên đã nộp đơn cho công việc này chưa
+      const existingApplication = await JobApplication.findOne({
+        where: {
+          user_id: userId,
+          job_id: job_id,
+        },
+      });
+
+      if (existingApplication) {
+        return res.status(400).json({
+          message: "Bạn đã nộp đơn cho công việc này rồi",
+          code: -1,
+        });
+      }
+
+      // Tạo đơn ứng tuyển mới
+      const application = await JobApplication.create({
+        application_id: this.generateApplicationId(),
+        user_id: userId,
+        job_id: job_id,
+        applied_at: new Date(),
+        status: 'Đang xét duyệt',
+      });
+
+      return res.status(201).json({
+        message: "Nộp đơn thành công",
+        code: 1,
+        application,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
+
+  // Thêm vào UserController
+  async checkApplicationStatus(req, res) {
+    const { job_id } = req.params;
+    const userId = req.user.id;
+
+    try {
+      const application = await JobApplication.findOne({
+        where: {
+          user_id: userId,
+          job_id: job_id,
+        },
+      });
+
+      if (application) {
+        return res.status(200).json({
+          message: "Bạn đã ứng tuyển cho công việc này.",
+          code: 1,
+          applied: true,
+        });
+      } else {
+        return res.status(200).json({
+          message: "Bạn chưa ứng tuyển cho công việc này.",
+          code: 1,
+          applied: false,
+        });
+      }
+    } catch (error) {
+      return res.status(500).json({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
+
+  // Thêm vào UserController
+  async withdrawApplication(req, res) {
+    const { job_id } = req.body;
+    const userId = req.user.id;
+
+    try {
+      const application = await JobApplication.findOne({
+        where: {
+          user_id: userId,
+          job_id: job_id,
+        },
+      });
+
+      if (!application) {
+        return res.status(404).json({
+          message: "Không tìm thấy đơn ứng tuyển",
+          code: -1,
+        });
+      }
+
+      await application.destroy();
+
+      return res.status(200).json({
+        message: "Đơn ứng tuyển đã được hủy thành công",
+        code: 1,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error.message,
+        code: -1,
       });
     }
   }

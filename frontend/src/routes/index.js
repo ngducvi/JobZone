@@ -59,7 +59,9 @@ import RecruiterJobs from '~/pages/Recruiter/Jobs/RecruiterJobs';
 import RecruiterReports from '~/pages/Recruiter/Reports/RecruiterReports';
 import RecruiterMyServices from '~/pages/Recruiter/MyServices/RecruiterMyServices';
 import RecruiterSettings from '~/pages/Recruiter/Settings/RecruiterSettings';
-
+import SearchCandidate from '~/pages/Recruiter/SearchCandidate/SearchCandidate';
+import CandidateDetail from '~/pages/Recruiter/CandidateDetail/CandidateDetail';
+import PostJob from '~/pages/Recruiter/PostJob/PostJob';
 
 const publicRoutes = [
     { path: '/', component: Dashboard },
@@ -106,6 +108,9 @@ const publicRoutes = [
     { path: '/recruiter/reports', component: RecruiterReports , layout: RecruiterLayout},
     { path: '/recruiter/my-services', component: RecruiterMyServices , layout: RecruiterLayout},
     { path: '/recruiter/settings', component: RecruiterSettings , layout: RecruiterLayout},
+    { path: '/recruiter/search-candidate', component: SearchCandidate , layout: RecruiterLayout},
+    { path: '/recruiter/candidate-detail/:candidate_id', component: CandidateDetail, layout: RecruiterLayout },
+    { path: '/recruiter/post-job', component: PostJob, layout: RecruiterLayout },
     { path: '/loading', component: LoadingPage, layout: null },
     { path: '/career-handbook/job-hunting', component: JobHunting },
     { path: '/career-handbook/industry-knowledge', component: IndustryKnowledge },

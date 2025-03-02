@@ -1,0 +1,105 @@
+.wrapper {
+  padding: 24px;
+  background: rgba(1, 58, 116, 0.8);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  color: #ffffff;
+}
+
+h1 {
+  font-size: 28px;
+  color: #ffffff;
+  margin-bottom: 24px;
+  text-align: center;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.form-group {
+  margin-bottom: 16px;
+
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #ffffff;
+  }
+
+  input,
+  textarea,
+  select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    transition: border-color 0.3s ease;
+
+    &:focus {
+      border-color: #02a346;
+      outline: none;
+      box-shadow: 0 0 5px rgba(2, 163, 70, 0.5);
+    }
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+}
+
+.submit-btn {
+  background: #02a346;
+  color: #ffffff;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+
+  &:hover {
+    background: #028a3c;
+    transform: translateY(-2px);
+  }
+}
+
+.error-message {
+  color: #dc2626;
+  margin-bottom: 16px;
+}
+
+.success-message {
+  color: #4caf50;
+  margin-bottom: 16px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.button-group {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.preview-btn {
+  background: #f9c74f;
+  color: #ffffff;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+
+  &:hover {
+    background: #f9b24f;
+    transform: translateY(-2px);
+  }
+}

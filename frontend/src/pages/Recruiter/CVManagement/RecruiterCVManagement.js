@@ -4,10 +4,12 @@ import styles from "./RecruiterCVManagement.module.scss";
 import { authAPI, userApis, recruiterApis } from "~/utils/api";
 import UserContext from "~/context/UserContext";
 import images from "~/assets/images";
-
+import { FaTimes } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 const cx = classNames.bind(styles);
 
 const JOB_STATUS = {
+  // tất cả tin
   Active: {
     label: "Đang hiển thị",
     color: "#02a346",
@@ -26,7 +28,18 @@ const JOB_STATUS = {
   },
 };
 
+const APPLICATION_STATUS = [
+  "Đang xét duyệt",
+  "Chờ phỏng vấn",
+  "Đã phỏng vấn",
+  "Đạt phỏng vấn",
+  "Đã nhận",
+  "Đã từ chối",
+  "Hết hạn",
+];
+
 function RecruiterCVManagement() {
+  const navigate = useNavigate();
   const { user } = useContext(UserContext);
   const [activeTab, setActiveTab] = useState("all");
   const [jobs, setJobs] = useState([]);
@@ -38,6 +51,9 @@ function RecruiterCVManagement() {
     expiredJobs: 0,
     draftJobs: 0,
   });
+  const [showModal, setShowModal] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [applications, setApplications] = useState([]);
 
   const token = localStorage.getItem("token");
 
@@ -103,48 +119,60 @@ function RecruiterCVManagement() {
       ? jobs
       : jobs.filter((job) => job.status.toLowerCase() === activeTab);
 
+  const handleJobClick = async (job) => {
+    setSelectedJob(job);
+    setShowModal(true);
+  };
+
+  const handleStatusChange = async (applicationId, newStatus) => {
+    try {
+      await authAPI().post(recruiterApis.editJobApplicationStatus, {
+        job_application_id: applicationId,
+        status: newStatus,
+      });
+      // Cập nhật lại danh sách ứng viên sau khi thay đổi trạng thái
+      const updatedApplications = jobApplications[selectedJob.job_id].map(
+        (application) => {
+          if (application.application_id === applicationId) {
+            return { ...application, status: newStatus };
+          }
+          return application;
+        }
+      );
+      setJobApplications((prev) => ({
+        ...prev,
+        [selectedJob.job_id]: updatedApplications,
+      }));
+    } catch (error) {
+      console.error("Error updating application status:", error);
+    }
+  };
+
+  const handleCandidateClick = (candidateId) => {
+    console.log("Clicking candidate with ID:", candidateId);
+    navigate(`/recruiter/candidate-detail/${candidateId}`);
+  };
+
+  const getApplicationCountByStatus = (status) => {
+    return (
+      jobApplications[selectedJob?.job_id]?.filter(
+        (app) => app.status === status
+      ).length || 0
+    );
+  };
+
   return (
     <div className={cx("wrapper")}>
       <div className={cx("header-section")}>
         <div className={cx("title-section")}>
           <h1>Quản lý CV Ứng Viên</h1>
-          <button className={cx("create-job-btn")}>
+          <button
+            className={cx("create-job-btn")}
+            onClick={() => navigate("/recruiter/post-job")}
+          >
             <i className="fa-solid fa-plus"></i>
             Đăng tin tuyển dụng
           </button>
-        </div>
-
-        <div className={cx("stats-section")}>
-          <div className={cx("stats-grid")}>
-            <div className={cx("stat-card")}>
-              <i className="fa-solid fa-briefcase"></i>
-              <div className={cx("stat-info")}>
-                <span className={cx("stat-value")}>{jobStats.totalJobs}</span>
-                <span className={cx("stat-label")}>Tổng tin tuyển dụng</span>
-              </div>
-            </div>
-            <div className={cx("stat-card")}>
-              <i className="fa-solid fa-circle-check"></i>
-              <div className={cx("stat-info")}>
-                <span className={cx("stat-value")}>{jobStats.activeJobs}</span>
-                <span className={cx("stat-label")}>Tin đang hiển thị</span>
-              </div>
-            </div>
-            <div className={cx("stat-card")}>
-              <i className="fa-solid fa-circle-xmark"></i>
-              <div className={cx("stat-info")}>
-                <span className={cx("stat-value")}>{jobStats.expiredJobs}</span>
-                <span className={cx("stat-label")}>Tin hết hạn</span>
-              </div>
-            </div>
-            <div className={cx("stat-card")}>
-              <i className="fa-solid fa-file-lines"></i>
-              <div className={cx("stat-info")}>
-                <span className={cx("stat-value")}>{jobStats.draftJobs}</span>
-                <span className={cx("stat-label")}>Tin nháp</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -223,17 +251,136 @@ function RecruiterCVManagement() {
               </div>
 
               <div className={cx("job-actions")}>
-                <button className={cx("action-btn", "edit")}>
-                  <i className="fa-solid fa-pen"></i>Chỉnh sửa
+                {/* button chi tiết và danh sách ứng viên */}
+                <button className={cx("action-btn", "detail")}>
+                  <i className="fa-solid fa-eye"></i>
+                  Chi tiết
                 </button>
-                <button className={cx("action-btn", "delete")}>
-                  <i className="fa-solid fa-trash"></i>Xóa
+                <button
+                  className={cx("action-btn", "applicants")}
+                  onClick={() => handleJobClick(job)}
+                >
+                  <i className="fa-solid fa-users"></i>
+                  Danh sách ứng viên
                 </button>
               </div>
             </div>
           ))}
         </div>
       </div>
+
+      {showModal && (
+        <div className={cx("modal-overlay")}>
+          <div className={cx("modal")}>
+            <div className={cx("modal-header")}>
+              <h3>Thông tin ứng viên cho {selectedJob?.title}</h3>
+              <button
+                className={cx("close-btn")}
+                onClick={() => setShowModal(false)}
+              >
+                <FaTimes />
+              </button>
+            </div>
+            <div className={cx("modal-content")}>
+              <div className={cx("tabs")}>
+                {APPLICATION_STATUS.map((status) => (
+                  <button
+                    key={status}
+                    className={cx("tab", { active: activeTab === status })}
+                    onClick={() => setActiveTab(status)}
+                  >
+                    {status} ({getApplicationCountByStatus(status)})
+                  </button>
+                ))}
+              </div>
+              {jobApplications[selectedJob?.job_id]?.length > 0 ? (
+                <table className={cx("candidate-table")}>
+                  <thead>
+                    <tr>
+                      <th>Tên</th>
+                      <th>Địa điểm</th>
+                      <th>Lương</th>
+                      <th>Trạng thái CV</th>
+                      <th>CV</th>
+                      <th>Về tôi</th>
+                      <th>Mục tiêu nghề nghiệp</th>
+                      <th>Thay đổi trạng thái</th>
+                      <th>Chi tiết</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {jobApplications[selectedJob?.job_id]
+                      .filter((application) => application.status === activeTab)
+                      .map((application) => (
+                        <tr key={application.application_id}>
+                          <td>{application.user.name || "Không có tên"}</td>
+                          <td>
+                            {application.candidate.location ||
+                              "Không có địa điểm"}
+                          </td>
+                          <td>
+                            $
+                            {application.candidate.current_salary ||
+                              "Không có thông tin"}
+                          </td>
+                          <td>{application.status || "Không có thông tin"}</td>
+                          <td>
+                            <a
+                              href={application.candidate.CV_link}
+                              className={cx("download-btn")}
+                            >
+                              Tải CV
+                            </a>
+                          </td>
+                          <td>
+                            {application.candidate.about_me ||
+                              "Không có thông tin"}
+                          </td>
+                          <td>
+                            {application.candidate.career_objective ||
+                              "Không có thông tin"}
+                          </td>
+                          <td>
+                            <select
+                              value={application.status}
+                              onChange={(e) =>
+                                handleStatusChange(
+                                  application.application_id,
+                                  e.target.value
+                                )
+                              }
+                            >
+                              {APPLICATION_STATUS.map((status) => (
+                                <option key={status} value={status}>
+                                  {status}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td>
+                            <button
+                              className={cx("action-btn", "detail")}
+                              onClick={() =>
+                                handleCandidateClick(
+                                  application.candidate.candidate_id
+                                )
+                              }
+                            >
+                              <i className="fa-solid fa-eye"></i>
+                              Chi tiết
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p>Không có ứng viên nào cho công việc này.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

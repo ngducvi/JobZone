@@ -4,6 +4,7 @@ import styles from "./RecruiterJobs.module.scss";
 import { authAPI, userApis, recruiterApis } from "~/utils/api";
 import UserContext from "~/context/UserContext";
 import images from "~/assets/images";
+import { useNavigate } from "react-router-dom";
 
 const cx = classNames.bind(styles);
 
@@ -15,6 +16,7 @@ const JOB_STATUS = {
 };
 
 function RecruiterJobs() {
+  const navigate = useNavigate();
   const { user } = useContext(UserContext);
   const [activeTab, setActiveTab] = useState('all');
   const [jobs, setJobs] = useState([]);
@@ -80,7 +82,7 @@ function RecruiterJobs() {
       <div className={cx('header-section')}>
         <div className={cx('title-section')}>
           <h1>Quản lý Tin Tuyển Dụng</h1>
-          <button className={cx('create-job-btn')}>
+          <button className={cx('create-job-btn')} onClick={() => navigate('/recruiter/post-job')}>
             <i className="fa-solid fa-plus"></i>
             Đăng tin tuyển dụng
           </button>

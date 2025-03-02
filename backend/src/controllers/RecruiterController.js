@@ -403,16 +403,148 @@ class RecruiterController {
       res.status(400).send(error);
     }
   }
+
   // get all job_application by job_id
   async getAllJobApplicationsByJobId(req, res) {
     try {
       const jobId = req.params.job_id;
       const jobApplications = await JobApplication.findAll({ where: { job_id: jobId } });
-      return res.json({ jobApplications: jobApplications });
+      
+      // Lấy tất cả user_id từ jobApplications
+      const userIds = jobApplications.map((jobApplication) => jobApplication.user_id);
+      
+      // Lấy thông tin người dùng
+      const users = await User.findAll({ where: { id: { [Op.in]: userIds } } });
+
+      // Lấy thông tin ứng viên
+      const candidates = await Candidate.findAll({ where: { user_id: { [Op.in]: userIds } } });
+
+      // Kết hợp thông tin người dùng và ứng viên vào jobApplications
+      const applicationsWithDetails = jobApplications.map((application) => {
+        const user = users.find((u) => u.id === application.user_id);
+        const candidate = candidates.find((c) => c.user_id === application.user_id);
+        return {
+          ...application.get({ plain: true }),
+          user: user || null, // Thêm thông tin người dùng vào kết quả
+          candidate: candidate || null, // Thêm thông tin ứng viên vào kết quả
+        };
+      });
+
+      return res.json({ jobApplications: applicationsWithDetails });
     } catch (error) {
       res.status(400).send(error);
     }
   }
+
+  // get all candidate
+  async getAllCandidate(req, res) {
+    try {
+      const candidates = await Candidate.findAll();
+      const userIds = candidates.map((candidate) => candidate.user_id);
+      const users = await User.findAll({
+        where: { id: { [Op.in]: userIds } },
+        attributes: ["id", "name", "email", "phone", "created_at"], // Only select needed fields
+      });
+
+      // Replace user_id with user object in candidates
+      const candidatesWithUsers = candidates.map((candidate) => {
+        const candidateObj = candidate.get({ plain: true }); // Convert to plain object
+        const user = users.find((user) => user.id === candidate.user_id);
+        delete candidateObj.user_id; // Remove user_id
+        return {
+          ...candidateObj,
+          user: user,
+        };
+      });
+
+      return res.status(200).json({
+        message: "Lấy danh sách ứng viên thành công",
+        code: 1,
+        candidates: candidatesWithUsers,
+      });
+    } catch (error) {
+      return res.status(400).json({
+        message: "Lỗi khi lấy danh sách ứng viên",
+        code: -1,
+        error: error.message,
+      });
+    }
+  }
+  // edit job_application status
+  async editJobApplicationStatus(req, res) {
+    try {
+      const { job_application_id, status } = req.body;
+      const jobApplication = await JobApplication.findByPk(job_application_id);
+      jobApplication.status = status;
+      await jobApplication.save();
+      return res.json({ message: "Cập nhật trạng thái thành công", code: 1 });
+    } catch (error) {
+      res.status(400).send(error);
+    }
+  }
+  // get job_application by job_id
+  async getJobApplicationByJobId(req, res) {
+    try {
+      const jobId = req.params.job_id;
+      const jobApplications = await JobApplication.findAll({
+        where: { job_id: jobId },
+      });
+      const userIds = jobApplications.map(
+        (jobApplication) => jobApplication.user_id
+      );
+      const users = await User.findAll({ where: { id: { [Op.in]: userIds } } });
+      return res.json({ jobApplications: jobApplications, users: users });
+    } catch (error) {
+      res.status(400).send(error);
+    }
+  }
+  // get candidate detail by candidate_id
+  async getCandidateDetailByCandidateId(req, res) {
+    try {
+      const candidateId = req.params.candidate_id;
+      const user_id = req.user.id;
+      const candidate = await Candidate.findByPk(candidateId);
+      // get candidateExperiences by candidate_id
+      const candidateExperiences = await CandidateExperiences.findAll({
+        where: { candidate_id: candidateId },
+      });
+      // get candidateEducation by candidate_id
+      const candidateEducation = await CandidateEducation.findAll({
+        where: { candidate_id: candidateId },
+      });
+      // get candidateCertifications by candidate_id
+      const candidateCertifications = await CandidateCertifications.findAll({
+        where: { candidate_id: candidateId },
+      });
+      // get candidateProjects by candidate_id
+      const candidateProjects = await CandidateProjects.findAll({
+        where: { candidate_id: candidateId },
+      });
+      // get candidateLanguages by candidate_id
+      const candidateLanguages = await CandidateLanguages.findAll({
+        where: { candidate_id: candidateId },
+      });
+      // get candidateCvs by candidate_id
+      const candidateCvs = await CandidateCv.findAll({
+        where: { user_id: user_id },
+      });
+      // get user by user_id từ candidate
+      const user = await User.findByPk(candidate.user_id);
+      return res.json({
+        candidate: candidate,
+        candidateExperiences: candidateExperiences,
+        candidateEducation: candidateEducation,
+        candidateCertifications: candidateCertifications,
+        candidateProjects: candidateProjects,
+        candidateLanguages: candidateLanguages,
+        candidateCvs: candidateCvs,
+        user: user,
+      });
+    } catch (error) {
+      res.status(400).send(error);
+    }
+  }
+  // get
 }
 
 module.exports = new RecruiterController();

@@ -12,7 +12,6 @@ const ViewdJob = () => {
   const [viewdJobs, setviewdJobs] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
-  const [user, setUser] = useState(null);
   const [savedStatus, setSavedStatus] = useState({});
   const navigate = useNavigate();
 

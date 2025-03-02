@@ -116,6 +116,9 @@ export const userApis = {
     clearViewedJobs: '/user/viewed-jobs/clear',
     deleteViewedJob: (jobId) => `/user/viewed-jobs/${jobId}`,
     getAllJobsByCompanyId: (companyId) => `/user/jobs/company/${companyId}`,
+    applyJob: '/user/apply-job',
+    checkApplicationStatus: (job_id) => `/user/check-application-status/${job_id}`,
+    withdrawApplication: '/user/withdraw-application',
 };
 
 
@@ -127,6 +130,11 @@ export const recruiterApis = {
     getDashboardStats: '/recruiter/dashboard-stats',
     getAllJobsByCompanyId: (company_id) => `/recruiter/jobs/${company_id}`,
     getAllJobApplicationsByJobId: (job_id) => `/recruiter/job-applications/${job_id}`,
+    getAllCandidate: '/recruiter/candidates',
+    getCandidateDetailByCandidateId: (candidate_id) => `/recruiter/candidate-detail/${candidate_id}`,
+    getJobApplicationByJobId: (job_id) => `/recruiter/job-application/${job_id}`,
+    getCandidateByJobId: (job_id) => `/recruiter/job-application/${job_id}`,
+    editJobApplicationStatus: '/recruiter/edit-job-application-status',
 };
 
 export const usageApis = {
