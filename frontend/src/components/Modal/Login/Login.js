@@ -76,7 +76,6 @@ function Login() {
 
   return (
     <form autoComplete="off" onSubmit={handleSubmit}>
-      <h1>Đăng nhập User</h1>
       <InputWrapper>
         <div className={cx("label-group")}>
           <label className={cx("label")}>Tên đăng nhập</label>

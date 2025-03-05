@@ -5,6 +5,7 @@ import styles from "./PostJob.module.scss";
 import { authAPI, recruiterApis, userApis } from "~/utils/api";
 import { useNavigate } from "react-router-dom";
 import UserContext from "~/context/UserContext";
+import { toast } from "react-toastify";
 
 const cx = classNames.bind(styles);
 
@@ -31,6 +32,138 @@ const categories = [
     { value: '1f25e3ee-ce9e-11ef-9430-2cf05db24bc7', name: 'Software Engineering' },
 ];
 
+// Preview Modal Component
+const PreviewJobModal = ({ isOpen, onClose, jobDetails, companyInfo }) => {
+  if (!isOpen) return null;
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "Chưa cập nhật";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("vi-VN", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const formatContent = (text) => {
+    if (!text) return <p>Chưa cập nhật</p>;
+    return text.split("\n").map((paragraph, index) => {
+      if (paragraph.trim().startsWith("- ")) {
+        return (
+          <ul key={index}>
+            <li>{paragraph.trim().substring(2)}</li>
+          </ul>
+        );
+      }
+      return <p key={index}>{paragraph}</p>;
+    });
+  };
+
+  return (
+    <div className={cx("modal-overlay")}> 
+      <div className={cx("modal-content")}> 
+        <button className={cx("close-btn")} onClick={onClose}>
+          <i className="fa-solid fa-times"></i>
+        </button>
+
+        <div className={cx("job-main")}> 
+          <div className={cx("job-header")}> 
+            <div className={cx("company-info")}> 
+              <div className={cx("company-logo")}>LOGO</div> 
+              <div className={cx("company-name")}> 
+                AutoMotors
+                <div className={cx("posting-date")}>Hạn nộp: {formatDate(jobDetails.deadline)}</div>
+              </div>
+            </div>
+
+            <h1 className={cx("job-title")}>{jobDetails.title}</h1>
+
+            <div className={cx("job-meta")}> 
+              <div className={cx("meta-item")}> 
+                <i className="fa-solid fa-money-bill"></i>
+                {jobDetails.salary}
+              </div> 
+              <div className={cx("meta-item")}> 
+                <i className="fa-solid fa-location-dot"></i>
+                {jobDetails.location}
+              </div> 
+              <div className={cx("meta-item")}> 
+                <i className="fa-solid fa-briefcase"></i>
+                {jobDetails.jobType}
+              </div> 
+              <div className={cx("meta-item")}> 
+                <i className="fa-solid fa-clock"></i>
+                {jobDetails.experience}
+              </div> 
+            </div> 
+          </div>
+
+          <div className={cx("job-content")}> 
+            <div className={cx("job-section")}> 
+              <h3> 
+                <i className="fa-solid fa-circle-info"></i>
+                Mô tả công việc
+              </h3> 
+              <div className={cx("section-content")}>{formatContent(jobDetails.description)}</div> 
+            </div>
+
+            <div className={cx("job-section")}> 
+              <h3> 
+                <i className="fa-solid fa-list-check"></i>
+                Yêu cầu công việc
+              </h3> 
+              <div className={cx("section-content")}>{formatContent(jobDetails.jobRequirements)}</div> 
+            </div>
+
+            <div className={cx("job-section")}> 
+              <h3> 
+                <i className="fa-solid fa-gift"></i>
+                Quyền lợi
+              </h3> 
+              <div className={cx("section-content")}>{formatContent(jobDetails.benefits)}</div> 
+            </div> 
+          </div> 
+        </div>
+
+        <div className={cx("company-sidebar")}> 
+          <div className={cx("sidebar-section")}> 
+            <h4>Thông tin chung</h4> 
+            <div className={cx("company-stats")}> 
+              <div className={cx("stat-item")}> 
+                <i className="fa-solid fa-users"></i>
+                100-499 nhân viên
+              </div> 
+              <div className={cx("stat-item")}> 
+                <i className="fa-solid fa-building"></i>
+                Bán lẻ - Hàng tiêu dùng - FMCG
+              </div> 
+              <div className={cx("stat-item")}> 
+                <i className="fa-solid fa-location-dot"></i>
+                123 Car St, MI
+              </div> 
+            </div> 
+            <a href="#" className={cx("company-link")}> 
+              Xem trang công ty
+              <i className="fa-solid fa-arrow-right"></i>
+            </a> 
+          </div>
+
+          <div className={cx("action-buttons")}> 
+            <button className={cx("apply-btn")}> 
+              <i className="fa-solid fa-paper-plane"></i>
+              Ứng tuyển ngay
+            </button> 
+            <button className={cx("save-btn")}> 
+              <i className="fa-regular fa-bookmark"></i>
+            </button> 
+          </div> 
+        </div> 
+      </div> 
+    </div> 
+  );
+};
+
 function PostJob() {
   const { user } = useContext(UserContext);
   const [jobTitle, setJobTitle] = useState("");
@@ -53,6 +186,7 @@ function PostJob() {
   const [companyInfo, setCompanyInfo] = useState({});
   const [companyId, setCompanyId] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -125,22 +259,7 @@ function PostJob() {
   };
 
   const handlePreview = () => {
-    console.log("Previewing job:", {
-      jobTitle,
-      description,
-      email,
-      specialisms,
-      salary,
-      username,
-      jobType,
-      careerLevel,
-      experience,
-      location,
-      benefits,
-      jobRequirements,
-      companyId,
-      categoryId,
-    });
+    setIsPreviewModalOpen(true);
   };
 
   return (
@@ -344,6 +463,26 @@ function PostJob() {
           </button>
         </div>
       </form>
+      <PreviewJobModal 
+        isOpen={isPreviewModalOpen} 
+        onClose={() => setIsPreviewModalOpen(false)} 
+        jobDetails={{
+          title: jobTitle,
+          description,
+          salary,
+          location,
+          experience,
+          jobType,
+          rank: careerLevel,
+          deadline,
+          benefits,
+          jobRequirements,
+          workingLocation: location,
+          status: "Đã đăng",
+          categoryId,
+        }}
+        companyInfo={companyInfo}
+      />
     </div>
   );
 }
