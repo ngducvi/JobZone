@@ -34,6 +34,29 @@ const CandidateProjects = require("../models/CandidateProjects");
 const RecruiterCompanies = require("../models/RecruiterConpanies");
 
 class RecruiterController {
+  constructor() {
+    this.generateEducationId = () => {
+      return "edu-" + Math.random().toString(36).substr(2, 9);
+    };
+    this.generateExperienceId = () => {
+      return "exp-" + Math.random().toString(36).substr(2, 9);
+    };
+    this.generateLanguagesId = () => {
+      return "lang-" + Math.random().toString(36).substr(2, 9);
+    };
+    this.generateCertificationsId = () => {
+      return "cert-" + Math.random().toString(36).substr(2, 9);
+    };
+    this.generateProjectsId = () => {
+      return "proj-" + Math.random().toString(36).substr(2, 9);
+    };
+    this.generateApplicationId = () => {
+      return "app-" + Math.random().toString(36).substr(2, 9);
+    };
+    this.generateJobId = () => {
+      return "job-" + Math.random().toString(36).substr(2, 9);
+    };
+  }
   async verifyEmail(req, res) {
     const token = req.query.token;
     const user = cacheService.get(token);
@@ -408,21 +431,29 @@ class RecruiterController {
   async getAllJobApplicationsByJobId(req, res) {
     try {
       const jobId = req.params.job_id;
-      const jobApplications = await JobApplication.findAll({ where: { job_id: jobId } });
-      
+      const jobApplications = await JobApplication.findAll({
+        where: { job_id: jobId },
+      });
+
       // Lấy tất cả user_id từ jobApplications
-      const userIds = jobApplications.map((jobApplication) => jobApplication.user_id);
-      
+      const userIds = jobApplications.map(
+        (jobApplication) => jobApplication.user_id
+      );
+
       // Lấy thông tin người dùng
       const users = await User.findAll({ where: { id: { [Op.in]: userIds } } });
 
       // Lấy thông tin ứng viên
-      const candidates = await Candidate.findAll({ where: { user_id: { [Op.in]: userIds } } });
+      const candidates = await Candidate.findAll({
+        where: { user_id: { [Op.in]: userIds } },
+      });
 
       // Kết hợp thông tin người dùng và ứng viên vào jobApplications
       const applicationsWithDetails = jobApplications.map((application) => {
         const user = users.find((u) => u.id === application.user_id);
-        const candidate = candidates.find((c) => c.user_id === application.user_id);
+        const candidate = candidates.find(
+          (c) => c.user_id === application.user_id
+        );
         return {
           ...application.get({ plain: true }),
           user: user || null, // Thêm thông tin người dùng vào kết quả
@@ -544,7 +575,195 @@ class RecruiterController {
       res.status(400).send(error);
     }
   }
-  // get
+  //   job_id: {
+  //     type: DataTypes.STRING,
+  //     primaryKey: true,
+  // },
+  // title: {
+  //     type: DataTypes.STRING,
+  //     allowNull: false,
+  // },
+  // description: {
+  //     type: DataTypes.TEXT,
+  //     allowNull: true,
+  // },
+  // salary: {
+  //     type: DataTypes.STRING,
+  //     allowNull: true,
+  // },
+  // location: {
+  //     type: DataTypes.STRING,
+  //     allowNull: true,
+  // },
+  // experience: {
+  //     type: DataTypes.STRING,
+  //     allowNull: true,
+  // },
+  // benefits: {
+  //     type: DataTypes.TEXT,
+  //     allowNull: true,
+  // },
+  // job_requirements: {
+  //     type: DataTypes.TEXT,
+  //     allowNull: true,
+  // },
+  // working_time: {
+  //     type: DataTypes.STRING,
+  //     allowNull: true,
+  // },
+  // working_location: {
+  //     type: DataTypes.STRING,
+  //     allowNull: true,
+  // },
+  // status: {
+  //     type: DataTypes.ENUM('Active', 'Closed'),
+  //     defaultValue: 'Active',
+  // },
+  // company_id: {
+  //     type: DataTypes.INTEGER,
+  //     allowNull: false,
+  //     references: {
+  //         model: Company,
+  //         key: 'company_id',
+  //     },
+  // },
+  // category_id: {
+  //     type: DataTypes.INTEGER,
+  //     allowNull: true,
+  //     references: {
+  //         model: Category,
+  //         key: 'category_id',
+  //     },
+  // },
+  // deadline: {
+  //     type: DataTypes.DATE,
+  //     allowNull: true,
+  // },
+  // job_embedding: {
+  //     type: DataTypes.TEXT,
+  //     allowNull: true,
+  // },
+  // created_at: {
+  //     type: DataTypes.DATE,
+  //     allowNull: true,
+  // },
+  // created_by: {
+  //     type: DataTypes.STRING,
+  //     allowNull: true,
+  // },
+  // last_modified_at: {
+  //     type: DataTypes.DATE,
+  //     allowNull: true,
+  // },
+  // last_modified_by: {
+  //     type: DataTypes.STRING,
+  //     allowNull: true,
+  // },
+  // version: {
+  //     type: DataTypes.INTEGER,
+  //     defaultValue: 1,
+  // },
+  // quantity: {
+  //     type: DataTypes.INTEGER,
+  //     allowNull: true,
+  // },
+  // rank: {
+  //     type: DataTypes.STRING,
+  //     allowNull: true,
+  // },
+  // education: {
+  //     type: DataTypes.STRING,
+  //     allowNull: true,
+  // },
+  // post job với job_id với company_id và category_id
+  async postJob(req, res) {
+    try {
+      const job = await Job.create({
+        job_id: this.generateJobId(),
+        company_id: req.body.company_id,
+        title: req.body.title,
+        description: req.body.description,
+        salary: req.body.salary,
+        location: req.body.location,
+        experience: req.body.experience,
+        benefits: req.body.benefits,
+        job_requirements: req.body.job_requirements,
+        working_time: req.body.working_time,
+        working_location: req.body.working_location,
+        status: req.body.status,
+        version: 1,
+        quantity: 1,
+        rank: req.body.rank,
+        education: req.body.education,
+        created_at: new Date(),
+        created_by: req.body.created_by,
+        last_modified_at: new Date(),
+        last_modified_by: req.body.last_modified_by,
+        deadline: req.body.deadline,
+        category_id: req.body.category_id,
+      });
+      return res.json({
+        message: "Đăng tin tuyển dụng thành công",
+        code: 1,
+        job: job,
+      });
+    } catch (error) {
+      console.error("Error posting job:", error);
+      res
+        .status(400)
+        .send({
+          message: "Đã xảy ra lỗi khi đăng tin tuyển dụng.",
+          error: error.message,
+        });
+    }
+  }
+  // get job by job_id
+  async getJobByJobId(req, res) {
+    try {
+      const jobId = req.params.job_id;
+      const job = await Job.findByPk(jobId);
+      return res.json({ job: job });
+    } catch (error) {
+      res.status(400).send(error);
+    }
+  }
+  // edit job
+  async editJob(req, res) {
+    try {
+      const jobId = req.params.job_id;
+      const job = await Job.findByPk(jobId);
+      job.title = req.body.title;
+      job.description = req.body.description;
+      job.salary = req.body.salary;
+      job.location = req.body.location;
+      job.experience = req.body.experience;
+      job.benefits = req.body.benefits;
+      job.job_requirements = req.body.job_requirements;
+      job.working_time = req.body.working_time;
+      job.working_location = req.body.working_location;
+      job.status = req.body.status;
+      job.category_id = req.body.category_id;
+      job.deadline = req.body.deadline;
+      await job.save();
+      return res.json({
+        message: "Cập nhật tin tuyển dụng thành công",
+        code: 1,
+        job: job,
+      });
+    } catch (error) {
+      res.status(400).send(error);
+    }
+  }
+  // delete job by job_id
+  async deleteJob(req, res) {
+    try {
+      const jobId = req.params.job_id;
+      await Job.destroy({ where: { job_id: jobId } });
+      return res.json({ message: "Xóa tin tuyển dụng thành công", code: 1 });
+    } catch (error) {
+      res.status(400).send(error);
+    }
+  }
 }
 
 module.exports = new RecruiterController();

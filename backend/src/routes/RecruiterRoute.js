@@ -19,4 +19,8 @@ router.get('/job-applications/:job_id', recruiterController.getAllJobApplication
 router.get('/candidates', recruiterController.getAllCandidate.bind(recruiterController));
 router.get('/candidate-detail/:candidate_id', recruiterController.getCandidateDetailByCandidateId.bind(recruiterController));
 router.post('/edit-job-application-status', recruiterController.editJobApplicationStatus.bind(recruiterController));
+router.post('/post-job', recruiterController.postJob.bind(recruiterController));
+router.post('/edit-job/:job_id', recruiterController.editJob.bind(recruiterController));
+router.get('/job/:job_id', recruiterController.getJobByJobId.bind(recruiterController));
+router.delete('/delete-job/:job_id', recruiterController.deleteJob.bind(recruiterController));
 module.exports = router;

@@ -48,8 +48,8 @@ Job.init({
         allowNull: true,
     },
     status: {
-        type: DataTypes.ENUM('Active', 'Closed'),
-        defaultValue: 'Active',
+        type: DataTypes.ENUM('Active', 'Closed','Pending'),
+        defaultValue: 'Pending',
     },
     company_id: {
         type: DataTypes.INTEGER,

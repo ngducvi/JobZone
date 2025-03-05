@@ -292,3 +292,324 @@
     justify-content: center;
   }
 }
+
+// Modal Styles
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(1, 58, 116, 0.75);
+  backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  animation: fadeIn 0.3s ease forwards;
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  padding: 0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 700px;
+  max-height: 85vh;
+  overflow: hidden;
+  transform: translateY(20px);
+  animation: slideUp 0.4s ease forwards;
+  display: flex;
+  flex-direction: column;
+  
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  
+  h2 {
+    margin: 0;
+    padding: 24px;
+    color: white;
+    background: linear-gradient(135deg, #013a74 0%, #02a346 100%);
+    border-radius: 16px 16px 0 0;
+    font-size: 22px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    
+    &::before {
+      content: '';
+      width: 6px;
+      height: 24px;
+      background: white;
+      border-radius: 3px;
+      margin-right: 12px;
+    }
+  }
+  
+  form {
+    padding: 24px;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+    
+    .form-group {
+      margin-bottom: 0;
+      position: relative;
+      transition: all 0.3s ease;
+      
+      &:hover {
+        transform: translateY(-2px);
+      }
+      
+      &:nth-child(3), &:nth-child(9), &:nth-child(10), &:nth-child(11) {
+        grid-column: span 2;
+        
+        @media (max-width: 768px) {
+          grid-column: span 1;
+        }
+      }
+      
+      label {
+        display: block;
+        margin-bottom: 8px;
+        color: #1e293b;
+        font-weight: 500;
+        font-size: 14px;
+        transition: color 0.3s ease;
+      }
+      
+      input, select, textarea {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        background: #f8fafc;
+        color: #1e293b;
+        font-size: 15px;
+        transition: all 0.3s ease;
+        
+        &:focus {
+          outline: none;
+          border-color: #013a74;
+          background: white;
+          box-shadow: 0 0 0 3px rgba(1, 58, 116, 0.1);
+        }
+        
+        &:hover {
+          border-color: #94a3b8;
+        }
+      }
+      
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+      
+      select {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23013a74' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 16px center;
+        padding-right: 40px;
+        
+        option {
+          padding: 10px;
+        }
+      }
+    }
+  }
+  
+  .button-group {
+    grid-column: span 2;
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    padding: 20px 24px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    margin-top: 20px;
+    border-radius: 0 0 16px 16px;
+    
+    @media (max-width: 768px) {
+      grid-column: span 1;
+      flex-direction: column;
+    }
+    
+    button {
+      padding: 12px 28px;
+      border-radius: 10px;
+      font-weight: 500;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      
+      &::before {
+        content: '';
+        margin-right: 10px;
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+      }
+    }
+    
+    .submit-btn {
+      background: linear-gradient(135deg, #013a74 0%, #02a346 100%);
+      color: white;
+      box-shadow: 0 4px 10px rgba(1, 58, 116, 0.2);
+      
+      &::before {
+        content: '\f0c7'; // save icon
+      }
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(1, 58, 116, 0.3);
+      }
+      
+      &:active {
+        transform: translateY(1px);
+      }
+    }
+    
+    .cancel-btn {
+      background: white;
+      color: #64748b;
+      border: 2px solid #e2e8f0;
+      
+      &::before {
+        content: '\f00d'; // times icon
+      }
+      
+      &:hover {
+        background: #f1f5f9;
+        color: #dc2626;
+        border-color: #dc2626;
+      }
+    }
+  }
+  
+  // Custom scrollbar
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 10px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 10px;
+    
+    &:hover {
+      background: #64748b;
+    }
+  }
+}
+
+// Add a nice loading effect for form elements
+@keyframes formElementsAppear {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-group {
+  animation: formElementsAppear 0.5s ease forwards;
+  
+  @for $i from 1 through 15 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.05}s;
+    }
+  }
+}
+
+// Add a pulsing effect for the submit button
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(1, 58, 116, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(1, 58, 116, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(1, 58, 116, 0);
+  }
+}
+
+.submit-btn {
+  animation: pulse 2s infinite;
+}
+
+// Add a close button to the modal
+.modal-content h2::after {
+  content: '\f00d';
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 18px;
+  opacity: 0.8;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    opacity: 1;
+    transform: translateY(-50%) rotate(90deg);
+  }
+}
+
+// Add focus styles for accessibility
+.form-group:focus-within label {
+  color: #013a74;
+  font-weight: 600;
+}
+
+// Add required field indicator
+.form-group label::after {
+  content: '*';
+  color: #dc2626;
+  margin-left: 4px;
+}
+
+// Add field validation visual feedback
+.form-group input:valid,
+.form-group select:valid,
+.form-group textarea:valid {
+  border-color: #02a346;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2302a346' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6L9 17l-5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
+}
+
+// Override for select elements to avoid double icons
+.form-group select:valid {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23013a74' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+

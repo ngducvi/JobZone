@@ -297,15 +297,17 @@ function RecruiterCVManagement() {
                 <table className={cx("candidate-table")}>
                   <thead>
                     <tr>
-                      <th>Tên</th>
-                      <th>Địa điểm</th>
-                      <th>Lương</th>
-                      <th>Trạng thái CV</th>
-                      <th>CV</th>
-                      <th>Về tôi</th>
+                      <th className={cx("name-column")}>Tên</th>
+                      <th className={cx("location-column")}>Địa điểm</th>
+                      <th className={cx("salary-column")}>Lương</th>
+                      <th className={cx("status-column-cv")}>Trạng thái CV</th>
+                      <th className={cx("cv-column")}>CV</th>
+                      <th className={cx("about-me-column")}>Về tôi</th>
                       <th>Mục tiêu nghề nghiệp</th>
-                      <th>Thay đổi trạng thái</th>
-                      <th>Chi tiết</th>
+                      <th className={cx("status-column")}>
+                        Thay đổi trạng thái
+                      </th>
+                      <th className={cx("detail-column")}>Chi tiết</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -349,6 +351,7 @@ function RecruiterCVManagement() {
                                   e.target.value
                                 )
                               }
+                              className={cx("status-select")}
                             >
                               {APPLICATION_STATUS.map((status) => (
                                 <option key={status} value={status}>
@@ -367,7 +370,7 @@ function RecruiterCVManagement() {
                               }
                             >
                               <i className="fa-solid fa-eye"></i>
-                              Chi tiết
+                              <span> Chi tiết</span>
                             </button>
                           </td>
                         </tr>

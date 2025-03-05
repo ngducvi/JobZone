@@ -135,6 +135,10 @@ export const recruiterApis = {
     getJobApplicationByJobId: (job_id) => `/recruiter/job-application/${job_id}`,
     getCandidateByJobId: (job_id) => `/recruiter/job-application/${job_id}`,
     editJobApplicationStatus: '/recruiter/edit-job-application-status',
+    postJob: '/recruiter/post-job',
+    editJob: (job_id) => `/recruiter/edit-job/${job_id}`,
+    getJobByJobId: (job_id) => `/recruiter/job/${job_id}`,
+    deleteJob: (job_id) => `/recruiter/delete-job/${job_id}`,
 };
 
 export const usageApis = {

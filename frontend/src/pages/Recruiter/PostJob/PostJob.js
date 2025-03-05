@@ -1,50 +1,130 @@
 // PostJob page
-import React, { useState } from 'react';
-import classNames from 'classnames/bind';
-import styles from './PostJob.module.scss';
-import { authAPI, recruiterApis } from '~/utils/api';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from "react";
+import classNames from "classnames/bind";
+import styles from "./PostJob.module.scss";
+import { authAPI, recruiterApis, userApis } from "~/utils/api";
+import { useNavigate } from "react-router-dom";
+import UserContext from "~/context/UserContext";
 
 const cx = classNames.bind(styles);
 
+const categories = [
+    { value: '1f25fd8e-ce9e-11ef-9430-2cf05db24bc7', name: 'Retail' },
+    { value: '1f25fc2b-ce9e-11ef-9430-2cf05db24bc7', name: 'Operations' },
+    { value: '1f25fb0c-ce9e-11ef-9430-2cf05db24bc7', name: 'Engineering' },
+    { value: '1f25f98c-ce9e-11ef-9430-2cf05db24bc7', name: 'Legal' },
+    { value: '1f25f861-ce9e-11ef-9430-2cf05db24bc7', name: 'Healthcare' },
+    { value: '1f25f6f2-ce9e-11ef-9430-2cf05db24bc7', name: 'Education' },
+    { value: '1f25f441-ce9e-11ef-9430-2cf05db24bc7', name: 'Consulting' },
+    { value: '1f25f23d-ce9e-11ef-9430-2cf05db24bc7', name: 'Finance' },
+    { value: '1f25f189-ce9e-11ef-9430-2cf05db24bc7', name: 'Business Analyst' },
+    { value: '1f25f0db-ce9e-11ef-9430-2cf05db24bc7', name: 'Cybersecurity' },
+    { value: '1f25f02b-ce9e-11ef-9430-2cf05db24bc7', name: 'Mobile Development' },
+    { value: '1f25ef7a-ce9e-11ef-9430-2cf05db24bc7', name: 'Web Development' },
+    { value: '1f25eec3-ce9e-11ef-9430-2cf05db24bc7', name: 'Customer Support' },
+    { value: '1f25ee06-ce9e-11ef-9430-2cf05db24bc7', name: 'Human Resources' },
+    { value: '1f25ed2a-ce9e-11ef-9430-2cf05db24bc7', name: 'Sales' },
+    { value: '1f25ec4e-ce9e-11ef-9430-2cf05db24bc7', name: 'Graphic Design' },
+    { value: '1f25eb8c-ce9e-11ef-9430-2cf05db24bc7', name: 'Marketing' },
+    { value: '1f25ea73-ce9e-11ef-9430-2cf05db24bc7', name: 'Project Management' },
+    { value: '1f25e912-ce9e-11ef-9430-2cf05db24bc7', name: 'Data Science' },
+    { value: '1f25e3ee-ce9e-11ef-9430-2cf05db24bc7', name: 'Software Engineering' },
+];
+
 function PostJob() {
-  const [jobTitle, setJobTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [email, setEmail] = useState('');
-  const [specialisms, setSpecialisms] = useState('');
-  const [salary, setSalary] = useState('');
-  const [username, setUsername] = useState('');
-  const [jobType, setJobType] = useState('');
-  const [careerLevel, setCareerLevel] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const { user } = useContext(UserContext);
+  const [jobTitle, setJobTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [email, setEmail] = useState("");
+  const [specialisms, setSpecialisms] = useState("");
+  const [salary, setSalary] = useState("");
+  const [username, setUsername] = useState("");
+  const [jobType, setJobType] = useState("");
+  const [careerLevel, setCareerLevel] = useState("");
+  const [experience, setExperience] = useState("");
+  const [companyType, setCompanyType] = useState("");
+  const [location, setLocation] = useState("");
+  const [benefits, setBenefits] = useState("");
+  const [jobRequirements, setJobRequirements] = useState("");
+  const [deadline, setDeadline] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [recruiter, setRecruiter] = useState({});
+  const [companyInfo, setCompanyInfo] = useState({});
+  const [companyId, setCompanyId] = useState("");
+  const [categoryId, setCategoryId] = useState("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await authAPI().get(userApis.getCurrentUser);
+        const responseCompany = await authAPI().get(
+          recruiterApis.getAllRecruiterCompanies
+        );
+        setCompanyId(responseCompany.data.companies[0].company_id);
+        setUsername(response.data.user.username);
+        setRecruiter(response.data.user.username);
+        setCompanyInfo(responseCompany.data.companies[0]);
+      } catch (error) {
+        setError("Không thể tải thông tin người dùng.");
+      }
+    };
+    fetchData();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
+
+    console.log("Submitting job data:", {
+      jobTitle,
+      description,
+      email,
+      specialisms,
+      salary,
+      username,
+      jobType,
+      careerLevel,
+      experience,
+      location,
+      benefits,
+      jobRequirements,
+      deadline,
+      company_id: companyId,
+      category_id: categoryId,
+    });
 
     try {
       await authAPI().post(recruiterApis.postJob, {
-        jobTitle,
+        title: jobTitle,
         description,
         email,
         specialisms,
         salary,
+        working_time: jobType,
         username,
-        jobType,
         careerLevel,
+        experience,
+        location,
+        benefits,
+        job_requirements: jobRequirements,
+        deadline,
+        company_id: companyId,
+        created_by: username,
+        last_modified_by: username,
+        category_id: categoryId,
       });
-      setSuccess('Đăng tin tuyển dụng thành công!');
-      navigate('/recruiter/jobs');
+      setSuccess("Đăng tin tuyển dụng thành công!");
+      navigate("/recruiter/jobs");
     } catch (err) {
-      setError('Đã xảy ra lỗi khi đăng tin tuyển dụng. Vui lòng thử lại.');
+      console.error("Error posting job:", err.response.data); // In ra thông báo lỗi chi tiết
+      setError("Đã xảy ra lỗi khi đăng tin tuyển dụng. Vui lòng thử lại.");
     }
   };
 
   const handlePreview = () => {
-    // Logic to handle preview (e.g., open a modal or navigate to a preview page)
     console.log("Previewing job:", {
       jobTitle,
       description,
@@ -54,17 +134,22 @@ function PostJob() {
       username,
       jobType,
       careerLevel,
+      experience,
+      location,
+      benefits,
+      jobRequirements,
+      companyId,
+      categoryId,
     });
-    // Bạn có thể mở một modal hoặc thực hiện hành động khác ở đây
   };
 
   return (
-    <div className={cx('wrapper')}>
+    <div className={cx("wrapper")}>
       <h1>Đăng Tin Tuyển Dụng</h1>
-      {error && <p className={cx('error-message')}>{error}</p>}
-      {success && <p className={cx('success-message')}>{success}</p>}
+      {error && <p className={cx("error-message")}>{error}</p>}
+      {success && <p className={cx("success-message")}>{success}</p>}
       <form onSubmit={handleSubmit}>
-        <div className={cx('form-group')}>
+        <div className={cx("form-group")}>
           <label htmlFor="jobTitle">Tiêu đề công việc</label>
           <input
             type="text"
@@ -74,7 +159,7 @@ function PostJob() {
             required
           />
         </div>
-        <div className={cx('form-group')}>
+        <div className={cx("form-group")}>
           <label htmlFor="description">Mô tả công việc</label>
           <textarea
             id="description"
@@ -83,7 +168,45 @@ function PostJob() {
             required
           />
         </div>
-        <div className={cx('form-group')}>
+        <div className={cx("form-group")}>
+          <label htmlFor="location">Địa điểm làm việc</label>
+          <input
+            type="text"
+            id="location"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            required
+          />
+        </div>
+        <div className={cx("form-group")}>
+          <label htmlFor="benefits">Quyền lợi</label>
+          <textarea
+            id="benefits"
+            value={benefits}
+            onChange={(e) => setBenefits(e.target.value)}
+            required
+          />
+        </div>
+        <div className={cx("form-group")}>
+          <label htmlFor="jobRequirements">Yêu cầu công việc</label>
+          <textarea
+            id="jobRequirements"
+            value={jobRequirements}
+            onChange={(e) => setJobRequirements(e.target.value)}
+            required
+          />
+        </div>
+        <div className={cx("form-group")}>
+          <label htmlFor="deadline">Hạn nộp đơn</label>
+          <input
+            type="date"
+            id="deadline"
+            value={deadline}
+            onChange={(e) => setDeadline(e.target.value)}
+            required
+          />
+        </div>
+        <div className={cx("form-group")}>
           <label htmlFor="email">Địa chỉ email</label>
           <input
             type="email"
@@ -93,7 +216,7 @@ function PostJob() {
             required
           />
         </div>
-        <div className={cx('form-group')}>
+        <div className={cx("form-group")}>
           <label htmlFor="specialisms">Chuyên môn</label>
           <input
             type="text"
@@ -103,40 +226,46 @@ function PostJob() {
             required
           />
         </div>
-        <div className={cx('form-group')}>
+        <div className={cx("form-group")}>
           <label htmlFor="salary">Mức lương</label>
-          <input
-            type="text"
+          <select
             id="salary"
             value={salary}
             onChange={(e) => setSalary(e.target.value)}
             required
-          />
+          >
+            <option value="">Chọn mức lương</option>
+            <option value="duoi-10-trieu">Dưới 10 triệu</option>
+            <option value="10-15-trieu">10 - 15 triệu</option>
+            <option value="15-20-trieu">15 - 20 triệu</option>
+            <option value="20-25-trieu">20 - 25 triệu</option>
+            <option value="25-30-trieu">25 - 30 triệu</option>
+            <option value="30-50-trieu">30 - 50 triệu</option>
+            <option value="tren-50-trieu">Trên 50 triệu</option>
+            <option value="thoa-thuan">Thỏa thuận</option>
+          </select>
         </div>
-        <div className={cx('form-group')}>
+        <div className={cx("form-group")}>
           <label htmlFor="username">Tên người đăng</label>
-          <input
-            type="text"
-            id="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
+          <input type="text" id="username" value={username} required disabled />
         </div>
-        <div className={cx('form-group')}>
-          <label htmlFor="jobType">Loại công việc</label>
+        <div className={cx("form-group")}>
+          <label htmlFor="jobType">Hình thức làm việc</label>
           <select
             id="jobType"
             value={jobType}
             onChange={(e) => setJobType(e.target.value)}
             required
           >
-            <option value="">Chọn loại</option>
-            <option value="full-time">Toàn thời gian</option>
-            <option value="part-time">Bán thời gian</option>
+            <option value="">Chọn hình thức</option>
+            <option value="tat-ca">Tất cả</option>
+            <option value="toan-thoi-gian">Toàn thời gian</option>
+            <option value="ban-thoi-gian">Bán thời gian</option>
+            <option value="thuc-tap">Thực tập</option>
+            <option value="khac">Khác</option>
           </select>
         </div>
-        <div className={cx('form-group')}>
+        <div className={cx("form-group")}>
           <label htmlFor="careerLevel">Cấp độ nghề nghiệp</label>
           <select
             id="careerLevel"
@@ -145,14 +274,74 @@ function PostJob() {
             required
           >
             <option value="">Chọn cấp độ</option>
-            <option value="junior">Junior</option>
-            <option value="mid">Mid</option>
-            <option value="senior">Senior</option>
+            <option value="nhan-vien">Nhân viên</option>
+            <option value="truong-nhom">Trưởng nhóm</option>
+            <option value="truong-pho-phong">Trưởng/Phó phòng</option>
+            <option value="quan-ly-giam-sat">Quản lý / Giám sát</option>
+            <option value="truong-chi-nhanh">Trưởng chi nhánh</option>
+            <option value="pho-giam-doc">Phó giám đốc</option>
+            <option value="giam-doc">Giám đốc</option>
+            <option value="thuc-tap-sinh">Thực tập sinh</option>
           </select>
         </div>
-        <div className={cx('button-group')}>
-          <button type="submit" className={cx('submit-btn')}>Đăng tin</button>
-          <button type="button" className={cx('preview-btn')} onClick={handlePreview}>Xem trước</button>
+        <div className={cx("form-group")}>
+          <label htmlFor="experience">Kinh nghiệm</label>
+          <select
+            id="experience"
+            value={experience}
+            onChange={(e) => setExperience(e.target.value)}
+            required
+          >
+            <option value="">Chọn kinh nghiệm</option>
+            <option value="khong-yeu-cau">Không yêu cầu</option>
+            <option value="duoi-1-nam">Dưới 1 năm</option>
+            <option value="1-nam">1 năm</option>
+            <option value="2-nam">2 năm</option>
+            <option value="3-nam">3 năm</option>
+            <option value="4-nam">4 năm</option>
+            <option value="5-nam">5 năm</option>
+          </select>
+        </div>
+        <div className={cx("form-group")}>
+          <label htmlFor="companyType">Loại công ty</label>
+          <select
+            id="companyType"
+            value={companyType}
+            onChange={(e) => setCompanyType(e.target.value)}
+            required
+          >
+            <option value="">Chọn loại công ty</option>
+            <option value="tat-ca">Tất cả</option>
+            <option value="pro-company">Pro Company</option>
+          </select>
+        </div>
+        <div className={cx("form-group")}>
+          <label htmlFor="categoryId">Danh mục</label>
+          <select
+            id="categoryId"
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+            required
+          >
+            <option value="">Chọn danh mục</option>
+            {categories.map((category) => (
+              <option key={category.value} value={category.value}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className={cx("button-group")}>
+          <button type="submit" className={cx("submit-btn")}>
+            Đăng tin
+          </button>
+          <button
+            type="button"
+            className={cx("preview-btn")}
+            onClick={handlePreview}
+          >
+            Xem trước
+          </button>
         </div>
       </form>
     </div>

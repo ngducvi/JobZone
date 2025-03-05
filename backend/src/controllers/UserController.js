@@ -52,6 +52,9 @@ class UserController {
     this.generateApplicationId = () => {
       return 'app-' + Math.random().toString(36).substr(2, 9);
     };
+    this.generateJobId = () => {
+      return 'job-' + Math.random().toString(36).substr(2, 9);
+    };
   }
   async getCurrentUser(req, res) {
     try {
@@ -1180,6 +1183,20 @@ class UserController {
         message: error.message,
         code: -1
       });
+    }
+  }
+  // post job với job_id với company_id và category_id
+  async postJobWithJobId(req, res) {
+    try {
+      const job = await Job.create({
+        job_id: this.generateJobId(),
+        ...req.body,
+        company_id: req.body.company_id,
+        category_id: req.body.category_id
+      });
+      return res.json({ job: job });
+    } catch (error) {
+      res.status(400).send(error);
     }
   }
   // create candidate languages with candidate_id

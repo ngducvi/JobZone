@@ -212,7 +212,7 @@ const SearchCandidate = () => {
                     <div 
                       key={candidate.candidate_id} 
                       className={cx('candidate-card')}
-                      onClick={() => handleCandidateClick(candidate.candidate_id)}
+                      
                     >
                       <div className={cx('candidate-avatar')}>
                         <img src={candidate.profile_picture || images.avatar} alt="Avatar" />
@@ -231,7 +231,7 @@ const SearchCandidate = () => {
                         </div>
                       </div>
 
-                      <button className={cx('view-profile-btn')}>
+                      <button className={cx('view-profile-btn')} onClick={() => handleCandidateClick(candidate.candidate_id)}>
                         View Profile
                       </button>
                     </div>
