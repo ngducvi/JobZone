@@ -477,14 +477,58 @@ class RecruiterController {
         attributes: ["id", "name", "email", "phone", "created_at"], // Only select needed fields
       });
 
+      const candidateIds = candidates.map((candidate) => candidate.candidate_id);
+      const candidateExperiences = await CandidateExperiences.findAll({
+        where: { candidate_id: { [Op.in]: candidateIds } },
+      });
+      const candidateEducation = await CandidateEducation.findAll({
+        where: { candidate_id: { [Op.in]: candidateIds } },
+      });
+      const candidateCertifications = await CandidateCertifications.findAll({
+        where: { candidate_id: { [Op.in]: candidateIds } },
+      });
+      const candidateProjects = await CandidateProjects.findAll({
+        where: { candidate_id: { [Op.in]: candidateIds } },
+      });
+      const candidateLanguages = await CandidateLanguages.findAll({
+        where: { candidate_id: { [Op.in]: candidateIds } },
+      });
+      const candidateCvs = await CandidateCv.findAll({
+        where: { user_id: { [Op.in]: userIds } },
+      });
+
       // Replace user_id with user object in candidates
       const candidatesWithUsers = candidates.map((candidate) => {
         const candidateObj = candidate.get({ plain: true }); // Convert to plain object
         const user = users.find((user) => user.id === candidate.user_id);
+        const candidateExperienceList = candidateExperiences.filter(
+          (experience) => experience.candidate_id === candidate.candidate_id
+        );
+        const candidateEducationList = candidateEducation.filter(
+          (education) => education.candidate_id === candidate.candidate_id
+        );
+        const candidateCertificationList = candidateCertifications.filter(
+          (certification) => certification.candidate_id === candidate.candidate_id
+        );
+        const candidateProjectList = candidateProjects.filter(
+          (project) => project.candidate_id === candidate.candidate_id
+        );
+        const candidateLanguageList = candidateLanguages.filter(
+          (language) => language.candidate_id === candidate.candidate_id
+        );
+        const candidateCvList = candidateCvs.filter(
+          (cv) => cv.user_id === candidate.user_id
+        );
         delete candidateObj.user_id; // Remove user_id
         return {
           ...candidateObj,
           user: user,
+          candidateExperiences: candidateExperienceList, // Changed to an array of experiences
+          candidateEducation: candidateEducationList,
+          candidateCertifications: candidateCertificationList,
+          candidateProjects: candidateProjectList,
+          candidateLanguages: candidateLanguageList,
+          candidateCvs: candidateCvList,
         };
       });
 
@@ -501,6 +545,7 @@ class RecruiterController {
       });
     }
   }
+  
   // edit job_application status
   async editJobApplicationStatus(req, res) {
     try {
@@ -575,107 +620,6 @@ class RecruiterController {
       res.status(400).send(error);
     }
   }
-  //   job_id: {
-  //     type: DataTypes.STRING,
-  //     primaryKey: true,
-  // },
-  // title: {
-  //     type: DataTypes.STRING,
-  //     allowNull: false,
-  // },
-  // description: {
-  //     type: DataTypes.TEXT,
-  //     allowNull: true,
-  // },
-  // salary: {
-  //     type: DataTypes.STRING,
-  //     allowNull: true,
-  // },
-  // location: {
-  //     type: DataTypes.STRING,
-  //     allowNull: true,
-  // },
-  // experience: {
-  //     type: DataTypes.STRING,
-  //     allowNull: true,
-  // },
-  // benefits: {
-  //     type: DataTypes.TEXT,
-  //     allowNull: true,
-  // },
-  // job_requirements: {
-  //     type: DataTypes.TEXT,
-  //     allowNull: true,
-  // },
-  // working_time: {
-  //     type: DataTypes.STRING,
-  //     allowNull: true,
-  // },
-  // working_location: {
-  //     type: DataTypes.STRING,
-  //     allowNull: true,
-  // },
-  // status: {
-  //     type: DataTypes.ENUM('Active', 'Closed'),
-  //     defaultValue: 'Active',
-  // },
-  // company_id: {
-  //     type: DataTypes.INTEGER,
-  //     allowNull: false,
-  //     references: {
-  //         model: Company,
-  //         key: 'company_id',
-  //     },
-  // },
-  // category_id: {
-  //     type: DataTypes.INTEGER,
-  //     allowNull: true,
-  //     references: {
-  //         model: Category,
-  //         key: 'category_id',
-  //     },
-  // },
-  // deadline: {
-  //     type: DataTypes.DATE,
-  //     allowNull: true,
-  // },
-  // job_embedding: {
-  //     type: DataTypes.TEXT,
-  //     allowNull: true,
-  // },
-  // created_at: {
-  //     type: DataTypes.DATE,
-  //     allowNull: true,
-  // },
-  // created_by: {
-  //     type: DataTypes.STRING,
-  //     allowNull: true,
-  // },
-  // last_modified_at: {
-  //     type: DataTypes.DATE,
-  //     allowNull: true,
-  // },
-  // last_modified_by: {
-  //     type: DataTypes.STRING,
-  //     allowNull: true,
-  // },
-  // version: {
-  //     type: DataTypes.INTEGER,
-  //     defaultValue: 1,
-  // },
-  // quantity: {
-  //     type: DataTypes.INTEGER,
-  //     allowNull: true,
-  // },
-  // rank: {
-  //     type: DataTypes.STRING,
-  //     allowNull: true,
-  // },
-  // education: {
-  //     type: DataTypes.STRING,
-  //     allowNull: true,
-  // },
-  // post job với job_id với company_id và category_id
   async postJob(req, res) {
     try {
       const job = await Job.create({

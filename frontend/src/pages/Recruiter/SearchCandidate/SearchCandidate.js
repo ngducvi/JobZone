@@ -132,8 +132,26 @@ const SearchCandidate = () => {
               <div className={cx('filter-section')}>
                 <h3>Candidate Gender</h3>
                 <select className={cx('filter-select')}>
-                  <option value="male">Male</option>
-                  {/* Add more options */}
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+              </div>
+              {/* nationality */}
+              <div className={cx('filter-section')}>
+                <h3>Nationality</h3>
+                <select className={cx('filter-select')}>
+                  <option value="Vietnamese">Vietnam</option>
+                  <option value="China">Other</option>
+                </select>
+              </div>
+              {/* employment_type */}
+              <div className={cx('filter-section')}>
+                <h3>Employment Type</h3>
+                <select className={cx('filter-select')}>
+                  <option value="Full-time">Full-time</option>
+                  <option value="Part-time">Part-time</option>
+                  <option value="Contract">Contract</option>
+                  <option value="Freelance">Freelance</option>
                 </select>
               </div>
 
