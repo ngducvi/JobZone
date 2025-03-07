@@ -6,6 +6,7 @@ import UserContext from "~/context/UserContext";
 import images from "~/assets/images";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import JobDetailModal from './JobDetailModal';
 
 const cx = classNames.bind(styles);
 
@@ -208,6 +209,8 @@ function RecruiterJobs() {
   });
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
+  const [isJobDetailModalOpen, setIsJobDetailModalOpen] = useState(false);
+  const [selectedJobDetails, setSelectedJobDetails] = useState(null);
 
   const token = localStorage.getItem("token");
 
@@ -278,6 +281,11 @@ function RecruiterJobs() {
     } catch (error) {
       console.error('Error deleting job:', error);
     }
+  };
+
+  const handleViewJob = (job) => {
+    setSelectedJobDetails(job);
+    setIsJobDetailModalOpen(true);
   };
 
   const filteredJobs = activeTab === 'all' 
@@ -390,6 +398,9 @@ function RecruiterJobs() {
                 <button className={cx('action-btn', 'delete')} onClick={() => handleDeleteJob(job.job_id)}>
                   <i className="fa-solid fa-trash"></i>Xóa
                 </button>
+                <button className={cx('action-btn', 'view')} onClick={() => handleViewJob(job)}>
+                  <i className="fa-solid fa-eye"></i>Xem Job
+                </button>
               </div>
             </div>
           ))}
@@ -401,7 +412,12 @@ function RecruiterJobs() {
         jobData={selectedJob} 
         onEdit={handleEditSubmit} 
         setSelectedJob={setSelectedJob} 
-      /> 
+      />
+      <JobDetailModal 
+        isOpen={isJobDetailModalOpen} 
+        onClose={() => setIsJobDetailModalOpen(false)} 
+        jobDetails={selectedJobDetails} 
+      />
     </div>
   );
 }
