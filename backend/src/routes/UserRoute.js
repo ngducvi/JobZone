@@ -1,6 +1,8 @@
 const express = require('express');
 const userController = require('../controllers/UserController');
 const jwtMiddleware = require('../middleware/JWTMiddleware');
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
 const router = express.Router();
 
 router.post('/register', userController.registerUser.bind(userController));
@@ -87,4 +89,7 @@ router.get('/jobs/company/:company_id', userController.getAllJobsByCompanyId.bin
 router.post('/apply-job', userController.applyForJob.bind(userController));
 router.get('/check-application-status/:job_id', userController.checkApplicationStatus.bind(userController));
 router.post('/withdraw-application', userController.withdrawApplication.bind(userController));
+router.put('/candidate/edit-profile-picture/:candidate_id', upload.single('profile_picture'), userController.editProfilePictureWithCandidateId.bind(userController));
+router.get('/candidate/profile-picture/:candidate_id', userController.getProfilePictureByCandidateId.bind(userController));
+router.put('/candidate/edit-profile-picture-cloudinary/:candidate_id', upload.single('profile_picture'), userController.updateProfilePictureByCandidateIdCloudinary.bind(userController));
 module.exports = router;

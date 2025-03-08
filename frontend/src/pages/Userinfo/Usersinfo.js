@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useEffect, useState, useContext, useRef } from "react";
 import classNames from "classnames/bind";
 import styles from "./Userinfo.module.scss";
 import { Link } from "react-router-dom";
-
+import UserContext from "~/context/UserContext";
 const cx = classNames.bind(styles);
 
 const menuItems = [
@@ -73,6 +73,21 @@ const menuItems = [
 ];
 
 function Userinfo() {
+  const { user } = useContext(UserContext);
+  
+  // Lọc menuItems dựa trên role
+  const filteredMenuItems = menuItems.filter(item => {
+    if (user?.role === 'recruiter') {
+      // Ẩn các mục không dành cho recruiter
+      return ![
+        '/user/manager-cv',
+        '/user/applications', 
+        '/user/saved-jobs'
+      ].includes(item.to);
+    }
+    return true; // Hiện tất cả cho user thường
+  });
+
   return (
     <div className={cx("wrapper")}>
       <div className={cx("container")}>
@@ -84,7 +99,7 @@ function Userinfo() {
         </div>
 
         <div className={cx("menu-grid")}>
-          {menuItems.map((item, index) => (
+          {filteredMenuItems.map((item, index) => (
             <Link to={item.to} key={index} className={cx("menu-item")}>
               <div 
                 className={cx("icon-wrapper")}

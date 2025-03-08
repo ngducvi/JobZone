@@ -22,12 +22,14 @@ const JobZoneProfile = () => {
     const { user } = useContext(UserContext);
     const [activeTab, setActiveTab] = useState('basic');
     const [loading, setLoading] = useState(true);
+    const [isUploading, setIsUploading] = useState(false);
     const [candidateProfile, setCandidateProfile] = useState(null);
     const [candidateEducation, setCandidateEducation] = useState([]);
     const [candidateExperiences, setCandidateExperiences] = useState([]);
     const [candidateCertifications, setCandidateCertifications] = useState([]);
     const [candidateProjects, setCandidateProjects] = useState([]);
     const [candidateLanguages, setCandidateLanguages] = useState([]);
+    const [selectedFile, setSelectedFile] = useState(null);
 
     const menuItems = [
         { id: 'basic', icon: <FaUser />, label: 'Thông tin cơ bản' },
@@ -73,7 +75,7 @@ const JobZoneProfile = () => {
                 ]);
 
                 setCandidateProfile(profileRes.data.candidate);
-                console.log(profileRes.data.candidate);
+                console.log("profileRes.data.candidate",profileRes.data.candidate);
                 setCandidateEducation(educationRes.data.candidateEducation);
                 setCandidateExperiences(experiencesRes.data.candidateExperiences);
                 setCandidateCertifications(certificationsRes.data.candidateCertifications);
@@ -95,6 +97,61 @@ const JobZoneProfile = () => {
         setCandidateEducation(updatedEducation);
     };
 
+    const handleUploadImage = async (file) => {
+        setIsUploading(true);
+        try {
+            if (!candidateProfile?.candidate_id) {
+                toast.error('Không tìm thấy thông tin ứng viên');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('profile_picture', file);
+
+            const response = await authAPI().put(
+                userApis.editProfilePictureWithCandidateId(candidateProfile.candidate_id),
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                }
+            );
+
+            if (response.data.code === 1) {
+                toast.success('Cập nhật ảnh đại diện thành công');
+                setCandidateProfile({
+                    ...candidateProfile,
+                    profile_picture: response.data.profile_picture
+                });
+            }
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            toast.error('Có lỗi xảy ra khi tải ảnh lên');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleFileChange = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error('Kích thước file không được vượt quá 5MB');
+                return;
+            }
+
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            if (!validTypes.includes(file.type)) {
+                toast.error('Chỉ chấp nhận file ảnh định dạng JPG, PNG hoặc GIF');
+                return;
+            }
+
+            setSelectedFile(URL.createObjectURL(file));
+            handleUploadImage(file);
+        }
+    };
+
     if (!user) {
         return (
             <div className={cx('wrapper')}>
@@ -109,13 +166,26 @@ const JobZoneProfile = () => {
                 <div className={cx('profile-header')}>
                     <div className={cx('header-content')}>
                         <div className={cx('avatar-section')}>
-                            <div className={cx('avatar')}>
-                                <img src={user?.avatar || "https://via.placeholder.com/150"} alt="Profile" />
+                            <div className={cx('avatar', { uploading: isUploading })}>
+                                <img 
+                                    src={selectedFile || candidateProfile?.profile_picture || "https://via.placeholder.com/150"} 
+                                    alt="Profile" 
+                                />
+                                {isUploading && <div className={cx('loading-overlay')}>
+                                    <span>Đang tải...</span>
+                                </div>}
                             </div>
-                            <button className={cx('upload-btn')}>
+                            <input 
+                                type="file" 
+                                accept="image/*" 
+                                onChange={handleFileChange} 
+                                style={{ display: 'none' }} 
+                                id="file-upload" 
+                            />
+                            <label htmlFor="file-upload" className={cx('upload-btn')}>
                                 <FaCloudUploadAlt />
                                 Tải ảnh lên
-                            </button>
+                            </label>
                         </div>
                         
                         <div className={cx('user-info')}>

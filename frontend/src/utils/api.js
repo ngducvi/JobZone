@@ -119,6 +119,8 @@ export const userApis = {
     applyJob: '/user/apply-job',
     checkApplicationStatus: (job_id) => `/user/check-application-status/${job_id}`,
     withdrawApplication: '/user/withdraw-application',
+    editProfilePictureWithCandidateId: (candidate_id) => `/user/candidate/edit-profile-picture/${candidate_id}`,
+    
 };
 
 

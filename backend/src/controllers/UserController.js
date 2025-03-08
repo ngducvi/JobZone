@@ -31,34 +31,41 @@ const CandidateExperiences = require("../models/CandidateExperiences");
 const CandidateEducation = require("../models/CandidateEducation");
 const CandidateCertifications = require("../models/CandidateCertifications");
 const CandidateProjects = require("../models/CandidateProjects");
+const { v4: uuid } = require("uuid");
+const cloudinary = require("../utils/cloudinary");
+const path = require("path");
+const fs = require("fs");
 
 class UserController {
   constructor() {
     this.generateEducationId = () => {
-      return 'edu-' + Math.random().toString(36).substr(2, 9);
+      return "edu-" + Math.random().toString(36).substr(2, 9);
     };
     this.generateExperienceId = () => {
-      return 'exp-' + Math.random().toString(36).substr(2, 9);
+      return "exp-" + Math.random().toString(36).substr(2, 9);
     };
     this.generateLanguagesId = () => {
-      return 'lang-' + Math.random().toString(36).substr(2, 9);
+      return "lang-" + Math.random().toString(36).substr(2, 9);
     };
     this.generateCertificationsId = () => {
-      return 'cert-' + Math.random().toString(36).substr(2, 9);
+      return "cert-" + Math.random().toString(36).substr(2, 9);
     };
     this.generateProjectsId = () => {
-      return 'proj-' + Math.random().toString(36).substr(2, 9);
+      return "proj-" + Math.random().toString(36).substr(2, 9);
     };
     this.generateApplicationId = () => {
-      return 'app-' + Math.random().toString(36).substr(2, 9);
+      return "app-" + Math.random().toString(36).substr(2, 9);
     };
     this.generateJobId = () => {
-      return 'job-' + Math.random().toString(36).substr(2, 9);
+      return "job-" + Math.random().toString(36).substr(2, 9);
     };
   }
   async getCurrentUser(req, res) {
     try {
       const user = await User.findByPk(req.user.id);
+      // get profile picture by user_id
+      const candidate = await Candidate.findOne({ where: { user_id: user.id } });
+
       if (!user) {
         return res
           .status(404)
@@ -69,6 +76,7 @@ class UserController {
         message: "Người dùng được tìm thấy",
         code: 1,
         user,
+        candidate,
       });
     } catch (error) {
       res.status(400).send(error);
@@ -322,14 +330,269 @@ class UserController {
       }
       user.password = await bcrypt.hash(password, 8);
       cacheService.set(token, user);
+      // mailerService.sendMail(
+      //   user.email,
+      //   "Xác Minh Tài Khoản JobZone",
+      //   `
+      //     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px;">
+      //       <div style="text-align: center; margin-bottom: 20px;">
+      //         <img src="${process.env.LOGO_URL || 'https://your-logo-url.com'}" alt="JobZone Logo" style="max-width: 150px;">
+      //       </div>
+            
+      //       <h2 style="color: #013a74; margin-bottom: 20px; text-align: center;">Xác Minh Email của Bạn</h2>
+            
+      //       <p style="color: #333; font-size: 16px; line-height: 1.5;">Xin chào <strong>${user.name}</strong>,</p>
+            
+      //       <p style="color: #333; font-size: 16px; line-height: 1.5;">Cảm ơn bạn đã đăng ký tài khoản tại JobZone - Nền tảng tìm kiếm việc làm hàng đầu.</p>
+            
+      //       <p style="color: #333; font-size: 16px; line-height: 1.5;">Vui lòng xác minh địa chỉ email của bạn trong vòng <strong>5 phút</strong> bằng cách nhấp vào nút bên dưới:</p>
+            
+      //       <div style="text-align: center; margin: 30px 0;">
+      //         <a href="${process.env.BASE_URL}/user/verify-email?token=${token}&status=success" 
+      //            style="background-color: #02a346; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+      //           Xác Minh Email
+      //         </a>
+      //       </div>
+            
+      //       <p style="color: #666; font-size: 14px;">Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này.</p>
+            
+      //       <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+      //         <p style="color: #666; font-size: 14px; margin: 0;">Trân trọng,</p>
+      //         <p style="color: #013a74; font-weight: bold; margin: 5px 0;">Đội ngũ JobZone</p>
+      //       </div>
+            
+      //       <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #666; font-size: 12px;">
+      //         <p>Email này được gửi tự động, vui lòng không trả lời.</p>
+      //         <p>Copyright © ${new Date().getFullYear()} JobZone. All rights reserved.</p>
+      //       </div>
+      //     </div>
+      //   `
+      // );
       mailerService.sendMail(
         user.email,
-        "Xác minh email của bạn",
+        "Xác Minh Tài Khoản JobZone",
         `
-                <p>Chào ${user.name},</p>
-                <p> Bạn có 5 phút để xác minh email của mình.</p>
-                <p>Nhấp vào <a href="${process.env.BASE_URL}/user/verify-email?token=${token}&status=success">đây</a> để xác minh email của bạn.</p>
-                <p>Nếu bạn không yêu cầu điều này, vui lòng bỏ qua email này.</p>`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Xác Minh Tài Khoản JobZone</title>
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Inter', sans-serif; background-color: #f5f7fa; color: #333333;">
+          <!-- Preheader text (hidden) -->
+          <div style="display: none; max-height: 0px; overflow: hidden;">
+            Xác minh tài khoản JobZone của bạn để bắt đầu hành trình tìm kiếm việc làm mới.
+          </div>
+          
+          <!-- Main Container -->
+          <table border="0" cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+              <td style="padding: 30px 0;">
+                <!-- Email Container -->
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 5px 30px rgba(0, 0, 0, 0.08);">
+                  
+                  <!-- Header with Logo -->
+                  <tr>
+                    <td style="padding: 0;">
+                      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td style="padding: 40px 0; text-align: center; background: linear-gradient(135deg, #013a74 0%, #02a346 100%);">
+                            <img src="${process.env.LOGO_URL || 'https://your-logo-url.com'}" alt="JobZone" style="max-width: 180px; height: auto; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));">
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  
+                  <!-- Main Content -->
+                  <tr>
+                    <td style="padding: 0;">
+                      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <!-- Welcome Section -->
+                        <tr>
+                          <td style="padding: 50px 50px 30px;">
+                            <h1 style="margin: 0 0 20px; font-size: 28px; font-weight: 700; color: #013a74; text-align: center; letter-spacing: -0.5px;">Xác Minh Email của Bạn</h1>
+                            
+                            <p style="margin: 0 0 25px; font-size: 16px; line-height: 1.6; color: #4b5563;">
+                              Xin chào <span style="font-weight: 600; color: #013a74;">${user.name}</span>,
+                            </p>
+                            
+                            <p style="margin: 0 0 25px; font-size: 16px; line-height: 1.6; color: #4b5563;">
+                              Cảm ơn bạn đã đăng ký tài khoản tại <span style="font-weight: 600; color: #013a74;">JobZone</span>. Chúng tôi rất vui mừng được đồng hành cùng bạn trong hành trình tìm kiếm cơ hội nghề nghiệp mới.
+                            </p>
+                          </td>
+                        </tr>
+                        
+                        <!-- Verification Box -->
+                        <tr>
+                          <td style="padding: 0 50px 40px;">
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(to right, rgba(1, 58, 116, 0.03), rgba(2, 163, 70, 0.03)); border-radius: 12px; overflow: hidden;">
+                              <tr>
+                                <td style="padding: 30px; border-left: 4px solid #02a346;">
+                                  <p style="margin: 0 0 15px; font-size: 16px; line-height: 1.6; color: #4b5563;">
+                                    Để hoàn tất quá trình đăng ký, vui lòng xác minh địa chỉ email của bạn trong vòng:
+                                  </p>
+                                  
+                                  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                    <tr>
+                                      <td style="padding: 15px 0; text-align: center;">
+                                        <p style="margin: 0; font-size: 24px; font-weight: 700; color: #013a74;">5 phút</p>
+                                      </td>
+                                    </tr>
+                                  </table>
+                                  
+                                  <p style="margin: 15px 0 0; font-size: 14px; line-height: 1.5; color: #6b7280; text-align: center;">
+                                    Liên kết xác minh sẽ hết hạn sau thời gian trên
+                                  </p>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                        
+                        <!-- CTA Button -->
+                        <tr>
+                          <td style="padding: 0 50px 40px; text-align: center;">
+                            <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                              <tr>
+                                <td style="background: linear-gradient(135deg, #013a74 0%, #02a346 100%); border-radius: 8px; box-shadow: 0 4px 12px rgba(1, 58, 116, 0.2);">
+                                  <a href="${process.env.BASE_URL}/user/verify-email?token=${token}&status=success" 
+                                     style="display: inline-block; padding: 16px 40px; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none;">
+                                    Xác Minh Email Ngay
+                                  </a>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                        
+                        <!-- Security Notice -->
+                        <tr>
+                          <td style="padding: 0 50px 50px;">
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+                              <tr>
+                                <td style="padding: 20px; background-color: #f9fafb;">
+                                  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                    <tr>
+                                      <td width="24" style="vertical-align: top; padding-right: 15px;">
+                                        <img src="https://cdn-icons-png.flaticon.com/512/1161/1161388.png" alt="Security" width="24" height="24">
+                                      </td>
+                                      <td>
+                                        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #4b5563;">
+                                          Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này hoặc liên hệ với bộ phận hỗ trợ của chúng tôi.
+                                        </p>
+                                      </td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  
+                  <!-- Divider -->
+                  <tr>
+                    <td style="padding: 0 50px;">
+                      <div style="height: 1px; background-color: #e5e7eb;"></div>
+                    </td>
+                  </tr>
+                  
+                  <!-- Benefits Section -->
+                  <tr>
+                    <td style="padding: 40px 50px 30px;">
+                      <h3 style="margin: 0 0 25px; font-size: 18px; font-weight: 600; color: #013a74; text-align: center;">
+                        Tại sao chọn JobZone?
+                      </h3>
+                      
+                      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td width="33%" style="padding: 0 10px; vertical-align: top; text-align: center;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/2910/2910791.png" alt="Việc làm chất lượng" width="40" height="40" style="margin-bottom: 10px;">
+                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: #4b5563;">Việc làm chất lượng</p>
+                          </td>
+                          <td width="33%" style="padding: 0 10px; vertical-align: top; text-align: center;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/1584/1584892.png" alt="Hồ sơ nổi bật" width="40" height="40" style="margin-bottom: 10px;">
+                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: #4b5563;">Hồ sơ nổi bật</p>
+                          </td>
+                          <td width="33%" style="padding: 0 10px; vertical-align: top; text-align: center;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Kết nối nhà tuyển dụng" width="40" height="40" style="margin-bottom: 10px;">
+                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: #4b5563;">Kết nối nhà tuyển dụng</p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  
+                  <!-- Footer -->
+                  <tr>
+                    <td style="padding: 0;">
+                      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb;">
+                        <tr>
+                          <td style="padding: 40px 50px; text-align: center;">
+                            <p style="margin: 0 0 15px; font-size: 14px; color: #6b7280;">Trân trọng,</p>
+                            <p style="margin: 0 0 25px; font-size: 16px; font-weight: 700; color: #013a74;">Đội ngũ JobZone</p>
+                            
+                            <!-- Social Media -->
+                            <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 25px;">
+                              <tr>
+                                <td style="padding: 0 8px;">
+                                  <a href="#" style="display: inline-block;">
+                                    <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" alt="Facebook" width="24" height="24">
+                                  </a>
+                                </td>
+                                <td style="padding: 0 8px;">
+                                  <a href="#" style="display: inline-block;">
+                                    <img src="https://cdn-icons-png.flaticon.com/512/733/733579.png" alt="Twitter" width="24" height="24">
+                                  </a>
+                                </td>
+                                <td style="padding: 0 8px;">
+                                  <a href="#" style="display: inline-block;">
+                                    <img src="https://cdn-icons-png.flaticon.com/512/733/733558.png" alt="LinkedIn" width="24" height="24">
+                                  </a>
+                                </td>
+                                <td style="padding: 0 8px;">
+                                  <a href="#" style="display: inline-block;">
+                                    <img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" alt="Instagram" width="24" height="24">
+                                  </a>
+                                </td>
+                              </tr>
+                            </table>
+                            
+                            <p style="margin: 0 0 5px; font-size: 12px; color: #6b7280;">Email này được gửi tự động, vui lòng không trả lời.</p>
+                            <p style="margin: 0; font-size: 12px; color: #6b7280;">Copyright © ${new Date().getFullYear()} JobZone. All rights reserved.</p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+                
+                <!-- Footer Address -->
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto;">
+                  <tr>
+                    <td style="padding: 20px 0; text-align: center;">
+                      <p style="margin: 0 0 5px; font-size: 12px; color: #9ca3af;">
+                        JobZone, Inc. • Tầng 16, Tòa nhà Vietcombank, 198 Trần Quang Khải, Hoàn Kiếm, Hà Nội
+                      </p>
+                      <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+                        <a href="#" style="color: #6b7280; text-decoration: none;">Chính sách bảo mật</a> • 
+                        <a href="#" style="color: #6b7280; text-decoration: none;">Điều khoản sử dụng</a> • 
+                        <a href="#" style="color: #6b7280; text-decoration: none;">Hủy đăng ký</a>
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+        `
       );
       res.status(201).send({
         message: "Vui lòng xác minh email của bạn",
@@ -370,8 +633,8 @@ class UserController {
       const categories = await Category.findAll();
       return res.status(200).send({
         message: "Thông tin chi tiết hồ sơ ứng viên",
-      code: 1,
-      categories,
+        code: 1,
+        categories,
       });
     } catch (error) {
       return res.status(500).send({
@@ -752,7 +1015,15 @@ class UserController {
       const companySize = company.size;
       const companyIndustry = company.industry;
       const companyAddress = company.address;
-      return res.json({ job, companyId, companyName, companyLogo, companySize, companyIndustry, companyAddress });
+      return res.json({
+        job,
+        companyId,
+        companyName,
+        companyLogo,
+        companySize,
+        companyIndustry,
+        companyAddress,
+      });
     } catch (error) {
       return res.status(500).send({
         message: error.message,
@@ -763,7 +1034,9 @@ class UserController {
   // get all jobs by company_id
   async getAllJobsByCompanyId(req, res) {
     try {
-      const jobs = await Job.findAll({ where: { company_id: req.params.company_id } });
+      const jobs = await Job.findAll({
+        where: { company_id: req.params.company_id },
+      });
       return res.json({ jobs });
     } catch (error) {
       return res.status(500).send({
@@ -853,16 +1126,18 @@ class UserController {
     const companies = await Company.findAll({
       where: { company_id: companyIds },
     });
-    const appliedJobsWithCompanies = appliedJobsWithDetails.map((appliedJob) => {
-      const company = companies.find(
-        (c) => c.company_id === appliedJob.job.company_id
-      );
-      return {
-        ...appliedJob,
-        company_name: company.company_name,
-        company_logo: company.logo,
-      };
-    });
+    const appliedJobsWithCompanies = appliedJobsWithDetails.map(
+      (appliedJob) => {
+        const company = companies.find(
+          (c) => c.company_id === appliedJob.job.company_id
+        );
+        return {
+          ...appliedJob,
+          company_name: company.company_name,
+          company_logo: company.logo,
+        };
+      }
+    );
 
     return res.json({
       appliedJobs: appliedJobsWithCompanies,
@@ -1076,7 +1351,7 @@ class UserController {
       });
     }
   }
-  
+
   // create candidate education with candidate_id
   async createCandidateEducationWithCandidateId(req, res) {
     try {
@@ -1089,27 +1364,159 @@ class UserController {
         start_date: req.body.start_date,
         end_date: req.body.end_date,
         grade: req.body.grade,
-        activities: req.body.activities
+        activities: req.body.activities,
       });
 
       return res.status(200).send({
         message: "Tạo thông tin học vấn thành công",
         code: 1,
-        candidateEducation
+        candidateEducation,
       });
     } catch (error) {
       console.error("Error creating education:", error);
       return res.status(500).send({
         message: error.message,
-        code: -1
+        code: -1,
       });
     }
   }
+  // edit profile_picture with candidate_id
+  async editProfilePictureWithCandidateId(req, res) {
+    try {
+      const candidate = await Candidate.findByPk(req.params.candidate_id);
 
+      if (!req.file) {
+        return res.status(400).send({
+          message: "Không có file nào được tải lên",
+          code: -1,
+        });
+      }
+
+      let filename = req.file.filename;
+      filename = filename.split(".");
+      filename = filename[0] + uuid() + "." + filename[1];
+
+      try {
+        // Upload vào folder "profile_pictures" trong cloudinary
+        const result = await cloudinary.uploader.upload(req.file.path, {
+          resource_type: "image",
+          folder: "profile_pictures", // Chỉ định folder để lưu trữ
+          public_id: `user_${req.params.candidate_id}_${Date.now()}`, // Tạo tên file duy nhất
+          overwrite: true, // Ghi đè nếu file đã tồn tại
+        });
+
+        if (!result.secure_url) {
+          return res.status(500).send({
+            message: "Failed to upload image to cloudinary",
+            code: -1,
+          });
+        }
+
+        await candidate.update({ profile_picture: result.secure_url });
+
+        return res.status(200).send({
+          message: "Cập nhật ảnh đại diện thành công",
+          code: 1,
+          profile_picture: result.secure_url,
+        });
+      } catch (error) {
+        return res.status(500).send({
+          message: "Lỗi khi upload ảnh: " + error.message,
+          code: -1,
+        });
+      }
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
+  // update profile picture by candidate_id cloudinary
+  async updateProfilePictureByCandidateIdCloudinary(req, res) {
+    try {
+        const candidate_id = req.params.candidate_id;
+        
+        // Get current profile picture public_id from database
+        const currentUser = await Candidate.findOne({
+            where: { candidate_id: candidate_id }
+        });
+        
+        if (!currentUser) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        // If there's an existing profile picture, delete it from Cloudinary
+        if (currentUser.profile_picture) {
+            try {
+                // Extract public_id from the URL
+                const urlParts = currentUser.profile_picture.split('/');
+                const filenameWithExt = urlParts[urlParts.length - 1];
+                const public_id = `profile_pictures/${filenameWithExt.split('.')[0]}`;
+                
+                // Delete the old image from Cloudinary
+                await cloudinary.uploader.destroy(public_id);
+            } catch (deleteError) {
+                console.error('Error deleting old image:', deleteError);
+                // Continue with upload even if delete fails
+            }
+        }
+
+        // Upload new image to Cloudinary
+        const result = await cloudinary.uploader.upload(req.file.path, {
+            folder: 'profile_pictures',
+            public_id: `user_${candidate_id}_${Date.now()}`
+        });
+
+        // Update database with new image URL
+        await Candidate.update(
+            { profile_picture: result.secure_url },
+            { where: { candidate_id: candidate_id } }
+        );
+
+        // Delete temporary file
+        fs.unlinkSync(req.file.path);
+
+        return res.status(200).json({
+            success: true,
+            message: "Profile picture updated successfully",
+            data: { profile_picture: result.secure_url }
+        });
+
+    } catch (error) {
+        console.error('Error updating profile picture:', error);
+        return res.status(500).json({
+            success: false,
+            message: "Error updating profile picture",
+            error: error.message
+        });
+    }
+  }
+
+  // get profile picture by candidate_id
+  async getProfilePictureByCandidateId(req, res) {
+    try {
+      const candidate = await Candidate.findByPk(req.params.candidate_id);
+
+      return res.status(200).send({
+        message: "Thông tin chi tiết hồ sơ ứng viên",
+        code: 1,
+        candidate,
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
   // create candidate experience with candidate_id
   async createCandidateExperienceWithCandidateId(req, res) {
     try {
-      console.log('Sending data:', req.body); // Log data trước khi gửi
+      console.log("Sending data:", req.body); // Log data trước khi gửi
       const candidateExperience = await CandidateExperiences.create({
         id: this.generateExperienceId(),
         candidate_id: req.params.candidate_id,
@@ -1119,7 +1526,7 @@ class UserController {
         achievements: req.body.achievements,
         start_date: req.body.start_date,
         end_date: req.body.end_date,
-        position: req.body.position // Thêm position
+        position: req.body.position, // Thêm position
       });
       return res.status(200).send({
         message: "Tạo thông tin kinh nghiệm thành công",
@@ -1127,7 +1534,7 @@ class UserController {
         candidateExperience,
       });
     } catch (error) {
-      console.error('Error details:', error); // Log chi tiết lỗi
+      console.error("Error details:", error); // Log chi tiết lỗi
       return res.status(500).send({
         message: error.message,
         code: -1,
@@ -1145,17 +1552,17 @@ class UserController {
         issue_date: req.body.issue_date,
         expiry_date: req.body.expiry_date,
         credential_id: req.body.credential_id,
-        credential_url: req.body.credential_url
+        credential_url: req.body.credential_url,
       });
       return res.status(200).send({
         message: "Tạo thông tin chứng chỉ thành công",
         code: 1,
-        candidateCertifications
+        candidateCertifications,
       });
     } catch (error) {
       return res.status(500).send({
         message: error.message,
-        code: -1
+        code: -1,
       });
     }
   }
@@ -1171,17 +1578,17 @@ class UserController {
         end_date: req.body.end_date,
         role: req.body.role,
         technologies_used: req.body.technologies_used,
-        project_url: req.body.project_url
+        project_url: req.body.project_url,
       });
       return res.status(200).send({
         message: "Tạo thông tin dự án thành công",
         code: 1,
-        candidateProjects
+        candidateProjects,
       });
     } catch (error) {
       return res.status(500).send({
         message: error.message,
-        code: -1
+        code: -1,
       });
     }
   }
@@ -1192,7 +1599,7 @@ class UserController {
         job_id: this.generateJobId(),
         ...req.body,
         company_id: req.body.company_id,
-        category_id: req.body.category_id
+        category_id: req.body.category_id,
       });
       return res.json({ job: job });
     } catch (error) {
@@ -1206,17 +1613,17 @@ class UserController {
         id: this.generateLanguagesId(),
         candidate_id: req.params.candidate_id,
         language: req.body.language,
-        proficiency: req.body.proficiency
+        proficiency: req.body.proficiency,
       });
       return res.status(200).send({
         message: "Tạo thông tin ngôn ngữ thành công",
         code: 1,
-        candidateLanguages
+        candidateLanguages,
       });
     } catch (error) {
       return res.status(500).send({
         message: error.message,
-        code: -1
+        code: -1,
       });
     }
   }
@@ -1225,27 +1632,29 @@ class UserController {
     try {
       const education_id = req.params.id; // Lấy id từ params
       const updateData = req.body;
-      
-      const candidateEducation = await CandidateEducation.findByPk(education_id);
-      
+
+      const candidateEducation = await CandidateEducation.findByPk(
+        education_id
+      );
+
       if (!candidateEducation) {
         return res.status(404).send({
           message: "Không tìm thấy thông tin học vấn",
-          code: -1
+          code: -1,
         });
       }
 
       await candidateEducation.update(updateData);
-      
+
       return res.status(200).send({
         message: "Cập nhật thông tin học vấn thành công",
         code: 1,
-        candidateEducation
+        candidateEducation,
       });
     } catch (error) {
       return res.status(500).send({
         message: error.message,
-        code: -1
+        code: -1,
       });
     }
   }
@@ -1259,12 +1668,12 @@ class UserController {
       return res.status(200).send({
         message: "Cập nhật thông tin dự án thành công",
         code: 1,
-        candidateProjects
+        candidateProjects,
       });
     } catch (error) {
       return res.status(500).send({
         message: error.message,
-        code: -1
+        code: -1,
       });
     }
   }
@@ -1273,21 +1682,23 @@ class UserController {
     try {
       const certifications_id = req.params.id;
       const updateData = req.body;
-      const candidateCertifications = await CandidateCertifications.findByPk(certifications_id);
+      const candidateCertifications = await CandidateCertifications.findByPk(
+        certifications_id
+      );
       await candidateCertifications.update(updateData);
       return res.status(200).send({
         message: "Cập nhật thông tin chứng chỉ thành công",
         code: 1,
-        candidateCertifications
+        candidateCertifications,
       });
     } catch (error) {
       return res.status(500).send({
         message: error.message,
-        code: -1
+        code: -1,
       });
     }
   }
-  // edit candidate 
+  // edit candidate
   async editCandidate(req, res) {
     try {
       const candidate_id = req.params.id;
@@ -1297,33 +1708,34 @@ class UserController {
       return res.status(200).send({
         message: "Cập nhật thông tin ứng viên thành công",
         code: 1,
-        candidate
+        candidate,
       });
     } catch (error) {
       return res.status(500).send({
         message: error.message,
-        code: -1
+        code: -1,
       });
     }
   }
-
 
   // edit candidate languages
   async editCandidateLanguages(req, res) {
     try {
       const languages_id = req.params.id;
       const updateData = req.body;
-      const candidateLanguages = await CandidateLanguages.findByPk(languages_id);
+      const candidateLanguages = await CandidateLanguages.findByPk(
+        languages_id
+      );
       await candidateLanguages.update(updateData);
       return res.status(200).send({
         message: "Cập nhật thông tin ngôn ngữ thành công",
         code: 1,
-        candidateLanguages
+        candidateLanguages,
       });
     } catch (error) {
       return res.status(500).send({
         message: error.message,
-        code: -1
+        code: -1,
       });
     }
   }
@@ -1332,9 +1744,11 @@ class UserController {
     try {
       const experience_id = req.params.id;
       const updateData = req.body;
-      const candidateExperience = await CandidateExperiences.findByPk(experience_id);
+      const candidateExperience = await CandidateExperiences.findByPk(
+        experience_id
+      );
       await candidateExperience.update(updateData);
-    return res.status(200).send({
+      return res.status(200).send({
         message: "Cập nhật thông tin kinh nghiệm thành công",
         code: 1,
         candidateExperience,
@@ -1346,7 +1760,7 @@ class UserController {
       });
     }
   }
-   // edit is_searchable and is_actively_searching
+  // edit is_searchable and is_actively_searching
   async editIsSearchableAndIsActivelySearching(req, res) {
     try {
       const candidate_id = req.params.id;
@@ -1356,12 +1770,12 @@ class UserController {
       return res.status(200).send({
         message: "Cập nhật thông tin ứng viên thành công",
         code: 1,
-        candidate
+        candidate,
       });
     } catch (error) {
       return res.status(500).send({
         message: error.message,
-        code: -1
+        code: -1,
       });
     }
   }
@@ -1369,16 +1783,18 @@ class UserController {
   async deleteCandidateLanguagesById(req, res) {
     try {
       const languages_id = req.params.id;
-      const candidateLanguages = await CandidateLanguages.findByPk(languages_id);
+      const candidateLanguages = await CandidateLanguages.findByPk(
+        languages_id
+      );
       await candidateLanguages.destroy();
       return res.status(200).send({
         message: "Xóa thông tin ngôn ngữ thành công",
-        code: 1
+        code: 1,
       });
     } catch (error) {
       return res.status(500).send({
         message: error.message,
-        code: -1
+        code: -1,
       });
     }
   }
@@ -1390,12 +1806,12 @@ class UserController {
       await candidateProjects.destroy();
       return res.status(200).send({
         message: "Xóa thông tin dự án thành công",
-        code: 1
+        code: 1,
       });
     } catch (error) {
       return res.status(500).send({
         message: error.message,
-        code: -1
+        code: -1,
       });
     }
   }
@@ -1403,16 +1819,18 @@ class UserController {
   async deleteCandidateCertificationsById(req, res) {
     try {
       const certifications_id = req.params.id;
-      const candidateCertifications = await CandidateCertifications.findByPk(certifications_id);
+      const candidateCertifications = await CandidateCertifications.findByPk(
+        certifications_id
+      );
       await candidateCertifications.destroy();
       return res.status(200).send({
         message: "Xóa thông tin chứng chỉ thành công",
-        code: 1
+        code: 1,
       });
     } catch (error) {
       return res.status(500).send({
         message: error.message,
-        code: -1
+        code: -1,
       });
     }
   }
@@ -1420,16 +1838,18 @@ class UserController {
   async deleteCandidateExperienceById(req, res) {
     try {
       const experience_id = req.params.id;
-      const candidateExperience = await CandidateExperiences.findByPk(experience_id);
+      const candidateExperience = await CandidateExperiences.findByPk(
+        experience_id
+      );
       await candidateExperience.destroy();
       return res.status(200).send({
         message: "Xóa thông tin kinh nghiệm thành công",
-        code: 1
+        code: 1,
       });
     } catch (error) {
       return res.status(500).send({
         message: error.message,
-        code: -1
+        code: -1,
       });
     }
   }
@@ -1437,16 +1857,18 @@ class UserController {
   async deleteCandidateEducationById(req, res) {
     try {
       const education_id = req.params.id;
-      const candidateEducation = await CandidateEducation.findByPk(education_id);
+      const candidateEducation = await CandidateEducation.findByPk(
+        education_id
+      );
       await candidateEducation.destroy();
       return res.status(200).send({
         message: "Xóa thông tin học vấn thành công",
-        code: 1
+        code: 1,
       });
     } catch (error) {
       return res.status(500).send({
         message: error.message,
-        code: -1
+        code: -1,
       });
     }
   }
@@ -1462,99 +1884,98 @@ class UserController {
         datePosted,
         location,
         rank,
-        education
+        education,
       } = req.query;
 
       let whereClause = {};
 
       // Filter by category
-      if (category_id && category_id !== 'all') {
+      if (category_id && category_id !== "all") {
         whereClause.category_id = category_id;
       }
 
       // Filter by experience
-      if (experience && experience !== 'all') {
+      if (experience && experience !== "all") {
         whereClause.experience = experience;
       }
 
       // Filter by working time
-      if (working_time && working_time !== 'all') {
+      if (working_time && working_time !== "all") {
         whereClause.working_time = working_time;
       }
 
       // Filter by working location
-      if (working_location && working_location !== 'all') {
+      if (working_location && working_location !== "all") {
         whereClause.working_location = working_location;
       }
 
       // Filter by location
       if (location) {
         whereClause.location = {
-          [Op.like]: `%${location}%`
+          [Op.like]: `%${location}%`,
         };
       }
 
       // Filter by rank
-      if (rank && rank !== 'all') {
+      if (rank && rank !== "all") {
         whereClause.rank = rank;
       }
 
       // Filter by education
-      if (education && education !== 'all') {
+      if (education && education !== "all") {
         whereClause.education = education;
       }
 
       // Filter by date posted
-      if (datePosted && datePosted !== 'all') {
+      if (datePosted && datePosted !== "all") {
         const now = new Date();
         switch (datePosted) {
-          case 'last_hour':
+          case "last_hour":
             whereClause.created_at = {
-              [Op.gte]: new Date(now - 60 * 60 * 1000)
+              [Op.gte]: new Date(now - 60 * 60 * 1000),
             };
             break;
-          case 'last_24h':
+          case "last_24h":
             whereClause.created_at = {
-              [Op.gte]: new Date(now - 24 * 60 * 60 * 1000)
+              [Op.gte]: new Date(now - 24 * 60 * 60 * 1000),
             };
             break;
-          case 'last_7d':
+          case "last_7d":
             whereClause.created_at = {
-              [Op.gte]: new Date(now - 7 * 24 * 60 * 60 * 1000)
+              [Op.gte]: new Date(now - 7 * 24 * 60 * 60 * 1000),
             };
             break;
-          case 'last_14d':
+          case "last_14d":
             whereClause.created_at = {
-              [Op.gte]: new Date(now - 14 * 24 * 60 * 60 * 1000)
+              [Op.gte]: new Date(now - 14 * 24 * 60 * 60 * 1000),
             };
             break;
-          case 'last_30d':
+          case "last_30d":
             whereClause.created_at = {
-              [Op.gte]: new Date(now - 30 * 24 * 60 * 60 * 1000)
+              [Op.gte]: new Date(now - 30 * 24 * 60 * 60 * 1000),
             };
             break;
         }
       }
 
       // Filter by salary range
-      if (salary && salary !== 'all') {
+      if (salary && salary !== "all") {
         whereClause.salary = salary;
       }
 
       const jobs = await Job.findAll({
         where: whereClause,
-        order: [['created_at', 'DESC']]
+        order: [["created_at", "DESC"]],
       });
 
       return res.json({
         jobs: jobs,
-        totalJobs: jobs.length
+        totalJobs: jobs.length,
       });
-
     } catch (error) {
       return res.status(500).send({
         message: error.message,
-        code: -1
+        code: -1,
       });
     }
   }
@@ -1569,7 +1990,7 @@ class UserController {
       if (!job) {
         return res.status(404).json({
           message: "Không tìm thấy công việc",
-          code: -1
+          code: -1,
         });
       }
 
@@ -1577,14 +1998,14 @@ class UserController {
       const existingSave = await SavedJob.findOne({
         where: {
           user_id: userId,
-          job_id: jobId
-        }
+          job_id: jobId,
+        },
       });
 
       if (existingSave) {
         return res.status(400).json({
           message: "Bạn đã lưu công việc này rồi",
-          code: -1
+          code: -1,
         });
       }
 
@@ -1593,19 +2014,18 @@ class UserController {
         saved_id: `saved-${Date.now()}`,
         user_id: userId,
         job_id: jobId,
-        saved_date: new Date()
+        saved_date: new Date(),
       });
 
       res.status(201).json({
         message: "Lưu công việc thành công",
         code: 1,
-        savedJob
+        savedJob,
       });
-
     } catch (error) {
       res.status(500).json({
         message: error.message,
-        code: -1
+        code: -1,
       });
     }
   }
@@ -1619,26 +2039,25 @@ class UserController {
       const result = await SavedJob.destroy({
         where: {
           user_id: userId,
-          job_id: jobId
-        }
+          job_id: jobId,
+        },
       });
 
       if (result === 0) {
         return res.status(404).json({
           message: "Không tìm thấy công việc đã lưu",
-          code: -1
+          code: -1,
         });
       }
 
       res.status(200).json({
         message: "Bỏ lưu công việc thành công",
-        code: 1
+        code: 1,
       });
-
     } catch (error) {
       res.status(500).json({
         message: error.message,
-        code: -1
+        code: -1,
       });
     }
   }
@@ -1652,19 +2071,18 @@ class UserController {
       const savedJob = await SavedJob.findOne({
         where: {
           user_id: userId,
-          job_id: jobId
-        }
+          job_id: jobId,
+        },
       });
 
       res.status(200).json({
         isSaved: !!savedJob,
-        code: 1
+        code: 1,
       });
-
     } catch (error) {
       res.status(500).json({
         message: error.message,
-        code: -1
+        code: -1,
       });
     }
   }
@@ -1680,7 +2098,7 @@ class UserController {
       if (!job) {
         return res.status(404).json({
           message: "Không tìm thấy công việc",
-          code: -1
+          code: -1,
         });
       }
 
@@ -1688,14 +2106,14 @@ class UserController {
       const existingView = await ViewedJob.findOne({
         where: {
           user_id: userId,
-          job_id: jobId
-        }
+          job_id: jobId,
+        },
       });
 
       if (existingView) {
         // Nếu đã xem rồi thì cập nhật thời gian xem
         await existingView.update({
-          viewed_date: new Date()
+          viewed_date: new Date(),
         });
       } else {
         // Nếu chưa xem thì tạo mới
@@ -1703,19 +2121,18 @@ class UserController {
           viewed_id: `viewed-${Date.now()}`,
           user_id: userId,
           job_id: jobId,
-          viewed_date: new Date()
+          viewed_date: new Date(),
         });
       }
 
       res.status(200).json({
         message: "Đã thêm vào lịch sử xem",
-        code: 1
+        code: 1,
       });
-
     } catch (error) {
       res.status(500).json({
         message: error.message,
-        code: -1
+        code: -1,
       });
     }
   }
@@ -1727,19 +2144,18 @@ class UserController {
 
       await ViewedJob.destroy({
         where: {
-          user_id: userId
-        }
+          user_id: userId,
+        },
       });
 
       res.status(200).json({
         message: "Đã xóa toàn bộ lịch sử xem",
-        code: 1
+        code: 1,
       });
-
     } catch (error) {
       res.status(500).json({
         message: error.message,
-        code: -1
+        code: -1,
       });
     }
   }
@@ -1753,26 +2169,25 @@ class UserController {
       const result = await ViewedJob.destroy({
         where: {
           user_id: userId,
-          job_id: jobId
-        }
+          job_id: jobId,
+        },
       });
 
       if (result === 0) {
         return res.status(404).json({
           message: "Không tìm thấy job trong lịch sử xem",
-          code: -1
+          code: -1,
         });
       }
 
       res.status(200).json({
         message: "Đã xóa job khỏi lịch sử xem",
-        code: 1
+        code: 1,
       });
-
     } catch (error) {
       res.status(500).json({
         message: error.message,
-        code: -1
+        code: -1,
       });
     }
   }
@@ -1813,7 +2228,7 @@ class UserController {
         user_id: userId,
         job_id: job_id,
         applied_at: new Date(),
-        status: 'Đang xét duyệt',
+        status: "Đang xét duyệt",
       });
 
       return res.status(201).json({
@@ -1896,6 +2311,8 @@ class UserController {
       });
     }
   }
+
+  
 }
 
 module.exports = new UserController();

@@ -187,7 +187,7 @@ const Sidebar = () => {
   const { user, setUser } = useContext(UserContext);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
+  const [candidate, setCandidate] = useState(null);
   const userSidebarIcons =
     user?.role === "admin"
       ? [
@@ -220,6 +220,8 @@ const Sidebar = () => {
       try {
         const response = await authAPI().get(userApis.getCurrentUser);
         setUser(response.data.user);
+        setCandidate(response.data.candidate);
+        console.log("response.data.candidate", response.data.candidate);
       } catch (error) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
@@ -312,7 +314,8 @@ const Sidebar = () => {
               {token ? (
                 <div className={cx("user-dropdown")}>
                   <div className={cx("avatar-container")}>
-                    <Avatar src={images.avatar} fontsize={"5px"} alt={"Avatar"} />
+                    <Avatar src={candidate?.profile_picture || images.avatar} fontsize={"5px"} alt={"Avatar"} 
+                    />
                     <div className={cx("dropdown-menu")}>
                       <div className={cx("user-info")}>
                         <span className={cx("user-name")}>{user?.name || "Vĩ Nguyễn Đức"}</span>
