@@ -40,7 +40,7 @@ const TopJob = () => {
         ...job,
         company_logo: `https://i.pravatar.cc/${getRandomAvatarId()}`
       }))
-      setJobs(jobsWithAvatars)
+      setJobs(result.data.jobs)
       console.log("jobsWithAvatars",jobsWithAvatars)
       setTotalPages(result.data.totalPages)
     } catch (error) {

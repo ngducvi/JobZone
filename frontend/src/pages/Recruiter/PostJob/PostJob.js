@@ -10,26 +10,29 @@ import { toast } from "react-toastify";
 const cx = classNames.bind(styles);
 
 const categories = [
-    { value: '1f25fd8e-ce9e-11ef-9430-2cf05db24bc7', name: 'Retail' },
-    { value: '1f25fc2b-ce9e-11ef-9430-2cf05db24bc7', name: 'Operations' },
-    { value: '1f25fb0c-ce9e-11ef-9430-2cf05db24bc7', name: 'Engineering' },
-    { value: '1f25f98c-ce9e-11ef-9430-2cf05db24bc7', name: 'Legal' },
-    { value: '1f25f861-ce9e-11ef-9430-2cf05db24bc7', name: 'Healthcare' },
-    { value: '1f25f6f2-ce9e-11ef-9430-2cf05db24bc7', name: 'Education' },
-    { value: '1f25f441-ce9e-11ef-9430-2cf05db24bc7', name: 'Consulting' },
-    { value: '1f25f23d-ce9e-11ef-9430-2cf05db24bc7', name: 'Finance' },
-    { value: '1f25f189-ce9e-11ef-9430-2cf05db24bc7', name: 'Business Analyst' },
-    { value: '1f25f0db-ce9e-11ef-9430-2cf05db24bc7', name: 'Cybersecurity' },
-    { value: '1f25f02b-ce9e-11ef-9430-2cf05db24bc7', name: 'Mobile Development' },
-    { value: '1f25ef7a-ce9e-11ef-9430-2cf05db24bc7', name: 'Web Development' },
-    { value: '1f25eec3-ce9e-11ef-9430-2cf05db24bc7', name: 'Customer Support' },
-    { value: '1f25ee06-ce9e-11ef-9430-2cf05db24bc7', name: 'Human Resources' },
-    { value: '1f25ed2a-ce9e-11ef-9430-2cf05db24bc7', name: 'Sales' },
-    { value: '1f25ec4e-ce9e-11ef-9430-2cf05db24bc7', name: 'Graphic Design' },
-    { value: '1f25eb8c-ce9e-11ef-9430-2cf05db24bc7', name: 'Marketing' },
-    { value: '1f25ea73-ce9e-11ef-9430-2cf05db24bc7', name: 'Project Management' },
-    { value: '1f25e912-ce9e-11ef-9430-2cf05db24bc7', name: 'Data Science' },
-    { value: '1f25e3ee-ce9e-11ef-9430-2cf05db24bc7', name: 'Software Engineering' },
+  { value: "1f25fd8e-ce9e-11ef-9430-2cf05db24bc7", name: "Retail" },
+  { value: "1f25fc2b-ce9e-11ef-9430-2cf05db24bc7", name: "Operations" },
+  { value: "1f25fb0c-ce9e-11ef-9430-2cf05db24bc7", name: "Engineering" },
+  { value: "1f25f98c-ce9e-11ef-9430-2cf05db24bc7", name: "Legal" },
+  { value: "1f25f861-ce9e-11ef-9430-2cf05db24bc7", name: "Healthcare" },
+  { value: "1f25f6f2-ce9e-11ef-9430-2cf05db24bc7", name: "Education" },
+  { value: "1f25f441-ce9e-11ef-9430-2cf05db24bc7", name: "Consulting" },
+  { value: "1f25f23d-ce9e-11ef-9430-2cf05db24bc7", name: "Finance" },
+  { value: "1f25f189-ce9e-11ef-9430-2cf05db24bc7", name: "Business Analyst" },
+  { value: "1f25f0db-ce9e-11ef-9430-2cf05db24bc7", name: "Cybersecurity" },
+  { value: "1f25f02b-ce9e-11ef-9430-2cf05db24bc7", name: "Mobile Development" },
+  { value: "1f25ef7a-ce9e-11ef-9430-2cf05db24bc7", name: "Web Development" },
+  { value: "1f25eec3-ce9e-11ef-9430-2cf05db24bc7", name: "Customer Support" },
+  { value: "1f25ee06-ce9e-11ef-9430-2cf05db24bc7", name: "Human Resources" },
+  { value: "1f25ed2a-ce9e-11ef-9430-2cf05db24bc7", name: "Sales" },
+  { value: "1f25ec4e-ce9e-11ef-9430-2cf05db24bc7", name: "Graphic Design" },
+  { value: "1f25eb8c-ce9e-11ef-9430-2cf05db24bc7", name: "Marketing" },
+  { value: "1f25ea73-ce9e-11ef-9430-2cf05db24bc7", name: "Project Management" },
+  { value: "1f25e912-ce9e-11ef-9430-2cf05db24bc7", name: "Data Science" },
+  {
+    value: "1f25e3ee-ce9e-11ef-9430-2cf05db24bc7",
+    name: "Software Engineering",
+  },
 ];
 
 // Preview Modal Component
@@ -61,106 +64,126 @@ const PreviewJobModal = ({ isOpen, onClose, jobDetails, companyInfo }) => {
   };
 
   return (
-    <div className={cx("modal-overlay")}> 
-      <div className={cx("modal-content")}> 
+    <div className={cx("modal-overlay")}>
+      <div className={cx("modal-content")}>
         <button className={cx("close-btn")} onClick={onClose}>
           <i className="fa-solid fa-times"></i>
         </button>
 
-        <div className={cx("job-main")}> 
-          <div className={cx("job-header")}> 
-            <div className={cx("company-info")}> 
-              <div className={cx("company-logo")}>LOGO</div> 
-              <div className={cx("company-name")}> 
-                AutoMotors
-                <div className={cx("posting-date")}>Hạn nộp: {formatDate(jobDetails.deadline)}</div>
+        <div className={cx("job-main")}>
+          <div className={cx("job-header")}>
+            <div className={cx("company-info")}>
+              <div className={cx("company-logo")}>
+                <img
+                  src={companyInfo.logo}
+                  alt="Company logo"
+                  className={cx("logo-preview")}
+                  style={{ width: "70px", height: "70px",
+                    objectFit: "cover",
+                    borderRadius: "50%",
+                    border: "1px solid #ccc",
+                    padding: "2px",
+                   }}
+                />
+              </div>
+              <div className={cx("company-name")}>
+                {companyInfo.company_name}
+                <div className={cx("posting-date")}>
+                  Hạn nộp: {formatDate(jobDetails.deadline)}
+                </div>
               </div>
             </div>
 
             <h1 className={cx("job-title")}>{jobDetails.title}</h1>
 
-            <div className={cx("job-meta")}> 
-              <div className={cx("meta-item")}> 
+            <div className={cx("job-meta")}>
+              <div className={cx("meta-item")}>
                 <i className="fa-solid fa-money-bill"></i>
                 {jobDetails.salary}
-              </div> 
-              <div className={cx("meta-item")}> 
+              </div>
+              <div className={cx("meta-item")}>
                 <i className="fa-solid fa-location-dot"></i>
                 {jobDetails.location}
-              </div> 
-              <div className={cx("meta-item")}> 
+              </div>
+              <div className={cx("meta-item")}>
                 <i className="fa-solid fa-briefcase"></i>
                 {jobDetails.jobType}
-              </div> 
-              <div className={cx("meta-item")}> 
+              </div>
+              <div className={cx("meta-item")}>
                 <i className="fa-solid fa-clock"></i>
                 {jobDetails.experience}
-              </div> 
-            </div> 
+              </div>
+            </div>
           </div>
 
-          <div className={cx("job-content")}> 
-            <div className={cx("job-section")}> 
-              <h3> 
+          <div className={cx("job-content")}>
+            <div className={cx("job-section")}>
+              <h3>
                 <i className="fa-solid fa-circle-info"></i>
                 Mô tả công việc
-              </h3> 
-              <div className={cx("section-content")}>{formatContent(jobDetails.description)}</div> 
+              </h3>
+              <div className={cx("section-content")}>
+                {formatContent(jobDetails.description)}
+              </div>
             </div>
 
-            <div className={cx("job-section")}> 
-              <h3> 
+            <div className={cx("job-section")}>
+              <h3>
                 <i className="fa-solid fa-list-check"></i>
                 Yêu cầu công việc
-              </h3> 
-              <div className={cx("section-content")}>{formatContent(jobDetails.jobRequirements)}</div> 
+              </h3>
+              <div className={cx("section-content")}>
+                {formatContent(jobDetails.jobRequirements)}
+              </div>
             </div>
 
-            <div className={cx("job-section")}> 
-              <h3> 
+            <div className={cx("job-section")}>
+              <h3>
                 <i className="fa-solid fa-gift"></i>
                 Quyền lợi
-              </h3> 
-              <div className={cx("section-content")}>{formatContent(jobDetails.benefits)}</div> 
-            </div> 
-          </div> 
+              </h3>
+              <div className={cx("section-content")}>
+                {formatContent(jobDetails.benefits)}
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className={cx("company-sidebar")}> 
-          <div className={cx("sidebar-section")}> 
-            <h4>Thông tin chung</h4> 
-            <div className={cx("company-stats")}> 
-              <div className={cx("stat-item")}> 
+        <div className={cx("company-sidebar")}>
+          <div className={cx("sidebar-section")}>
+            <h4>Thông tin chung</h4>
+            <div className={cx("company-stats")}>
+              <div className={cx("stat-item")}>
                 <i className="fa-solid fa-users"></i>
                 100-499 nhân viên
-              </div> 
-              <div className={cx("stat-item")}> 
+              </div>
+              <div className={cx("stat-item")}>
                 <i className="fa-solid fa-building"></i>
                 Bán lẻ - Hàng tiêu dùng - FMCG
-              </div> 
-              <div className={cx("stat-item")}> 
+              </div>
+              <div className={cx("stat-item")}>
                 <i className="fa-solid fa-location-dot"></i>
                 123 Car St, MI
-              </div> 
-            </div> 
-            <a href="#" className={cx("company-link")}> 
+              </div>
+            </div>
+            <a href="#" className={cx("company-link")}>
               Xem trang công ty
               <i className="fa-solid fa-arrow-right"></i>
-            </a> 
+            </a>
           </div>
 
-          <div className={cx("action-buttons")}> 
-            <button className={cx("apply-btn")}> 
+          <div className={cx("action-buttons")}>
+            <button className={cx("apply-btn")}>
               <i className="fa-solid fa-paper-plane"></i>
               Ứng tuyển ngay
-            </button> 
-            <button className={cx("save-btn")}> 
+            </button>
+            <button className={cx("save-btn")}>
               <i className="fa-regular fa-bookmark"></i>
-            </button> 
-          </div> 
-        </div> 
-      </div> 
-    </div> 
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -463,9 +486,9 @@ function PostJob() {
           </button>
         </div>
       </form>
-      <PreviewJobModal 
-        isOpen={isPreviewModalOpen} 
-        onClose={() => setIsPreviewModalOpen(false)} 
+      <PreviewJobModal
+        isOpen={isPreviewModalOpen}
+        onClose={() => setIsPreviewModalOpen(false)}
         jobDetails={{
           title: jobTitle,
           description,

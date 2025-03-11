@@ -11,6 +11,7 @@ function UserInfo() {
     const [appliedJobs, setAppliedJobs] = useState([]);
     const [savedJobs, setSavedJobs] = useState([]);
     const [viewedJobs, setViewedJobs] = useState([]);
+    const [candidate, setCandidate] = useState(null);
 
     const fetchUserData = async () => {
         const token = localStorage.getItem("token");
@@ -24,6 +25,9 @@ function UserInfo() {
                 authAPI().get(userApis.getAllViewedJobsByUser),
             ]);
             setUser(userResponse.data.user);
+            console.log(userResponse.data.user);
+            setCandidate(userResponse.data.candidate);
+            console.log(userResponse.data.candidate);
             setAppliedJobs(appliedJobsResponse.data.appliedJobs);
             setSavedJobs(savedJobsResponse.data.savedJobs);
             setViewedJobs(viewedJobsResponse.data.viewedJobs);
@@ -55,7 +59,7 @@ function UserInfo() {
         <div>
             <div className={cx('user-info')}>
                 <div className={cx('user-card')}>
-                    <img src={user?.avatar || images.avatar} alt="Avatar" className={cx('avatar')} />
+                    <img src={candidate?.profile_picture || images.avatar} alt="Avatar" className={cx('avatar')} />
                     <h3>{user?.name || "Vĩ Nguyễn Đức"}</h3>
                     <p className={cx('user-title')}>Frontend Developer</p>
                     <div className={cx('user-stats')}>

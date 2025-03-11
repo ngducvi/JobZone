@@ -44,6 +44,7 @@ export const userApis = {
     verifyEmail: '/verify-email/',
     forgotPassword: '/user/forget-password/',
     aiCompletion: '/ai/completion/',
+    getAllTopCompany: '/user/top-company',
 
     createPaymentUrl: '/vnpay/create_payment_url',
 
@@ -58,7 +59,7 @@ export const userApis = {
     getAllCategoriesPost: '/user/categories-post',
     getAllCareerHandbooks: '/user/career-handbook',
     getAllFeaturedCareerHandbooks: '/user/career-handbook/featured',
-    getAllTopCompany: '/user/top-company',
+    
     getAllJobs: '/user/jobs',
     getAllSavedJobsByUser: '/user/saved-jobs',
     getAllAppliedJobsByUser: '/user/applied-jobs',
@@ -141,6 +142,9 @@ export const recruiterApis = {
     editJob: (job_id) => `/recruiter/edit-job/${job_id}`,
     getJobByJobId: (job_id) => `/recruiter/job/${job_id}`,
     deleteJob: (job_id) => `/recruiter/delete-job/${job_id}`,
+    updateCompanyLogo: (company_id) => `/recruiter/company/edit-logo/${company_id}`,
+    updateCompany: (company_id) => `/recruiter/company/edit/${company_id}`,
+    updateCompanyBanner: (company_id) => `/recruiter/company/edit-banner/${company_id}`,
 };
 
 export const usageApis = {

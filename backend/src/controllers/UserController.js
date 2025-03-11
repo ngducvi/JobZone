@@ -35,6 +35,7 @@ const { v4: uuid } = require("uuid");
 const cloudinary = require("../utils/cloudinary");
 const path = require("path");
 const fs = require("fs");
+const RecruiterCompanies = require("../models/RecruiterConpanies");
 
 class UserController {
   constructor() {
@@ -64,7 +65,9 @@ class UserController {
     try {
       const user = await User.findByPk(req.user.id);
       // get profile picture by user_id
-      const candidate = await Candidate.findOne({ where: { user_id: user.id } });
+      const candidate = await Candidate.findOne({
+        where: { user_id: user.id },
+      });
 
       if (!user) {
         return res
@@ -338,29 +341,29 @@ class UserController {
       //       <div style="text-align: center; margin-bottom: 20px;">
       //         <img src="${process.env.LOGO_URL || 'https://your-logo-url.com'}" alt="JobZone Logo" style="max-width: 150px;">
       //       </div>
-            
+
       //       <h2 style="color: #013a74; margin-bottom: 20px; text-align: center;">Xác Minh Email của Bạn</h2>
-            
+
       //       <p style="color: #333; font-size: 16px; line-height: 1.5;">Xin chào <strong>${user.name}</strong>,</p>
-            
+
       //       <p style="color: #333; font-size: 16px; line-height: 1.5;">Cảm ơn bạn đã đăng ký tài khoản tại JobZone - Nền tảng tìm kiếm việc làm hàng đầu.</p>
-            
+
       //       <p style="color: #333; font-size: 16px; line-height: 1.5;">Vui lòng xác minh địa chỉ email của bạn trong vòng <strong>5 phút</strong> bằng cách nhấp vào nút bên dưới:</p>
-            
+
       //       <div style="text-align: center; margin: 30px 0;">
-      //         <a href="${process.env.BASE_URL}/user/verify-email?token=${token}&status=success" 
+      //         <a href="${process.env.BASE_URL}/user/verify-email?token=${token}&status=success"
       //            style="background-color: #02a346; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
       //           Xác Minh Email
       //         </a>
       //       </div>
-            
+
       //       <p style="color: #666; font-size: 14px;">Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này.</p>
-            
+
       //       <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
       //         <p style="color: #666; font-size: 14px; margin: 0;">Trân trọng,</p>
       //         <p style="color: #013a74; font-weight: bold; margin: 5px 0;">Đội ngũ JobZone</p>
       //       </div>
-            
+
       //       <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #666; font-size: 12px;">
       //         <p>Email này được gửi tự động, vui lòng không trả lời.</p>
       //         <p>Copyright © ${new Date().getFullYear()} JobZone. All rights reserved.</p>
@@ -399,7 +402,10 @@ class UserController {
                       <table border="0" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
                           <td style="padding: 40px 0; text-align: center; background: linear-gradient(135deg, #013a74 0%, #02a346 100%);">
-                            <img src="${process.env.LOGO_URL || 'https://your-logo-url.com'}" alt="JobZone" style="max-width: 180px; height: auto; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));">
+                            <img src="${
+                              process.env.LOGO_URL ||
+                              "https://your-logo-url.com"
+                            }" alt="JobZone" style="max-width: 180px; height: auto; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));">
                           </td>
                         </tr>
                       </table>
@@ -416,7 +422,9 @@ class UserController {
                             <h1 style="margin: 0 0 20px; font-size: 28px; font-weight: 700; color: #013a74; text-align: center; letter-spacing: -0.5px;">Xác Minh Email của Bạn</h1>
                             
                             <p style="margin: 0 0 25px; font-size: 16px; line-height: 1.6; color: #4b5563;">
-                              Xin chào <span style="font-weight: 600; color: #013a74;">${user.name}</span>,
+                              Xin chào <span style="font-weight: 600; color: #013a74;">${
+                                user.name
+                              }</span>,
                             </p>
                             
                             <p style="margin: 0 0 25px; font-size: 16px; line-height: 1.6; color: #4b5563;">
@@ -458,7 +466,9 @@ class UserController {
                             <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
                               <tr>
                                 <td style="background: linear-gradient(135deg, #013a74 0%, #02a346 100%); border-radius: 8px; box-shadow: 0 4px 12px rgba(1, 58, 116, 0.2);">
-                                  <a href="${process.env.BASE_URL}/user/verify-email?token=${token}&status=success" 
+                                  <a href="${
+                                    process.env.BASE_URL
+                                  }/user/verify-email?token=${token}&status=success" 
                                      style="display: inline-block; padding: 16px 40px; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none;">
                                     Xác Minh Email Ngay
                                   </a>
@@ -1167,6 +1177,13 @@ class UserController {
       limit,
       offset,
     });
+    // lấy danh sách company_id
+    const companyIds = topCompany.rows.map((company) => company.company_id);
+    // lấy user_id từ company_id từ recruiter_company
+    const recruiterCompany = await RecruiterCompanies.findAll({
+      where: { company_id: companyIds },
+    });
+  
     return res.json({
       topCompany: topCompany.rows,
       totalPages: Math.ceil(topCompany.count / limit),
@@ -1181,8 +1198,37 @@ class UserController {
       limit,
       offset,
     });
+    // lấy danh sách company_id từ jobs
+    const companyIds = jobs.rows.map((job) => job.company_id);
+    // dựa vào company_id để lấy company_name, logo, size, industry, address
+    const companies = await Company.findAll({
+      where: { company_id: companyIds },
+    });
+    // lấy thông tin company_name, company_id ,logo, size, industry, address từ companies
+    const companiesWithDetails = companies.map((company) => {
+      return {
+        company_name: company.company_name,
+        company_id: company.company_id,
+        logo: company.logo,
+        size: company.size,
+        industry: company.industry,
+        address: company.address,
+      };
+    });
+    // nếu có company_id trong jobs thì thêm company_name, logo, size, industry, address vào jobs
+    const jobsWithCompanies = jobs.rows.map((job) => {
+      const company = companiesWithDetails.find((c) => c.company_id === job.company_id);
+      return {
+        ...job.toJSON(),
+        company_name: company.company_name,
+        company_logo: company.logo,
+        company_size: company.size,
+        company_industry: company.industry,
+        company_address: company.address,
+      };
+    });
     return res.json({
-      jobs: jobs.rows,
+      jobs: jobsWithCompanies,
       totalPages: Math.ceil(jobs.count / limit),
     });
   }
@@ -1432,67 +1478,104 @@ class UserController {
       });
     }
   }
+  // update company logo with company_id
+  // async updateCompanyLogoWithCompanyId(req, res) {
+  //   try {
+  //     const company = await Company.findByPk(req.params.company_id);
+  //     if (!company) {
+  //       return res.status(404).send({
+  //         message: "Không tìm thấy công ty",
+  //         code: -1,
+  //       });
+  //     }
+  //     let filename = req.file.filename;
+  //     filename = filename.split(".");
+  //     filename = filename[0] + uuid() + "." + filename[1];
+  //     try {
+  //       const result = await cloudinary.uploader.upload(req.file.path, {
+  //         resource_type: "image",
+  //         folder: "company_logos",
+  //         public_id: `company_${req.params.company_id}_${Date.now()}`,
+  //       });
+  //       await company.update({ logo: result.secure_url });
+  //       return res.status(200).send({
+  //         message: "Cập nhật logo công ty thành công",
+  //         code: 1,
+  //         company,
+  //       });
+  //     } catch (error) {
+  //       return res.status(500).send({
+  //         message: error.message,
+  //         code: -1,
+  //       });
+  //     }
+  //   } catch (error) {
+  //     return res.status(500).send({
+  //       message: error.message,
+  //       code: -1,
+  //     });
+  //   }
+  // }
   // update profile picture by candidate_id cloudinary
   async updateProfilePictureByCandidateIdCloudinary(req, res) {
     try {
-        const candidate_id = req.params.candidate_id;
-        
-        // Get current profile picture public_id from database
-        const currentUser = await Candidate.findOne({
-            where: { candidate_id: candidate_id }
+      const candidate_id = req.params.candidate_id;
+
+      // Get current profile picture public_id from database
+      const currentUser = await Candidate.findOne({
+        where: { candidate_id: candidate_id },
+      });
+
+      if (!currentUser) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
         });
-        
-        if (!currentUser) {
-            return res.status(404).json({
-                success: false,
-                message: "User not found"
-            });
+      }
+
+      // If there's an existing profile picture, delete it from Cloudinary
+      if (currentUser.profile_picture) {
+        try {
+          // Extract public_id from the URL
+          const urlParts = currentUser.profile_picture.split("/");
+          const filenameWithExt = urlParts[urlParts.length - 1];
+          const public_id = `profile_pictures/${filenameWithExt.split(".")[0]}`;
+
+          // Delete the old image from Cloudinary
+          await cloudinary.uploader.destroy(public_id);
+        } catch (deleteError) {
+          console.error("Error deleting old image:", deleteError);
+          // Continue with upload even if delete fails
         }
+      }
 
-        // If there's an existing profile picture, delete it from Cloudinary
-        if (currentUser.profile_picture) {
-            try {
-                // Extract public_id from the URL
-                const urlParts = currentUser.profile_picture.split('/');
-                const filenameWithExt = urlParts[urlParts.length - 1];
-                const public_id = `profile_pictures/${filenameWithExt.split('.')[0]}`;
-                
-                // Delete the old image from Cloudinary
-                await cloudinary.uploader.destroy(public_id);
-            } catch (deleteError) {
-                console.error('Error deleting old image:', deleteError);
-                // Continue with upload even if delete fails
-            }
-        }
+      // Upload new image to Cloudinary
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "profile_pictures",
+        public_id: `user_${candidate_id}_${Date.now()}`,
+      });
 
-        // Upload new image to Cloudinary
-        const result = await cloudinary.uploader.upload(req.file.path, {
-            folder: 'profile_pictures',
-            public_id: `user_${candidate_id}_${Date.now()}`
-        });
+      // Update database with new image URL
+      await Candidate.update(
+        { profile_picture: result.secure_url },
+        { where: { candidate_id: candidate_id } }
+      );
 
-        // Update database with new image URL
-        await Candidate.update(
-            { profile_picture: result.secure_url },
-            { where: { candidate_id: candidate_id } }
-        );
+      // Delete temporary file
+      fs.unlinkSync(req.file.path);
 
-        // Delete temporary file
-        fs.unlinkSync(req.file.path);
-
-        return res.status(200).json({
-            success: true,
-            message: "Profile picture updated successfully",
-            data: { profile_picture: result.secure_url }
-        });
-
+      return res.status(200).json({
+        success: true,
+        message: "Profile picture updated successfully",
+        data: { profile_picture: result.secure_url },
+      });
     } catch (error) {
-        console.error('Error updating profile picture:', error);
-        return res.status(500).json({
-            success: false,
-            message: "Error updating profile picture",
-            error: error.message
-        });
+      console.error("Error updating profile picture:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Error updating profile picture",
+        error: error.message,
+      });
     }
   }
 
@@ -1967,6 +2050,8 @@ class UserController {
         where: whereClause,
         order: [["created_at", "DESC"]],
       });
+      
+      
 
       return res.json({
         jobs: jobs,
@@ -2311,8 +2396,6 @@ class UserController {
       });
     }
   }
-
-  
 }
 
 module.exports = new UserController();

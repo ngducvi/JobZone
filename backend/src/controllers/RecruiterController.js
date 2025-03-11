@@ -32,7 +32,10 @@ const CandidateEducation = require("../models/CandidateEducation");
 const CandidateCertifications = require("../models/CandidateCertifications");
 const CandidateProjects = require("../models/CandidateProjects");
 const RecruiterCompanies = require("../models/RecruiterConpanies");
-
+const { v4: uuid } = require("uuid");
+const cloudinary = require("../utils/cloudinary");
+const path = require("path");
+const fs = require("fs");
 class RecruiterController {
   constructor() {
     this.generateEducationId = () => {
@@ -477,7 +480,9 @@ class RecruiterController {
         attributes: ["id", "name", "email", "phone", "created_at"], // Only select needed fields
       });
 
-      const candidateIds = candidates.map((candidate) => candidate.candidate_id);
+      const candidateIds = candidates.map(
+        (candidate) => candidate.candidate_id
+      );
       const candidateExperiences = await CandidateExperiences.findAll({
         where: { candidate_id: { [Op.in]: candidateIds } },
       });
@@ -508,7 +513,8 @@ class RecruiterController {
           (education) => education.candidate_id === candidate.candidate_id
         );
         const candidateCertificationList = candidateCertifications.filter(
-          (certification) => certification.candidate_id === candidate.candidate_id
+          (certification) =>
+            certification.candidate_id === candidate.candidate_id
         );
         const candidateProjectList = candidateProjects.filter(
           (project) => project.candidate_id === candidate.candidate_id
@@ -545,7 +551,7 @@ class RecruiterController {
       });
     }
   }
-  
+
   // edit job_application status
   async editJobApplicationStatus(req, res) {
     try {
@@ -653,12 +659,10 @@ class RecruiterController {
       });
     } catch (error) {
       console.error("Error posting job:", error);
-      res
-        .status(400)
-        .send({
-          message: "Đã xảy ra lỗi khi đăng tin tuyển dụng.",
-          error: error.message,
-        });
+      res.status(400).send({
+        message: "Đã xảy ra lỗi khi đăng tin tuyển dụng.",
+        error: error.message,
+      });
     }
   }
   // get job by job_id
@@ -706,6 +710,154 @@ class RecruiterController {
       return res.json({ message: "Xóa tin tuyển dụng thành công", code: 1 });
     } catch (error) {
       res.status(400).send(error);
+    }
+  }
+  async updateCompanyLogoWithCompanyId(req, res) {
+    try {
+      const company = await Company.findByPk(req.params.company_id);
+      if (!company) {
+        return res.status(404).send({
+          message: "Không tìm thấy công ty",
+          code: -1,
+        });
+      }
+      let filename = req.file.filename;
+      filename = filename.split(".");
+      filename = filename[0] + uuid() + "." + filename[1];
+      try {
+        const result = await cloudinary.uploader.upload(req.file.path, {
+          resource_type: "image",
+          folder: "company_logos",
+          public_id: `company_${req.params.company_id}_${Date.now()}`,
+        });
+
+        await company.update({
+          company_name: req.body.company_name,
+          address: req.body.address,
+          website: req.body.website,
+          description: req.body.description,
+          logo: result.secure_url,
+          company_emp: req.body.company_emp,
+        });
+        return res.status(200).send({
+          message: "Cập nhật logo công ty thành công",
+          code: 1,
+          company,
+        });
+      } catch (error) {
+        return res.status(500).send({
+          message: error.message,
+          code: -1,
+        });
+      }
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
+  // Thêm method mới để cập nhật thông tin công ty
+  async updateCompany(req, res) {
+    try {
+      const company = await Company.findByPk(req.params.company_id);
+      if (!company) {
+        return res.status(404).send({
+          message: "Không tìm thấy công ty",
+          code: -1,
+        });
+      }
+
+      const updateData = {
+        company_name: req.body.company_name,
+        address: req.body.address,
+        website: req.body.website,
+        description: req.body.description,
+        company_emp: req.body.company_emp,
+      };
+
+      // Nếu có file logo mới được upload
+      if (req.file) {
+        try {
+          const result = await cloudinary.uploader.upload(req.file.path, {
+            resource_type: "image",
+            folder: "company_logos",
+            public_id: `company_${req.params.company_id}_${Date.now()}`,
+          });
+          updateData.logo = result.secure_url;
+        } catch (error) {
+          return res.status(500).send({
+            message: "Lỗi khi tải lên logo",
+            code: -1,
+          });
+        }
+      }
+      // Nếu có file banner mới được upload
+      if (req.file) {
+        try {
+          const result = await cloudinary.uploader.upload(req.file.path, {
+            resource_type: "image",
+            folder: "company_banners",
+            public_id: `company_${req.params.company_id}_${Date.now()}`,
+          });
+          updateData.banner = result.secure_url;
+        } catch (error) {
+          return res.status(500).send({
+            message: "Lỗi khi tải lên banner",
+            code: -1,
+          });
+        }
+      }
+      await company.update(updateData);
+
+      return res.status(200).send({
+        message: "Cập nhật thông tin công ty thành công",
+        code: 1,
+        company,
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
+  // update company banner with company_id
+  async updateCompanyBannerWithCompanyId(req, res) {
+    try {
+      const company = await Company.findByPk(req.params.company_id);
+      if (!company) {
+        return res.status(404).send({
+          message: "Không tìm thấy công ty",
+          code: -1,
+        });
+      }
+      let filename = req.file.filename;
+      filename = filename.split(".");
+      filename = filename[0] + uuid() + "." + filename[1];
+      try {
+        const result = await cloudinary.uploader.upload(req.file.path, {
+          resource_type: "image",
+          folder: "company_banners",
+          public_id: `company_${req.params.company_id}_${Date.now()}`,
+        });
+        await company.update({ banner: result.secure_url });
+        return res.status(200).send({
+          message: "Cập nhật banner công ty thành công",
+          code: 1,
+          company,
+        });
+      } catch (error) {
+        return res.status(500).send({
+          message: "Lỗi khi tải lên banner",
+          code: -1,
+        });
+      }
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1,
+      });
     }
   }
 }

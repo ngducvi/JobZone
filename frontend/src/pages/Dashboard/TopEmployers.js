@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import classNames from 'classnames/bind'
 import styles from './TopEmployers.module.scss'
-import { authAPI, userApis } from '~/utils/api'
+import { authAPI, userApis } from "~/utils/api";
 import { Link, useNavigate } from 'react-router-dom'
 const cx = classNames.bind(styles)
 const EMPLOYERS = [
@@ -60,11 +60,28 @@ const EMPLOYERS = [
 const TopEmployers = () => {
   const [companyDetail, setCompanyDetail] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [topCompany, setTopCompany] = useState([]);
+  const [activePage, setActivePage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const navigate = useNavigate();
 
   const handleEmployerClick = (employerId) => {
     navigate(`/top-company-detail/${employerId}`);
   };
+  
+  useEffect(() => {
+    const fetchTopCompany = async () => {
+      const response = await authAPI().get(userApis.getAllTopCompany, {
+        params: {
+          page: activePage,
+        },
+      });
+      setTopCompany(response.data.topCompany);
+      console.log("response.data.topCompany",response.data.topCompany);
+      setTotalPages(response.data.totalPages);
+    };
+    fetchTopCompany();
+  }, [activePage]);
 
   
   return (
@@ -78,7 +95,7 @@ const TopEmployers = () => {
 
       <div className={cx('logo-container')}>
         {/* Duplicate logos to fill the space */}
-        {[...EMPLOYERS, ...EMPLOYERS].map((employer, index) => (
+        {topCompany.map((employer, index) => (
           <div 
             key={`${employer.id}-${index}`} 
             className={cx('employer-logo')}

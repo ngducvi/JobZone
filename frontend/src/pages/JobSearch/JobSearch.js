@@ -174,6 +174,7 @@ const JobSearch = () => {
         const jobDate = new Date(job.created_at);
         console.log("jobDate", jobDate);
       });
+      console.log("jobs", jobs);
     };
     fetchData();
   }, []);
@@ -625,7 +626,7 @@ const JobSearch = () => {
                   onClick={() => handleJobClick(job.job_id)}
                 >
                   <div className={cx("company-logo")}>
-                    <img src={job.Company?.logo || images.company_logo} alt="Company Logo" />
+                    <img src={job.company_logo || images.company_logo} alt="Company Logo" />
                   </div>
                   
                   <div className={cx("job-info")}>

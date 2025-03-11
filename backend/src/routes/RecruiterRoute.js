@@ -2,6 +2,8 @@ const express = require('express');
 const userController = require('../controllers/UserController');
 const recruiterController = require('../controllers/RecruiterController');
 const jwtMiddleware = require('../middleware/JWTMiddleware');
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
 const router = express.Router();
 
 router.post('/register', recruiterController.registerUser.bind(userController));
@@ -23,4 +25,7 @@ router.post('/post-job', recruiterController.postJob.bind(recruiterController));
 router.post('/edit-job/:job_id', recruiterController.editJob.bind(recruiterController));
 router.get('/job/:job_id', recruiterController.getJobByJobId.bind(recruiterController));
 router.delete('/delete-job/:job_id', recruiterController.deleteJob.bind(recruiterController));
+router.put('/company/edit-logo/:company_id', upload.single('logo'), recruiterController.updateCompanyLogoWithCompanyId.bind(recruiterController));
+router.put('/company/edit/:company_id', upload.single('logo'), recruiterController.updateCompany.bind(recruiterController));
+router.put('/company/edit-banner/:company_id', upload.single('banner'), recruiterController.updateCompanyBannerWithCompanyId.bind(recruiterController));
 module.exports = router;
