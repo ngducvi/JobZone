@@ -32,6 +32,7 @@ function RecruiterHome() {
     totalSaved: 0,
     totalCVs: 0,
   });
+  const [plan, setPlan] = useState('Basic');
   const [showCompanyInfo, setShowCompanyInfo] = useState(false);
   const [jobs, setJobs] = useState([]);
   const [jobApplications, setJobApplications] = useState({});
@@ -47,6 +48,8 @@ function RecruiterHome() {
           recruiterApis.getAllRecruiterCompanies
         );
         setCompanyInfo(responseCompany.data.companies[0]);
+        setPlan(responseCompany.data.companies[0].plan);
+        console.log("plan", plan);
 
         //
         const responseJob = await authAPI().get(
@@ -93,21 +96,6 @@ function RecruiterHome() {
     }
   }, [token, setUser]);
 
-  useEffect(() => {
-    const fetchJobApplications = async () => {
-      try {
-        const response = await authAPI().get(
-          recruiterApis.getAllJobApplications
-        );
-        setJobApplications(response.data.jobApplications);
-      } catch (error) {
-        console.error("Error fetching job applications:", error);
-      }
-    };
-
-    fetchJobApplications();
-  }, []);
-
   return (
     <div className={cx("wrapper")}>
       <div className={cx("user-info")}>
@@ -128,11 +116,11 @@ function RecruiterHome() {
           </div>
           <div className={cx("membership-info")}>
             <div className={cx("membership-level")}>
-              <span style={{ color: planDetails[recruiter?.plan]?.color }}>
-                <FontAwesomeIcon icon={planDetails[recruiter?.plan]?.icon} />{" "}
-                Gói: {recruiter?.plan || "Chưa có gói nào"}
+              <span style={{ color: planDetails[plan]?.color }}>
+                <FontAwesomeIcon icon={planDetails[plan]?.icon} />{" "}
+                Gói: {plan || "Chưa có gói nào"}
               </span>
-              <span className={cx("level")}>Hạng khách hàng</span>
+              <span className={cx("level")}>Hạng Công ty</span>
             </div>
             <div className={cx("membership-points")}>
               <div className={cx("point-row")}>

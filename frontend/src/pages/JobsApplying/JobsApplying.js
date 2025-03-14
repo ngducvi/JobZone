@@ -17,7 +17,7 @@ const JobsApplying = () => {
   const [jobDetails, setJobDetails] = useState({});
   const [filteredJobs, setFilteredJobs] = useState([]);
   const navigate = useNavigate();
-  
+
   // Cập nhật statusMap với đầy đủ các trạng thái
   const statusMap = {
     'pending': 'Đang xét duyệt',
@@ -31,7 +31,7 @@ const JobsApplying = () => {
 
   // Cập nhật tabs với đầy đủ các trạng thái và icons phù hợp
   const tabs = [
-    { 
+    {
       id: 'all', 
       label: 'Tất cả', 
       icon: 'fas fa-list-ul',
@@ -202,12 +202,12 @@ const JobsApplying = () => {
           <div className={cx('job-list')}>
             {filteredJobs.map((appliedJob) => {
               const job = jobDetails[appliedJob.job_id] || {};
-              return (
-                <div 
-                  key={appliedJob.job_id} 
+                return (
+                  <div
+                    key={appliedJob.job_id}
                   className={cx('job-card')} 
-                  onClick={() => handleJobClick(appliedJob.job_id)}
-                >
+                    onClick={() => handleJobClick(appliedJob.job_id)}
+                  >
                   <div className={cx('job-header')}>
                     <img 
                       src={jobDetails[appliedJob.job_id]?.companyLogo || images.company_1} 
@@ -216,46 +216,46 @@ const JobsApplying = () => {
                     <div className={cx('job-title')}>
                       <h3>{jobDetails[appliedJob.job_id]?.job?.title || "Frontend Developer"}</h3>
                       <p>{jobDetails[appliedJob.job_id]?.companyName || "Công ty ABC"}</p>
-                    </div>
+                      </div>
                     <div className={cx('application-status')} data-status={appliedJob.status.toLowerCase()}>
-                      {appliedJob.status}
+                        {appliedJob.status}
+                      </div>
                     </div>
-                  </div>
 
                   <div className={cx('job-info')}>
                     <div className={cx('info-item')}>
                       <i className="fas fa-money-bill"></i>
                       <span>{jobDetails[appliedJob.job_id]?.job?.salary || "Thương lượng"}</span>
-                    </div>
+                      </div>
                     <div className={cx('info-item')}>
-                      <i className="fas fa-map-marker-alt"></i>
+                        <i className="fas fa-map-marker-alt"></i>
                       <span>{jobDetails[appliedJob.job_id]?.job?.location || "Remote"}</span>
-                    </div>
+                      </div>
                     <div className={cx('info-item')}>
-                      <i className="far fa-clock"></i>
+                        <i className="far fa-clock"></i>
                       <span>
                         Đã ứng tuyển: {new Date(appliedJob.applied_at).toLocaleDateString('vi-VN')}
                       </span>
+                      </div>
                     </div>
-                  </div>
 
                   <div className={cx('application-info')}>
                     <div className={cx('resume-info')}>
-                      <i className="far fa-file-pdf"></i>
+                        <i className="far fa-file-pdf"></i>
                       <span>CV đã nộp: {appliedJob.resume}</span>
-                    </div>
+                      </div>
                     <div className={cx('last-update')}>
-                      <i className="fas fa-history"></i>
-                      <span>
+                        <i className="fas fa-history"></i>
+                        <span>
                         Cập nhật cuối: {
                           appliedJob.updated_at 
                           ? new Date(appliedJob.updated_at).toLocaleDateString('vi-VN')
                           : 'Chưa có cập nhật'
                         }
-                      </span>
+                        </span>
                     </div>
                   </div>
-                </div>
+              </div>
               );
             })}
           </div>

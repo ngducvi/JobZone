@@ -11,10 +11,31 @@ import JobDetailModal from './JobDetailModal';
 const cx = classNames.bind(styles);
 
 const JOB_STATUS = {
-  Active: { label: 'Đang hiển thị', color: '#02a346', icon: 'fa-solid fa-circle-check' },
-  Pending: { label: 'Chờ duyệt', color: '#f59e0b', icon: 'fa-solid fa-clock' },
-  Expired: { label: 'Hết hạn', color: '#dc2626', icon: 'fa-solid fa-circle-xmark' },
-  Draft: { label: 'Bản nháp', color: '#64748b', icon: 'fa-solid fa-file-lines' }
+  ACTIVE: {
+    label: 'Đang hiển thị',
+    icon: 'fa-solid fa-circle-check',
+    color: '#10b981'
+  },
+  PENDING: {
+    label: 'Chờ duyệt',
+    icon: 'fa-solid fa-clock',
+    color: '#f59e0b'
+  },
+  EXPIRED: {
+    label: 'Hết hạn',
+    icon: 'fa-solid fa-circle-xmark',
+    color: '#ef4444'
+  },
+  DRAFT: {
+    label: 'Bản nháp',
+    icon: 'fa-solid fa-file-lines',
+    color: '#6b7280'
+  },
+  CLOSED: {
+    label: 'Đã đóng',
+    icon: 'fa-solid fa-lock',
+    color: '#dc2626'
+  }
 };
 
 // Job Edit Modal Component
@@ -32,6 +53,9 @@ function EditJobModal({ isOpen, onClose, jobData, onEdit, setSelectedJob }) {
   const [workingLocation, setWorkingLocation] = useState(jobData ? jobData.working_location : 'Chưa có địa điểm');
   const [status, setStatus] = useState(jobData ? jobData.status : 'Chưa có trạng thái');
   const [categoryId, setCategoryId] = useState(jobData ? jobData.category_id : 'Chưa có chuyên ngành');
+
+  // active, pending, closed
+  const statusLabel = status === 'Active' ? 'Đang hiển thị' : status === 'Pending' ? 'Chờ duyệt' : 'Đã đóng';
 
   useEffect(() => {
     if (jobData) {
@@ -161,12 +185,11 @@ function EditJobModal({ isOpen, onClose, jobData, onEdit, setSelectedJob }) {
           </div>
           <div className={cx('form-group')}> 
             <label htmlFor="status">Trạng thái</label>
-            <select id="status" value={status} onChange={(e) => setStatus(e.target.value)} required>
-              <option value="">Chọn trạng thái</option>
-              <option value="Active">Đang hiển thị</option>
-              <option value="Pending">Chờ duyệt</option>
-              <option value="Closed">Hết hạn</option>
-            </select>
+            {status === 'Active' ? (
+              <input type="text" id="status" value={statusLabel} readOnly />
+            ) : (
+              <input type="text" id="status" value={statusLabel} readOnly />
+            )}
           </div>
           <div className={cx('form-group')}> 
             <label htmlFor="categoryId">Chuyên ngành</label>
@@ -211,6 +234,9 @@ function RecruiterJobs() {
   const [selectedJob, setSelectedJob] = useState(null);
   const [isJobDetailModalOpen, setIsJobDetailModalOpen] = useState(false);
   const [selectedJobDetails, setSelectedJobDetails] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const jobsPerPage = 8;
 
   const token = localStorage.getItem("token");
 
@@ -288,9 +314,56 @@ function RecruiterJobs() {
     setIsJobDetailModalOpen(true);
   };
 
-  const filteredJobs = activeTab === 'all' 
-    ? jobs 
-    : jobs.filter(job => job.status.toLowerCase() === activeTab);
+  const isJobExpired = (deadline) => {
+    return new Date(deadline) < new Date();
+  };
+
+  const getFilteredJobs = () => {
+    let filtered = [...jobs];
+
+    if (searchTerm) {
+      filtered = filtered.filter(job => 
+        job.title.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (activeTab !== 'all') {
+      filtered = filtered.filter(job => {
+        if (activeTab === 'expired') {
+          return isJobExpired(job.deadline);
+        }
+        if (activeTab === 'active') {
+          return job.status === 'Active' && !isJobExpired(job.deadline);
+        }
+        if (activeTab === 'closed') {
+          return job.status === 'Closed';
+        }
+        return job.status.toLowerCase() === activeTab;
+      });
+    }
+
+    return filtered;
+  };
+
+  // Tính toán các jobs cho trang hiện tại
+  const getCurrentJobs = () => {
+    const filtered = getFilteredJobs();
+    const indexOfLastJob = currentPage * jobsPerPage;
+    const indexOfFirstJob = indexOfLastJob - jobsPerPage;
+    return filtered.slice(indexOfFirstJob, indexOfLastJob);
+  };
+
+  // Tính tổng số trang
+  const totalPages = Math.ceil(getFilteredJobs().length / jobsPerPage);
+
+  // Tạo mảng các số trang để hiển thị
+  const getPageNumbers = () => {
+    const pages = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
 
   return (
     <div className={cx('wrapper')}>
@@ -330,7 +403,7 @@ function RecruiterJobs() {
               <i className="fa-solid fa-file-lines"></i>
               <div className={cx('stat-info')}>
                 <span className={cx('stat-value')}>{jobStats.draftJobs}</span>
-                <span className={cx('stat-label')}>Tin nháp</span>
+                <span className={cx('stat-label')}>Tin đóng</span>
               </div>
             </div>
           </div>
@@ -343,38 +416,82 @@ function RecruiterJobs() {
             <button 
               className={cx('tab', { active: activeTab === 'all' })}
               onClick={() => setActiveTab('all')}
+              data-tab="all"
             >
               Tất cả tin
+              <span className={cx('count-badge')}>{jobs.length}</span>
             </button>
-            {Object.entries(JOB_STATUS).map(([key, value]) => (
-              <button
-                key={key}
-                className={cx('tab', { active: activeTab === key.toLowerCase() })}
-                onClick={() => setActiveTab(key.toLowerCase())}
-              >
-                <i className={value.icon}></i>
-                {value.label}
-              </button>
-            ))}
+            <button
+              className={cx('tab', { active: activeTab === 'active' })}
+              onClick={() => setActiveTab('active')}
+              data-tab="active"
+            >
+              <i className={JOB_STATUS.ACTIVE.icon}></i>
+              Đang hiển thị
+              <span className={cx('count-badge')}>
+                {jobs.filter(job => job.status === 'Active' && !isJobExpired(job.deadline)).length}
+              </span>
+            </button>
+            <button
+              className={cx('tab', { active: activeTab === 'pending' })}
+              onClick={() => setActiveTab('pending')}
+              data-tab="pending"
+            >
+              <i className={JOB_STATUS.PENDING.icon}></i>
+              Chờ duyệt
+              <span className={cx('count-badge')}>
+                {jobs.filter(job => job.status === 'Pending').length}
+              </span>
+            </button>
+            <button
+              className={cx('tab', { active: activeTab === 'expired' })}
+              onClick={() => setActiveTab('expired')}
+              data-tab="expired"
+            >
+              <i className={JOB_STATUS.EXPIRED.icon}></i>
+              Hết hạn
+              <span className={cx('count-badge')}>
+                {jobs.filter(job => isJobExpired(job.deadline)).length}
+              </span>
+            </button>
+            <button
+              className={cx('tab', { active: activeTab === 'closed' })}
+              onClick={() => setActiveTab('closed')}
+              data-tab="closed"
+            >
+              <i className={JOB_STATUS.CLOSED.icon}></i>
+              Đã đóng
+              <span className={cx('count-badge')}>
+                {jobs.filter(job => job.status === 'Closed').length}
+              </span>
+            </button>
           </div>
 
           <div className={cx('search-section')}>
             <div className={cx('search-box')}>
               <i className="fa-solid fa-search"></i>
-              <input type="text" placeholder="Tìm kiếm tin tuyển dụng..." />
+              <input 
+                type="text" 
+                placeholder="Tìm kiếm tin tuyển dụng..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
           </div>
         </div>
 
         <div className={cx('jobs-grid')}>
-          {filteredJobs.map(job => (
+          {getCurrentJobs().map(job => (
             <div key={job.job_id} className={cx('job-card')}>
               <div className={cx('job-header')}>
                 <h3>{job.title}</h3>
-                <span className={cx('job-status')} style={{ 
-                  color: JOB_STATUS[job.status]?.color,
-                  backgroundColor: `${JOB_STATUS[job.status]?.color}15`
-                }}>
+                <span className={cx('job-status')} 
+                  data-status={job.status.toLowerCase()}
+                  style={{ 
+                    color: JOB_STATUS[job.status]?.color,
+                    backgroundColor: `${JOB_STATUS[job.status]?.color}15`
+                  }}
+                >
                   <i className={JOB_STATUS[job.status]?.icon}></i>
                   {JOB_STATUS[job.status]?.label}
                 </span>
@@ -405,6 +522,37 @@ function RecruiterJobs() {
             </div>
           ))}
         </div>
+
+        {/* Thêm phân trang */}
+        {totalPages > 1 && (
+          <div className={cx('pagination')}>
+            <button 
+              className={cx('pagination-btn')} 
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              <i className="fa-solid fa-chevron-left"></i>
+            </button>
+
+            {getPageNumbers().map(number => (
+              <button
+                key={number}
+                className={cx('pagination-btn', { active: currentPage === number })}
+                onClick={() => setCurrentPage(number)}
+              >
+                {number}
+              </button>
+            ))}
+
+            <button 
+              className={cx('pagination-btn')} 
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              <i className="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+        )}
       </div>
       <EditJobModal 
         isOpen={isEditModalOpen} 

@@ -16,6 +16,9 @@ import { Tabs } from "~/components/Tabs";
 import JobCard from '~/components/JobCard/JobCard';
 import LoadingPage from "../LoadingPage/LoadingPage.js";
 import useScrollTop from '~/hooks/useScrollTop';
+import { authAPI, userApis } from '~/utils/api';
+import toast from 'react-hot-toast';
+
 const cx = classNames.bind(styles);
 
 const Dashboard = () => {
@@ -277,29 +280,55 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    const loadDashboard = async () => {
+    const checkCandidateStatus = async () => {
       try {
         setIsLoading(true);
-        // Simulate loading time
-        await new Promise(resolve => setTimeout(resolve, 12000));
+        // Kiểm tra xem user đã có profile candidate chưa
+        const response = await authAPI().get(userApis.checkCandidate);
         
-        // Fetch your data here
-        // const response = await userServices.getDashboardData();
-        // setData(response.data);
-        
+        if (response.data.code === 1) {
+          // Candidate đã tồn tại, tiếp tục load dashboard
+          await loadDashboard();
+        } else {
+          // Chưa có candidate profile, chuyển hướng để tạo profile
+          toast.error('Bạn cần tạo hồ sơ ứng viên trước!');
+          navigate('/create-profile');
+        }
       } catch (error) {
-        console.error("Error loading dashboard:", error);
+        console.error('Error checking candidate status:', error);
+        toast.error('Có lỗi xảy ra khi kiểm tra thông tin ứng viên');
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadDashboard();
-  }, []);
+    const loadDashboard = async () => {
+      try {
+        // Simulate loading time
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Fetch dashboard data here
+        // const response = await authAPI().get(userApis.getDashboardData);
+        // setData(response.data);
+        
+      } catch (error) {
+        console.error("Error loading dashboard:", error);
+        toast.error('Có lỗi xảy ra khi tải dữ liệu');
+      }
+    };
 
-  // if (isLoading) {
-  //   return <LoadingPage />;
-  // }
+    // Chỉ check candidate nếu user đã đăng nhập
+    if (user) {
+      checkCandidateStatus();
+    } else {
+      setIsLoading(false);
+    }
+  }, [user, navigate]);
+
+  if (isLoading) {
+    return <LoadingPage />;
+  }
+
   const handleJobClick = (jobId) => {
     navigate(`/jobs/${jobId}`);
   }

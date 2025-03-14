@@ -107,7 +107,11 @@ function CareerHandbook() {
             <h1>Bài viết nổi bật</h1>
             <div className={cx("featured-grid")}>
               {featuredCareerHandbookData.map((article) => (
-                <div key={article.post_id} className={cx("featured-card")}>
+                <Link 
+                  to={`/career-handbook/${article.post_id}`} 
+                  key={article.post_id} 
+                  className={cx("featured-card")}
+                >
                   <div className={cx("featured-image")}>
                     <img
                       src={article.image || images.cat1}
@@ -129,7 +133,7 @@ function CareerHandbook() {
                       </span>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
@@ -144,7 +148,8 @@ function CareerHandbook() {
         </div>
         <div className={cx("grid-layout-1")}>
           {careerHandbookData1.slice(0, 3).map((article) => (
-            <div
+            <Link
+              to={`/career-handbook/${article.post_id}`}
               key={article.post_id}
               className={cx("article-card", "card-style-1")}
             >
@@ -165,7 +170,7 @@ function CareerHandbook() {
                   </span>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 
@@ -178,7 +183,11 @@ function CareerHandbook() {
         </div>
         <div className={cx("masonry-layout")}>
           {careerHandbookData2.slice(0, 3).map((article) => (
-            <div key={article.post_id} className={cx("article-card")}>
+            <Link
+              to={`/career-handbook/${article.post_id}`}
+              key={article.post_id}
+              className={cx("article-card")}
+            >
               <div className={cx("article-image")}>
                 <img
                   src={article.image || images.company_1}
@@ -200,7 +209,7 @@ function CareerHandbook() {
                   </span>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 
@@ -213,7 +222,11 @@ function CareerHandbook() {
         </div>
         <div className={cx("horizontal-scroll")}>
           {careerHandbookData3.slice(0, 5).map((article) => (
-            <div key={article.post_id} className={cx("article-card")}>
+            <Link
+              to={`/career-handbook/${article.post_id}`}
+              key={article.post_id}
+              className={cx("article-card")}
+            >
               <div className={cx("article-image")}>
                 <img src={article.image || images.cat1} alt={article.title} />
               </div>
@@ -231,7 +244,7 @@ function CareerHandbook() {
                   </span>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 
@@ -244,7 +257,11 @@ function CareerHandbook() {
         </div>
         <div className={cx("knowledge-grid")}>
           {careerHandbookData4.slice(0, 4).map((article) => (
-            <div key={article.post_id} className={cx("article-card")}>
+            <Link
+              to={`/career-handbook/${article.post_id}`}
+              key={article.post_id}
+              className={cx("article-card")}
+            >
               <div className={cx("article-image")}>
                 <img src={article.image || images.cat1} alt={article.title} />
               </div>
@@ -262,7 +279,7 @@ function CareerHandbook() {
                   </span>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 
@@ -278,7 +295,11 @@ function CareerHandbook() {
             </div>
             <div className={cx("article-grid")}>
               {careerHandbookData5.slice(0, 4).map((article) => (
-                <div key={article.post_id} className={cx("article-card")}>
+                <Link
+                  to={`/career-handbook/${article.post_id}`}
+                  key={article.post_id}
+                  className={cx("article-card")}
+                >
                   <div className={cx("article-image")}>
                     <img
                       src={article.image || images.cat1}
@@ -299,7 +320,7 @@ function CareerHandbook() {
                       </span>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
@@ -314,7 +335,11 @@ function CareerHandbook() {
             </div>
             <div className={cx("article-grid")}>
               {careerHandbookData6.slice(0, 4).map((article) => (
-                <div key={article.post_id} className={cx("article-card")}>
+                <Link
+                  to={`/career-handbook/${article.post_id}`}
+                  key={article.post_id}
+                  className={cx("article-card")}
+                >
                   <div className={cx("article-image")}>
                     <img
                       src={article.image || images.cat1}
@@ -335,7 +360,7 @@ function CareerHandbook() {
                       </span>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>

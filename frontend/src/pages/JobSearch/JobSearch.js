@@ -42,6 +42,15 @@ const JobSearch = () => {
     education: 'all'
   });
 
+  // Thêm state để lưu số lượng việc làm theo từng filter
+  const [jobCounts, setJobCounts] = useState({
+    experience: {},
+    rank: {},
+    salary: {},
+    working_time: {},
+    category_id: {}
+  });
+
   const datePostedOptions = [
     { value: 'all', label: 'All' },
     { value: 'last_hour', label: 'Last Hour' },
@@ -362,6 +371,49 @@ const JobSearch = () => {
     }
   };
 
+  // Thêm hàm tính toán số lượng việc làm cho mỗi filter
+  const calculateJobCounts = (jobs) => {
+    const counts = {
+      experience: {},
+      rank: {},
+      salary: {},
+      working_time: {},
+      category_id: {}
+    };
+
+    jobs.forEach(job => {
+      // Đếm theo kinh nghiệm
+      counts.experience[job.experience] = (counts.experience[job.experience] || 0) + 1;
+      
+      // Đếm theo cấp bậc
+      counts.rank[job.rank] = (counts.rank[job.rank] || 0) + 1;
+      
+      // Đếm theo mức lương
+      counts.salary[job.salary] = (counts.salary[job.salary] || 0) + 1;
+      
+      // Đếm theo hình thức làm việc
+      counts.working_time[job.working_time] = (counts.working_time[job.working_time] || 0) + 1;
+      
+      // Đếm theo danh mục
+      counts.category_id[job.category_id] = (counts.category_id[job.category_id] || 0) + 1;
+    });
+
+    setJobCounts(counts);
+  };
+
+  // Cập nhật useEffect để tính toán số lượng khi jobs thay đổi
+  useEffect(() => {
+    if (jobs.length > 0) {
+      calculateJobCounts(jobs);
+    }
+  }, [jobs]);
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }, []);
   return (
     <div className={cx("job-search")}>
       <div className={cx("search-header")}>
@@ -428,7 +480,7 @@ const JobSearch = () => {
                     <div className={cx("date-filter-info")}>
                       <span className={cx("category-name")}>{category.category_name}</span>
                       <span className={cx("job-count")}>
-                        ({jobs.filter(job => job.category_id === category.category_id).length} việc làm)
+                        ({jobCounts.category_id[category.category_id] || 0} việc làm)
                       </span>
                     </div>
                   </label>
@@ -459,9 +511,9 @@ const JobSearch = () => {
               <h3>Kinh nghiệm</h3>
               {experienceOptions.map(option => (
                 <label key={option.value} className={cx("radio-item")}>
-                <input
-                  type="radio"
-                  name="experience"
+                  <input
+                    type="radio"
+                    name="experience"
                     value={option.value}
                     checked={filters.experience === option.value}
                     onChange={(e) => handleFilterChange('experience', e.target.value)}
@@ -469,10 +521,10 @@ const JobSearch = () => {
                   <div className={cx("date-filter-info")}>
                     <span>{option.label}</span>
                     <span className={cx("job-count")}>
-                      ({jobs.filter(job => job.experience === option.value).length} việc làm)
+                      ({jobCounts.experience[option.value] || 0} việc làm)
                     </span>
                   </div>
-              </label>
+                </label>
               ))}
             </div>
 
@@ -480,8 +532,8 @@ const JobSearch = () => {
               <h3>Cấp bậc</h3>
               {rankOptions.map(option => (
                 <label key={option.value} className={cx("radio-item")}>
-                <input
-                  type="radio"
+                  <input
+                    type="radio"
                     name="rank"
                     value={option.value}
                     checked={filters.rank === option.value}
@@ -490,10 +542,10 @@ const JobSearch = () => {
                   <div className={cx("date-filter-info")}>
                     <span>{option.label}</span>
                     <span className={cx("job-count")}>
-                      ({jobs.filter(job => job.rank === option.value).length} việc làm)
+                      ({jobCounts.rank[option.value] || 0} việc làm)
                     </span>
                   </div>
-              </label>
+                </label>
               ))}
             </div>
 
@@ -501,9 +553,9 @@ const JobSearch = () => {
               <h3>Mức lương</h3>
               {salaryOptions.map(option => (
                 <label key={option.value} className={cx("radio-item")}>
-                <input
-                  type="radio"
-                  name="salary"
+                  <input
+                    type="radio"
+                    name="salary"
                     value={option.value}
                     checked={filters.salary === option.value}
                     onChange={(e) => handleFilterChange('salary', e.target.value)}
@@ -511,10 +563,10 @@ const JobSearch = () => {
                   <div className={cx("date-filter-info")}>
                     <span>{option.label}</span>
                     <span className={cx("job-count")}>
-                      ({jobs.filter(job => job.salary === option.value).length} việc làm)
+                      ({jobCounts.salary[option.value] || 0} việc làm)
                     </span>
                   </div>
-              </label>
+                </label>
               ))}
             </div>
 
@@ -522,8 +574,8 @@ const JobSearch = () => {
               <h3>Hình thức làm việc</h3>
               {workingTimeOptions.map(option => (
                 <label key={option.value} className={cx("radio-item")}>
-                <input
-                  type="radio"
+                  <input
+                    type="radio"
                     name="working_time"
                     value={option.value}
                     checked={filters.working_time === option.value}
@@ -532,10 +584,10 @@ const JobSearch = () => {
                   <div className={cx("date-filter-info")}>
                     <span>{option.label}</span>
                     <span className={cx("job-count")}>
-                      ({jobs.filter(job => job.working_time === option.value).length} việc làm)
+                      ({jobCounts.working_time[option.value] || 0} việc làm)
                     </span>
                   </div>
-              </label>
+                </label>
               ))}
             </div>
 
@@ -543,8 +595,8 @@ const JobSearch = () => {
               <h3>Loại công ty</h3>
               {companyTypeOptions.map(option => (
                 <label key={option.value} className={cx("radio-item")}>
-                <input
-                  type="radio"
+                  <input
+                    type="radio"
                     name="company_type"
                     value={option.value}
                     checked={filters.company_type === option.value}
@@ -556,7 +608,7 @@ const JobSearch = () => {
                       {jobs.filter(job => job.company_type === option.value).length}
                     </span>
                   </div>
-              </label>
+                </label>
               ))}
             </div>
 
@@ -564,8 +616,8 @@ const JobSearch = () => {
               <h3>Date Posted</h3>
               {datePostedOptions.map(option => (
                 <label key={option.value} className={cx("radio-item")}>
-                <input
-                  type="radio"
+                  <input
+                    type="radio"
                     name="datePosted"
                     value={option.value}
                     checked={datePosted === option.value}
@@ -577,7 +629,7 @@ const JobSearch = () => {
                       ({filterJobsByDate(jobs).length} việc làm)
                     </span>
                   </div>
-              </label>
+                </label>
               ))}
             </div>
           </aside>
@@ -586,7 +638,7 @@ const JobSearch = () => {
             <div className={cx("job-list-header")}>
               <div className={cx("active-filters")}>
                 <div className={cx("filter-header")}>
-                <span>Lọc nâng cao</span>
+                  <span>Lọc nâng cao</span>
                   <span className={cx("jobs-counter")}>
                     ({filterJobsByDate(jobs).length} việc làm)
                   </span>
@@ -603,7 +655,7 @@ const JobSearch = () => {
                           >
                             ×
                           </button>
-                  </span>
+                        </span>
                       );
                     }
                     return null;

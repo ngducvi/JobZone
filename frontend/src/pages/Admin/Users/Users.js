@@ -1,126 +1,138 @@
 import { useEffect, useState } from "react";
 import classNames from "classnames/bind";
-import { useLocation } from "react-router-dom";
 import styles from "./Users.module.scss";
 import { adminApis, authAPI } from "~/utils/api";
 import { NextPageIcon, PrevPageIcon } from "~/components/Icons";
+import { FaUser, FaEnvelope, FaCalendarAlt, FaUserCircle } from "react-icons/fa";
 
 const cx = classNames.bind(styles);
 
 function Users() {
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const pageFromUrl = parseInt(queryParams.get("page")) || 1;
-
-  const [activePage, setActivePage] = useState(pageFromUrl);
+  const [activePage, setActivePage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [userData, setUserData] = useState([]);
-
-  const handlePageClick = (pageNumber) => {
-    setActivePage(pageNumber);
-  };
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
         const result = await authAPI().get(adminApis.getAllUsers, {
           params: { page: activePage },
         });
+        console.log(result.data.users);
         setUserData(result.data.users);
         setTotalPages(result.data.totalPages);
-        console.log(result.data.users);
       } catch (error) {
         console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchData();
   }, [activePage]);
 
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setActivePage(newPage);
+    }
+  };
+
   const formatDate = (date) => {
-    return new Date(date).toLocaleString("vi-VN", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    return new Date(date).toLocaleDateString("vi-VN");
   };
 
   return (
-    <div>
-      <div className={cx("heading")}>
-        <i style={{
-            fontSize: "2.5rem",
-            color: "var(--primary-color)",
-          }}
-          className="fa-solid fa-user mr-2"></i>
-       <h1>
-          Người dùng
-       </h1>
+    <div className={cx('wrapper')}>
+      <div className={cx('header')}>
+        <div className={cx('header-content')}>
+          <h1>
+            <FaUser className={cx('header-icon')} />
+            Quản lý người dùng
+          </h1>
+          <p>Quản lý thông tin người dùng trên hệ thống</p>
+        </div>
       </div>
 
-      <table className={cx("user-table")}>
-        <thead>
-          <tr>
-            <th scope="col">STT</th>
-            <th scope="col">Tên</th>
-            <th scope="col">Tên đăng nhập</th>
-            <th scope="col">Email</th>
-            <th scope="col">Ngày tạo</th>
-          </tr>
-        </thead>
-        <tbody>
-          {userData.length > 0 ? (
-            userData.map((user, index) => (
-              <tr key={user.id}>
-                <td>{index + 1}</td>
-                <td>{user.name || "N/A"}</td>
-                <td>{user.username || "N/A"}</td>
-                <td>{user.email || "N/A"}</td>
-                <td>{user.created_at ? formatDate(user.created_at) : "N/A"}</td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="5" className="text-center">
-                Không có dữ liệu
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+      <div className={cx('main-content')}>
+        {loading ? (
+          <div className={cx('loading')}>Đang tải dữ liệu...</div>
+        ) : (
+          <div className={cx('table-wrapper')}>
+            <table className={cx('user-table')}>
+              <thead>
+                <tr>
+                  <th>Thông tin người dùng</th>
+                  <th>Tên đăng nhập</th>
+                  <th>Thông tin liên hệ</th>
+                  <th>Ngày tham gia</th>
+                </tr>
+              </thead>
+              <tbody>
+                {userData.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" className={cx('no-results')}>
+                      Không có dữ liệu người dùng
+                    </td>
+                  </tr>
+                ) : (
+                  userData.map((user) => (
+                    <tr key={user.id}>
+                      <td>
+                        <div className={cx('user-info')}>
+                          <FaUserCircle className={cx('avatar')} />
+                          <div className={cx('info')}>
+                            <h3>{user.name || "Chưa cập nhật"}</h3>
+                            <span className={cx('role')}>{user.role}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div className={cx('username')}>
+                          {user.username}
+                        </div>
+                      </td>
+                      <td>
+                        <div className={cx('contact-info')}>
+                          <div className={cx('info-item')}>
+                            <FaEnvelope className={cx('icon')} />
+                            <span>{user.email}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div className={cx('date-info')}>
+                          <FaCalendarAlt className={cx('icon')} />
+                          <span>{formatDate(user.created_at)}</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-      <div className={cx("page-wrapper")}>
-        <div className={cx("page-container")}>
-          <div
-            className={cx("page", "next-prev", { disabled: activePage === 1 })}
-            onClick={() => activePage > 1 && handlePageClick(activePage - 1)}
+        <div className={cx('pagination')}>
+          <button
+            className={cx('page-btn')}
+            onClick={() => handlePageChange(activePage - 1)}
+            disabled={activePage === 1}
           >
             <PrevPageIcon />
-          </div>
-
-          {[...Array(totalPages)].map((_, pageNumber) => (
-            <div
-              key={pageNumber + 1}
-              className={cx("page", { active: activePage === pageNumber + 1 })}
-              onClick={() => handlePageClick(pageNumber + 1)}
-            >
-              {pageNumber + 1}
-            </div>
-          ))}
-
-          <div
-            className={cx("page", "next-prev", {
-              disabled: activePage === totalPages,
-            })}
-            onClick={() =>
-              activePage < totalPages && handlePageClick(activePage + 1)
-            }
+          </button>
+          <span className={cx('page-info')}>
+            Trang {activePage} / {totalPages}
+          </span>
+          <button
+            className={cx('page-btn')}
+            onClick={() => handlePageChange(activePage + 1)}
+            disabled={activePage === totalPages}
           >
             <NextPageIcon />
-          </div>
+          </button>
         </div>
       </div>
     </div>

@@ -12,8 +12,13 @@ router.get('/reset-password', userController.resetPassword.bind(userController))
 router.post('/forget-password', userController.forgetPassword.bind(userController));
 router.post('/change-password', userController.changePassword.bind(userController));
 router.get("/top-company", userController.getAllTopCompany.bind(userController));
+router.get("/reviews/:company_id", userController.getAllReviewsByCompanyId.bind(userController));
+router.get("/career-handbook/:category_id", userController.getCareerHandbookByCategoryId.bind(userController));
+router.get("/career-handbook/post/:post_id", userController.getCareerHandbookByPostId.bind(userController));
+
 router.use(jwtMiddleware(["user", "admin","recruiter"]));
 router.get('/current-user', userController.getCurrentUser.bind(userController));
+router.get('/check-candidate', userController.checkCandidate.bind(userController));
 router.patch('/current-user', userController.updateUser.bind(userController));
 router.get('/check-balance', userController.checkBalance.bind(userController));
 router.get('/logout', userController.logout.bind(userController));
@@ -38,7 +43,6 @@ router.get("/suitable-jobs", userController.getAllSuitableJobsByUser.bind(userCo
 router.get("/job-detail/:job_id", userController.getJobDetailByJobId.bind(userController));
 router.get("/companies", userController.getAllCompany.bind(userController));
 router.get("/company-detail/:company_id", userController.getCompanyDetailByCompanyId.bind(userController));
-router.get("/career-handbook/:category_id", userController.getCareerHandbookByCategoryId.bind(userController));
 router.get("/template-fields/:template_id", userController.getAllTemplateFieldsByTemplateId.bind(userController));
 router.get("/cv-field-values/:cv_id", userController.getAllCvFieldValuesByCvId.bind(userController));
 router.get("/cv-templates/:template_id", userController.getTemplateById.bind(userController));
@@ -93,4 +97,5 @@ router.put('/candidate/edit-profile-picture/:candidate_id', upload.single('profi
 // router.put('/company/edit-logo/:company_id', upload.single('logo'), userController.updateCompanyLogoWithCompanyId.bind(userController));
 router.get('/candidate/profile-picture/:candidate_id', userController.getProfilePictureByCandidateId.bind(userController));
 router.put('/candidate/edit-profile-picture-cloudinary/:candidate_id', upload.single('profile_picture'), userController.updateProfilePictureByCandidateIdCloudinary.bind(userController));
+router.post('/company/review', userController.createReviewCompany.bind(userController));
 module.exports = router;

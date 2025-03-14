@@ -673,8 +673,29 @@
     }
   }
 
+  .review-stats {
+    padding: 0 20px;
+    margin-bottom: 12px;
+    
+    .review-count {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: #666;
+
+      .icon {
+        color: #ffc107;
+      }
+
+      .review-total {
+        color: #999;
+      }
+    }
+  }
+
   h3 {
-    padding: 16px 20px;
+    padding: 16px 20px 8px 20px;
     font-size: 16px;
     font-weight: 600;
     color: #013a74;
@@ -790,6 +811,16 @@
       font-size: 13px;
       -webkit-line-clamp: 2;
       min-height: 70px;
+    }
+
+    .review-stats {
+      padding: 0 16px;
+      margin-bottom: 8px;
+      
+      .review-count {
+        font-size: 12px;
+        gap: 4px;
+      }
     }
   }
 }

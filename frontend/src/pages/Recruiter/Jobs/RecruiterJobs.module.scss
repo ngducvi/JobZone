@@ -152,6 +152,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 24px;
+    margin-bottom: 32px;
 
     .job-card {
       background: white;
@@ -265,6 +266,64 @@
             }
           }
         }
+      }
+    }
+  }
+
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 24px;
+    padding: 16px;
+    
+    .pagination-btn {
+      min-width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: white;
+      color: #64748b;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+
+      &:hover:not(:disabled) {
+        background: #f1f5f9;
+        color: #1e293b;
+        transform: translateY(-2px);
+      }
+
+      &.active {
+        background: #013a74;
+        color: white;
+        border-color: #013a74;
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        
+        &:hover {
+          transform: none;
+        }
+      }
+
+      i {
+        font-size: 14px;
+      }
+    }
+
+    // Responsive
+    @media (max-width: 768px) {
+      .pagination-btn {
+        min-width: 36px;
+        height: 36px;
+        font-size: 14px;
       }
     }
   }

@@ -36,7 +36,7 @@ const cloudinary = require("../utils/cloudinary");
 const path = require("path");
 const fs = require("fs");
 const RecruiterCompanies = require("../models/RecruiterConpanies");
-
+const Reviews = require("../models/Reviews");
 class UserController {
   constructor() {
     this.generateEducationId = () => {
@@ -59,6 +59,12 @@ class UserController {
     };
     this.generateJobId = () => {
       return "job-" + Math.random().toString(36).substr(2, 9);
+    };
+    this.generateReviewId = () => {
+      return "rev-" + Math.random().toString(36).substr(2, 9);
+    };
+    this.generateCandidateId = () => {
+      return "cand-" + Math.random().toString(36).substr(2, 9);
     };
   }
   async getCurrentUser(req, res) {
@@ -610,6 +616,27 @@ class UserController {
       });
     } catch (error) {
       res.status(400).send({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
+  // check xem đã có candidate chưa nếu chưa thì tạo mới
+  async checkCandidate(req, res) {
+    try {
+      const candidate = await Candidate.findOne({
+        where: { user_id: req.user.id },
+      });
+      if (!candidate) {
+        const newCandidate = new Candidate({
+          candidate_id: this.generateCandidateId(),
+          user_id: req.user.id,
+        });
+        await newCandidate.save();
+      }
+      return res.status(200).send({ message: "Candidate đã tồn tại", code: 1 });
+    } catch (error) {
+      return res.status(400).send({
         message: error.message,
         code: -1,
       });
@@ -1171,23 +1198,71 @@ class UserController {
   }
   // get all top company
   async getAllTopCompany(req, res) {
-    const { page = 1, limit = 9 } = req.query;
-    const offset = (page - 1) * limit;
-    const topCompany = await Company.findAndCountAll({
-      limit,
-      offset,
+    try {
+      const { page = 1, limit = 9 } = req.query;
+      const offset = (page - 1) * limit;
+      const topCompany = await Company.findAndCountAll({
+        limit,
+        offset,
+      });
+      // lấy danh sách company_id
+      const companyIds = topCompany.rows.map((company) => company.company_id);
+
+      // Get reviews for each company
+      const companyReviews = {};
+      for (const companyId of companyIds) {
+        const reviews = await Reviews.findAll({
+          where: { company_id: companyId },
+          raw: true,
+        });
+        companyReviews[companyId] = reviews;
+      }
+
+      // Map companies with their reviews
+      const companiesWithReviews = topCompany.rows.map((company) => ({
+        ...company.toJSON(),
+        reviews: companyReviews[company.company_id] || [],
+      }));
+
+      return res.json({
+        topCompany: companiesWithReviews,
+        totalPages: Math.ceil(topCompany.count / limit),
+      });
+    } catch (error) {
+      console.error("Error in getAllTopCompany:", error);
+      return res.status(500).send({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
+  // tạo đánh giá công ty
+  async createReviewCompany(req, res) {
+    try {
+      const { company_id, user_id, rating, comment } = req.body;
+      const review = await Reviews.create({
+        review_id: this.generateReviewId(),
+        company_id,
+        user_id,
+        rating,
+        comment,
+        review_date: new Date(),
+        created_by: req.user.id,
+      });
+      return res.json({ review });
+    } catch (error) {
+      return res.status(500).send({ message: error.message, code: -1 });
+    }
+  }
+  // get all reviews by company_id
+  async getAllReviewsByCompanyId(req, res) {
+    const reviews = await Reviews.findAll({
+      where: {
+        company_id: req.params.company_id,
+      },
+      order: [["review_date", "DESC"]],
     });
-    // lấy danh sách company_id
-    const companyIds = topCompany.rows.map((company) => company.company_id);
-    // lấy user_id từ company_id từ recruiter_company
-    const recruiterCompany = await RecruiterCompanies.findAll({
-      where: { company_id: companyIds },
-    });
-  
-    return res.json({
-      topCompany: topCompany.rows,
-      totalPages: Math.ceil(topCompany.count / limit),
-    });
+    return res.json({ reviews });
   }
 
   // get all jobs
@@ -1217,7 +1292,9 @@ class UserController {
     });
     // nếu có company_id trong jobs thì thêm company_name, logo, size, industry, address vào jobs
     const jobsWithCompanies = jobs.rows.map((job) => {
-      const company = companiesWithDetails.find((c) => c.company_id === job.company_id);
+      const company = companiesWithDetails.find(
+        (c) => c.company_id === job.company_id
+      );
       return {
         ...job.toJSON(),
         company_name: company.company_name,
@@ -2050,8 +2127,6 @@ class UserController {
         where: whereClause,
         order: [["created_at", "DESC"]],
       });
-      
-      
 
       return res.json({
         jobs: jobs,
@@ -2391,6 +2466,25 @@ class UserController {
       });
     } catch (error) {
       return res.status(500).json({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
+  // get career handbook by post_id
+  async getCareerHandbookByPostId(req, res) {
+    const { post_id } = req.params;
+    try {
+      const careerHandbook = await CareerHandbook.findOne({
+        where: { post_id: post_id },
+      });
+      res.status(200).json({
+        message: "Thành công",
+        code: 1,
+        careerHandbook,
+      });
+    } catch (error) {
+      res.status(500).json({
         message: error.message,
         code: -1,
       });

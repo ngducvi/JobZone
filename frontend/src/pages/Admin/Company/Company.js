@@ -3,7 +3,7 @@ import classNames from "classnames/bind";
 import styles from "./Company.module.scss";
 import { adminApis, authAPI } from "~/utils/api";
 import { NextPageIcon, PrevPageIcon } from "~/components/Icons";
-import { FaBuilding, FaUser, FaGlobe, FaMapMarkerAlt, FaUsers, FaCalendarAlt, FaCheckCircle, FaClock, FaBan, FaChartLine } from "react-icons/fa";
+import { FaBuilding, FaUser, FaGlobe, FaMapMarkerAlt, FaUsers, FaCalendarAlt, FaCheckCircle, FaClock, FaBan, FaChartLine, FaStar } from "react-icons/fa";
 import { toast } from 'react-hot-toast';
 import useScrollTop from '~/hooks/useScrollTop';
 const cx = classNames.bind(styles);
@@ -24,8 +24,10 @@ function Company() {
             const result = await authAPI().get(adminApis.getAllRecruiterCompanies, {
                 params: { page: activePage },
             });
+            const reviews = await authAPI().get(adminApis.getAllReviewsByCompanyId());
+            console.log("reviews",reviews.data);
             setRecruiterData(result.data.recruiterCompanies);
-            console.log(result.data.recruiterCompanies);
+            console.log("recruiterCompanies",result.data.recruiterCompanies);
             setTotalPages(result.data.totalPages);
             setLoading(false);
         } catch (error) {
@@ -167,6 +169,27 @@ function Company() {
         rejected: recruiterData.filter(item => item.status === 'rejected').length
     };
 
+    const getAverageRating = (reviews) => {
+        if (!reviews || reviews.length === 0) return 0;
+        const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
+        return (sum / reviews.length).toFixed(1);
+    };
+
+    const renderReviewStats = (item) => {
+        const averageRating = getAverageRating(item.company.reviews);
+        return (
+            <div className={cx('review-stats')}>
+                <div className={cx('review-count')}>
+                    <FaStar className={cx('icon')} />
+                    <span>{averageRating}/5</span>
+                    <span className={cx('review-total')}>
+                        ({item.company.reviews?.length || 0} đánh giá)
+                    </span>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className={cx('wrapper')}>
             <div className={cx('header')}>
@@ -256,9 +279,9 @@ function Company() {
                         </button>
                     </div>
 
-                    <button className={cx('add-btn')}>
+                    {/* <button className={cx('add-btn')}>
                         <FaUser /> Thêm nhà tuyển dụng
-                    </button>
+                    </button> */}
                 </div>
 
                 <div className={cx('content')}>
@@ -301,6 +324,7 @@ function Company() {
                                                         <FaMapMarkerAlt />
                                                         <span>{item.company.address}</span>
                                                     </div>
+                                                    {renderReviewStats(item)}
                                                 </div>
                                             </div>
                                         </div>
@@ -356,9 +380,6 @@ function Company() {
                                                 <div className={cx('actions')}>
                                                     <button className={cx('action-btn', 'edit')}>
                                                         Chỉnh sửa
-                                                    </button>
-                                                    <button className={cx('action-btn', 'delete')}>
-                                                        Xóa
                                                     </button>
                                                 </div>
                                             </div>

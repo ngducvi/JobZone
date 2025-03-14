@@ -7,6 +7,26 @@ import { toast } from 'react-hot-toast';
 
 const cx = classNames.bind(styles);
 
+const EMPLOYMENT_TYPES = [
+    { value: 'Full-time', label: 'Toàn thời gian' },
+    { value: 'Part-time', label: 'Bán thời gian' },
+    { value: 'Contract', label: 'Hợp đồng' },
+    { value: 'Freelance', label: 'Tự do' },
+    { value: 'Internship', label: 'Thực tập' }
+];
+
+const GENDER_TYPES = [
+    { value: 'Male', label: 'Nam' },
+    { value: 'Female', label: 'Nữ' },
+    { value: 'Other', label: 'Khác' }
+];
+
+const MARITAL_STATUS_TYPES = [
+    { value: 'Single', label: 'Độc thân' },
+    { value: 'Married', label: 'Đã kết hôn' },
+    { value: 'Other', label: 'Khác' }
+];
+
 const BasicInfoTab = ({ userDetails, candidateProfile }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({});
@@ -79,9 +99,11 @@ const BasicInfoTab = ({ userDetails, candidateProfile }) => {
                                 onChange={handleInputChange}
                             >
                                 <option value="">Chọn giới tính</option>
-                                <option value="Nam">Nam</option>
-                                <option value="Nữ">Nữ</option>
-                                <option value="Khác">Khác</option>
+                                {GENDER_TYPES.map(type => (
+                                    <option key={type.value} value={type.value}>
+                                        {type.label}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>
@@ -95,8 +117,11 @@ const BasicInfoTab = ({ userDetails, candidateProfile }) => {
                                 onChange={handleInputChange}
                             >
                                 <option value="">Chọn tình trạng</option>
-                                <option value="Độc thân">Độc thân</option>
-                                <option value="Đã kết hôn">Đã kết hôn</option>
+                                {MARITAL_STATUS_TYPES.map(type => (
+                                    <option key={type.value} value={type.value}>
+                                        {type.label}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                         <div className={cx('form-group')}>
@@ -189,11 +214,12 @@ const BasicInfoTab = ({ userDetails, candidateProfile }) => {
                                 value={formData.employment_type || ''}
                                 onChange={handleInputChange}
                             >
-                                <option value="">Chọn hình thức</option>
-                                <option value="Toàn thời gian">Toàn thời gian</option>
-                                <option value="Bán thời gian">Bán thời gian</option>
-                                <option value="Freelance">Freelance</option>
-                                <option value="Remote">Remote</option>
+                                <option value="">Chọn hình thức làm việc</option>
+                                {EMPLOYMENT_TYPES.map(type => (
+                                    <option key={type.value} value={type.value}>
+                                        {type.label}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>
@@ -213,14 +239,18 @@ const BasicInfoTab = ({ userDetails, candidateProfile }) => {
                         </div>
                         <div className={cx('info-group')}>
                             <label>Giới tính</label>
-                            <span>{formData.gender || 'Chưa cập nhật'}</span>
+                            <p>
+                                {GENDER_TYPES.find(type => type.value === formData.gender)?.label || 'Chưa cập nhật'}
+                            </p>
                         </div>
                     </div>
 
                     <div className={cx('info-row')}>
                         <div className={cx('info-group')}>
                             <label>Tình trạng hôn nhân</label>
-                            <span>{formData.marital_status || 'Chưa cập nhật'}</span>
+                            <p>
+                                {MARITAL_STATUS_TYPES.find(type => type.value === formData.marital_status)?.label || 'Chưa cập nhật'}
+                            </p>
                         </div>
                         <div className={cx('info-group')}>
                             <label>Quốc tịch</label>
@@ -267,7 +297,9 @@ const BasicInfoTab = ({ userDetails, candidateProfile }) => {
                         </div>
                         <div className={cx('info-group')}>
                             <label>Hình thức làm việc</label>
-                            <span>{formData.employment_type || 'Chưa cập nhật'}</span>
+                            <p>
+                                {EMPLOYMENT_TYPES.find(type => type.value === formData.employment_type)?.label || 'Chưa cập nhật'}
+                            </p>
                         </div>
                     </div>
                 </div>

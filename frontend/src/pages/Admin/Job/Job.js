@@ -5,7 +5,8 @@ import classNames from "classnames/bind";
 import styles from "./Job.module.scss";
 import { adminApis, authAPI } from "~/utils/api";
 import { NextPageIcon, PrevPageIcon } from "~/components/Icons";
-import { FaBriefcase, FaBuilding, FaMapMarkerAlt, FaGraduationCap, FaClock, FaMoneyBillWave, FaUserTie, FaCalendarAlt, FaChartLine, FaCheckCircle, FaBan, FaTimes, FaUsers, FaGlobe } from "react-icons/fa";
+import { FaBriefcase, FaBuilding, FaMapMarkerAlt, FaGraduationCap, FaClock, FaMoneyBillWave, FaUserTie, FaCalendarAlt, FaChartLine, FaCheckCircle, FaBan, FaTimes, FaUsers, FaGlobe, FaLock } from "react-icons/fa";
+import { toast } from "react-hot-toast";
 
 const cx = classNames.bind(styles);
 
@@ -43,6 +44,9 @@ function Job() {
 
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
   const [companyDetails, setCompanyDetails] = useState({});
+
+  // Thêm state cho status modal
+  const [showStatusModal, setShowStatusModal] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -214,6 +218,88 @@ function Job() {
     }
   };
 
+  // Thêm hàm xử lý cập nhật status
+  const handleUpdateStatus = async (jobId, newStatus) => {
+    try {
+      await authAPI().patch(adminApis.updateStatusJob(jobId), {
+        status: newStatus
+      });
+      
+      let message = '';
+      let icon = '';
+      
+      switch(newStatus) {
+        case 'Active':
+          message = 'Đã kích hoạt tin tuyển dụng';
+          icon = '��';
+          break;
+        case 'Pending':
+          message = 'Đã chuyển về trạng thái chờ duyệt';
+          icon = '⏳';
+          break;
+        case 'Closed':
+          message = 'Đã đóng tin tuyển dụng';
+          icon = '��';
+          break;
+        default:
+          message = 'Cập nhật trạng thái thành công';
+      }
+      
+      toast.success(`${icon} ${message}`, {
+        position: "top-right",
+        autoClose: 3000
+      });
+
+      await fetchData();
+      setShowStatusModal(false);
+      setSelectedJob(null);
+      
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast.error('❌ Có lỗi xảy ra khi cập nhật trạng thái', {
+        position: "top-right",
+        autoClose: 3000
+      });
+    }
+  };
+
+  // Thêm component StatusModal
+  const StatusModal = ({ job, onClose }) => {
+    return (
+      <div className={cx('modal-overlay')} onClick={onClose}>
+        <div className={cx('modal-content')} onClick={e => e.stopPropagation()}>
+          <h3>Cập nhật trạng thái</h3>
+          <p>Tin tuyển dụng: {job.title}</p>
+          
+          <div className={cx('status-options')}>
+            <button 
+              className={cx('status-btn', 'active')}
+              onClick={() => handleUpdateStatus(job.job_id, 'Active')}
+            >
+              <FaCheckCircle /> Hoạt động
+            </button>
+            <button 
+              className={cx('status-btn', 'pending')}
+              onClick={() => handleUpdateStatus(job.job_id, 'Pending')}
+            >
+              <FaClock /> Chờ duyệt
+            </button>
+            <button 
+              className={cx('status-btn', 'closed')}
+              onClick={() => handleUpdateStatus(job.job_id, 'Closed')}
+            >
+              <FaLock /> Đã đóng
+            </button>
+          </div>
+
+          <button className={cx('close-btn')} onClick={onClose}>
+            <FaTimes /> Đóng
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className={cx("wrapper")}>
       {notification.show && (
@@ -260,9 +346,9 @@ function Job() {
             </button>
           </div>
 
-          <button className={cx("add-btn")}>
+          {/* <button className={cx("add-btn")}>
             <FaBriefcase /> Thêm tin tuyển dụng
-          </button>
+          </button> */}
         </div>
 
         <div className={cx("table-wrapper")}>
@@ -358,8 +444,17 @@ function Job() {
                       </div>
                     </td>
                     <td>
-                      <div className={cx("status", job.status.toLowerCase())}>
-                        {job.status}
+                      <div 
+                        className={cx('status', job.status?.toLowerCase())}
+                        onClick={() => {
+                          setSelectedJob(job);
+                          setShowStatusModal(true);
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        {job.status === 'Active' && 'Đang hoạt động'}
+                        {job.status === 'Pending' && 'Chờ duyệt'}
+                        {job.status === 'Closed' && 'Đã đóng'}
                       </div>
                     </td>
                     <td>
@@ -369,9 +464,6 @@ function Job() {
                           onClick={() => handleEditClick(job)}
                         >
                           Chỉnh sửa
-                        </button>
-                        <button className={cx("action-btn", "delete")}>
-                          Xóa
                         </button>
                       </div>
                     </td>
@@ -550,6 +642,16 @@ function Job() {
             </form>
           </div>
         </div>
+      )}
+
+      {showStatusModal && selectedJob && (
+        <StatusModal 
+          job={selectedJob}
+          onClose={() => {
+            setShowStatusModal(false);
+            setSelectedJob(null);
+          }}
+        />
       )}
     </div>
   );

@@ -7,33 +7,57 @@
 .container {
   flex: 1;
   display: flex;
-  margin-top: 20px; // Chiều cao của header
+
+  &.mobile {
+    margin-top: 56px; // Giảm margin trên mobile
+  }
 }
 
 .content {
   flex: 1;
   margin-left: 280px; // Chiều rộng mặc định của sidebar
   padding: 24px;
-  transition: margin-left 0.3s ease;
-  min-height: calc(100vh - 60px); // Chiều cao - header
+  transition: all 0.3s ease;
+  min-height: calc(100vh - 60px);
   background: #f9fafb;
 
   &.sidebar-collapsed {
-    margin-left: 80px; // Chiều rộng khi sidebar thu gọn
+    margin-left: 80px;
+  }
+
+  &.mobile {
+    margin-left: 0;
+    padding: 16px;
+    min-height: calc(100vh - 56px);
   }
 }
 
-// Media queries cho responsive
+// Media queries
 @media (max-width: 1024px) {
   .content {
     margin-left: 80px;
-    padding: 16px;
+    padding: 20px;
+
+    &.sidebar-collapsed {
+      margin-left: 0;
+    }
   }
 }
 
 @media (max-width: 768px) {
+  .container {
+    position: relative;
+  }
+
   .content {
     margin-left: 0;
+    padding: 16px;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .content {
     padding: 12px;
   }
 }

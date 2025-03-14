@@ -173,7 +173,7 @@
       .actions {
         display: flex;
         gap: 8px;
-        justify-content: flex-end;
+        justify-content: flex-start;
   
         .action-btn {
           padding: 6px 12px;
@@ -698,6 +698,44 @@
           margin-bottom: 4px;
         }
       }
+    }
+  }
+  
+  .review-stats {
+    margin-top: 4px;
+    
+    .review-count {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: #666;
+
+      .icon {
+        color: #ffc107;
+      }
+
+      .review-total {
+        color: #999;
+      }
+    }
+  }
+  
+  .company-details {
+    h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 4px;
+    }
+
+    .company-location {
+      font-size: 12px;
+      color: #718096;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 2px;
     }
   }
   

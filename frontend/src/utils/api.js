@@ -30,10 +30,21 @@ export const adminApis = {
     editJob: (id) => `/admin/jobs/${id}`,
     getCompanyDetailByCompanyId: (id) => `/admin/company/detail/${id}`,
     getUserDetail: (id) => `/admin/user/detail/${id}`,
+    getAllReviews: '/admin/reviews/all',
+    getAllReviewsByCompanyId: (company_id) => `/admin/reviews/company/${company_id}`,
+    createCategory: '/admin/category/create',
+    editCategory: (category_id) => `/admin/category/edit/${category_id}`,
+    deleteCategory: (id) => `/admin/category/delete/${id}`,
+    createCareerHandbook: '/admin/career-handbook/create',
+    editCareerHandbook: (id) => `/admin/career-handbook/edit/${id}`,
+    deleteCareerHandbook: (id) => `/admin/career-handbook/delete/${id}`,
+    updateStatusCandidate: (candidate_id) => `/admin/candidate/update-status/${candidate_id}`,
+    updateStatusJob: (job_id) => `/admin/job/update-status/${job_id}`,
 };
 
 export const userApis = {
     getCurrentUser: '/user/current-user',
+    checkCandidate: '/user/check-candidate',
     getReturnUrl: '/api/vnpay_return',
     updatePassword: '/user/update-password',
     updateCurrentUser: '/user/current-user',
@@ -121,7 +132,10 @@ export const userApis = {
     checkApplicationStatus: (job_id) => `/user/check-application-status/${job_id}`,
     withdrawApplication: '/user/withdraw-application',
     editProfilePictureWithCandidateId: (candidate_id) => `/user/candidate/edit-profile-picture/${candidate_id}`,
-    
+    createReviewCompany: '/user/company/review',
+    getAllReviewsByCompanyId: (company_id) => `/user/reviews/${company_id}`,
+
+    getCareerHandbookByPostId: (post_id) => `/user/career-handbook/post/${post_id}`,
 };
 
 

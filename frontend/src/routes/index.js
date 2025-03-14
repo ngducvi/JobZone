@@ -62,7 +62,8 @@ import RecruiterSettings from '~/pages/Recruiter/Settings/RecruiterSettings';
 import SearchCandidate from '~/pages/Recruiter/SearchCandidate/SearchCandidate';
 import CandidateDetail from '~/pages/Recruiter/CandidateDetail/CandidateDetail';
 import PostJob from '~/pages/Recruiter/PostJob/PostJob';
-
+import PricingRecruiter from '~/pages/Recruiter/PricingRecruiter/PricingRecruiter';
+import CareerHandbookDetail from '~/pages/CareerHandbook/CareerHandbookDetail/CareerHandbookDetail';
 const publicRoutes = [
     { path: '/', component: Dashboard },
     { path: '/user/verify-email', component: VerifyEmailSuccess, layout: null },
@@ -111,6 +112,7 @@ const publicRoutes = [
     { path: '/recruiter/search-candidate', component: SearchCandidate , layout: RecruiterLayout},
     { path: '/recruiter/candidate-detail/:candidate_id', component: CandidateDetail, layout: RecruiterLayout },
     { path: '/recruiter/post-job', component: PostJob, layout: RecruiterLayout },
+    { path: '/recruiter/pricing', component: PricingRecruiter, layout: RecruiterLayout },
     { path: '/loading', component: LoadingPage, layout: null },
     { path: '/career-handbook/job-hunting', component: JobHunting },
     { path: '/career-handbook/industry-knowledge', component: IndustryKnowledge },
@@ -124,6 +126,8 @@ const publicRoutes = [
     { path: '/tools/saving-calculator', component: SavingCalculator },
     { path: '/tools/test-disc', component: TestDisc },
     { path: '/test-template', component: TestTemplate, layout: null },
+    { path: '/career-handbook/detail/:id', component: CareerHandbookDetail},
+    { path: '/career-handbook/:post_id', component: CareerHandbookDetail},
 ];
 
 const privateRoutes = [];

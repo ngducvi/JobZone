@@ -194,7 +194,7 @@ function Home() {
       <div className="row">
         {/* Card for Users */}
         <motion.div
-          className="col-lg-3 col-md-6 col-sm-12 mt-4"
+          className={cx('col-lg-3', 'col-md-6', 'col-sm-12', 'mb-4')}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
@@ -218,7 +218,7 @@ function Home() {
 
         {/* Card for Models */}
         <motion.div
-          className="col-lg-3 col-md-6 col-sm-12 mt-4"
+          className={cx('col-lg-3', 'col-md-6', 'col-sm-12', 'mb-4')}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
@@ -242,7 +242,7 @@ function Home() {
 
         {/* Card for Jobs */}
         <motion.div
-          className="col-lg-3 col-md-6 col-sm-12 mt-4"
+          className={cx('col-lg-3', 'col-md-6', 'col-sm-12', 'mb-4')}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
@@ -266,7 +266,7 @@ function Home() {
 
         {/* Card for Payments */}
         <motion.div
-          className="col-lg-3 col-md-6 col-sm-12 mt-4"
+          className={cx('col-lg-3', 'col-md-6', 'col-sm-12', 'mb-4')}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
@@ -292,26 +292,29 @@ function Home() {
 
 
       {/* Chart Section */}
-      <div className="mt-5">
-        <h3>{currentYear} Tổng quan</h3>
-        <div className={cx("row", "chart-container")}>
-          {/* dùng col */}
-          <div className={cx("col-8", "chart-left")}>
-            <h3>{currentYear} Tổng quan thanh toán</h3>
-            {chartData.labels && chartData.datasets ? (
-              <Bar data={chartData} options={{ responsive: true }} />
-            ) : (
-              <p>Loading chart data...</p>
-            )}
-          </div>
-          <div className={cx("col-4", "chart-right")}>
-            <h3>Payment Status Overview</h3>
-            {walletData.labels && walletData.datasets ? (
-              <Pie data={walletData} options={{ responsive: true }} />
-            ) : (
-              <p>Loading wallet data...</p>
-            )}
-          </div>
+      <div className={cx('chart-container', 'row')}>
+        <div className={cx('chart-section', 'col-lg-8', 'col-md-12', 'mb-4')}>
+          <h3>{currentYear} Tổng quan thanh toán</h3>
+          {chartData.labels && chartData.datasets ? (
+            <Bar data={chartData} options={{ 
+              responsive: true,
+              maintainAspectRatio: false
+            }} />
+          ) : (
+            <p>Loading chart data...</p>
+          )}
+        </div>
+        
+        <div className={cx('chart-section', 'col-lg-4', 'col-md-12')}>
+          <h3>Payment Status Overview</h3>
+          {walletData.labels && walletData.datasets ? (
+            <Pie data={walletData} options={{ 
+              responsive: true,
+              maintainAspectRatio: false
+            }} />
+          ) : (
+            <p>Loading wallet data...</p>
+          )}
         </div>
       </div>
     </div>

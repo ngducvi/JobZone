@@ -30,5 +30,14 @@ router.get("/job/count-all", adminController.countAllJobs.bind(adminController))
 router.put('/jobs/:id', adminController.editJob.bind(adminController));
 router.get("/company/detail/:id", adminController.getCompanyDetailByCompanyId.bind(adminController));
 router.get("/user/detail/:id", adminController.getUserDetail.bind(adminController));
-
+router.get("/reviews/all", adminController.getAllReviews.bind(adminController));
+router.get("/reviews/company/:company_id", adminController.getAllReviewsByCompanyId.bind(adminController));
+router.post("/category/create", adminController.createCategory.bind(adminController));
+router.patch("/category/edit/:category_id", adminController.editCategory.bind(adminController));
+router.delete("/category/delete/:category_id", adminController.deleteCategory.bind(adminController));
+router.post("/career-handbook/create", adminController.createCareerHandbook.bind(adminController));
+router.patch("/career-handbook/edit/:post_id", adminController.editCareerHandbook.bind(adminController));
+router.delete("/career-handbook/delete/:post_id", adminController.deleteCareerHandbook.bind(adminController));
+router.patch("/candidate/update-status/:candidate_id", adminController.updateStatusCandidate.bind(adminController));
+router.patch("/job/update-status/:job_id", adminController.updateStatusJob.bind(adminController));
 module.exports = router;

@@ -10,9 +10,20 @@ const Job = require("../models/Job");
 const Candidate = require("../models/Candidate");
 const RecruiterCompanies = require("../models/RecruiterConpanies");
 const CareerHandbook = require("../models/CareerHandbook");
+const Reviews = require("../models/Reviews");
 
 class AdminController {
-  constructor() {}
+  constructor() {
+    this.generateEducationId = () => {
+      return "edu-" + Math.random().toString(36).substr(2, 9);
+    };
+    this.generateCategoryId = () => {
+      return "cat-" + Math.random().toString(36).substr(2, 9);
+    };
+    this.generateCareerHandbookId = () => {
+      return "ch-" + Math.random().toString(36).substr(2, 9);
+    };
+  }
   randomString(length) {
     const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     let result = "";
@@ -378,6 +389,7 @@ class AdminController {
       offset,
       order: [["created_at", "DESC"]],
     });
+    //get c
     return res.json({
       companies: companies.rows,
       totalPages: Math.ceil(companies.count / limit),
@@ -392,14 +404,14 @@ class AdminController {
       const recruiterCompanies = await RecruiterCompanies.findAndCountAll({
         limit,
         offset,
-        raw: true, // Thêm raw: true để lấy plain object
+        raw: true,
       });
 
-      // Lấy danh sách company_ids và user_ids
+      // Get company_ids and user_ids
       const companyIds = recruiterCompanies.rows.map((rc) => rc.company_id);
       const userIds = recruiterCompanies.rows.map((rc) => rc.user_id);
 
-      // Fetch companies và users
+      // Fetch companies and users
       const [companies, users] = await Promise.all([
         Company.findAll({
           where: { company_id: companyIds },
@@ -411,6 +423,16 @@ class AdminController {
         }),
       ]);
 
+      // Get reviews for each company
+      const companyReviews = {};
+      for (const companyId of companyIds) {
+        const reviews = await Reviews.findAll({
+          where: { company_id: companyId },
+          raw: true,
+        });
+        companyReviews[companyId] = reviews;
+      }
+
       // Map data
       const recruiterCompaniesWithDetails = recruiterCompanies.rows.map(
         (recruiter) => {
@@ -421,7 +443,12 @@ class AdminController {
 
           return {
             ...recruiter,
-            company,
+            company: company
+              ? {
+                  ...company,
+                  reviews: companyReviews[recruiter.company_id] || [],
+                }
+              : null,
             user: user
               ? {
                   id: user.id,
@@ -451,6 +478,35 @@ class AdminController {
       });
     }
   }
+  // get all reviews
+  async getAllReviews(req, res) {
+    try {
+      const reviews = await Reviews.findAll();
+      return res.json({ reviews });
+    } catch (error) {
+      console.error("Error:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message,
+      });
+    }
+  }
+  // get all reviews by company id
+  async getAllReviewsByCompanyId(req, res) {
+    try {
+      const { company_id } = req.params;
+      const reviews = await Reviews.findAll({
+        where: { company_id },
+      });
+      return res.json({ reviews });
+    } catch (error) {
+      console.error("Error:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message,
+      });
+    }
+  }
   //   update status recruiter company
   async updateStatusRecruiterCompany(req, res) {
     const { id } = req.params;
@@ -471,10 +527,55 @@ class AdminController {
       });
     }
   }
+  // update status candidate
+  async updateStatusCandidate(req, res) {
+    try {
+      const { candidate_id } = req.params;
+      const { status } = req.body;
+      const candidate = await Candidate.findByPk(candidate_id);
+      candidate.status = status;
+      await candidate.save();
+      return res.json({ candidate });
+    } catch (error) {
+      console.error("Error:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message,
+      });
+    }
+  }
+  // update status job
+  async updateStatusJob(req, res) {
+    try {
+      const { job_id } = req.params;
+      const { status } = req.body;
+      const job = await Job.findByPk(job_id);
+      job.status = status;
+      await job.save();
+      return res.json({ job });
+    } catch (error) {
+      console.error("Error:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message,
+      });
+    }
+  }
   async editJob(req, res) {
     const { id } = req.params;
-    const { title, description, salary, location, company_id, status, deadline, quantity, rank, education, experience } =
-      req.body;
+    const {
+      title,
+      description,
+      salary,
+      location,
+      company_id,
+      status,
+      deadline,
+      quantity,
+      rank,
+      education,
+      experience,
+    } = req.body;
     try {
       const job = await Job.findByPk(id);
       if (!job) {
@@ -528,7 +629,7 @@ class AdminController {
       totalPages: Math.ceil(careerHandbooks.count / limit),
     });
   }
-  
+
   async getUserDetail(req, res) {
     const { id } = req.params;
     try {
@@ -537,6 +638,123 @@ class AdminController {
         return res.status(404).json({ error: "User not found" });
       }
       return res.json({ user });
+    } catch (error) {
+      console.error("Error:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message,
+      });
+    }
+  }
+  // create category
+  async createCategory(req, res) {
+    try {
+      const { category_name, description } = req.body;
+      const category = await Category.create({
+        category_id: this.generateCategoryId(),
+        category_name,
+        description,
+        created_at: new Date(),
+        created_by: "admin",
+        last_modified_by: "admin",
+        version: 1,
+      });
+      return res.json({ category });
+    } catch (error) {
+      console.error("Error:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message,
+      });
+    }
+  }
+  // edit category by category id
+  async editCategory(req, res) {
+    try {
+      const { category_id } = req.params;
+      const { category_name, description, last_modified_by } = req.body;
+
+      const category = await Category.findByPk(category_id);
+      if (!category) {
+        return res.status(404).json({ error: "Category not found" });
+      }
+
+      category.category_name = category_name;
+      category.description = description;
+      category.last_modified_by = last_modified_by;
+      await category.save();
+
+      return res.json({ category });
+    } catch (error) {
+      console.error("Error:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message,
+      });
+    }
+  }
+  // delete category by category id
+  async deleteCategory(req, res) {
+    const { id } = req.params;
+    const category = await Category.findByPk(id);
+    await category.destroy();
+    return res.json({ success: true });
+  }
+  // create career handbook
+  async createCareerHandbook(req, res) {
+    try {
+      const { title, category_id, content } = req.body;
+      const careerHandbook = await CareerHandbook.create({
+        post_id: this.generateCareerHandbookId(),
+        title,
+        category_id,
+        content,
+        created_at: new Date(),
+        created_by: "admin",
+        last_modified_by: "admin",
+        version: 1,
+        status: "draft",
+        isFeatured: false,
+      });
+      return res.json({ careerHandbook });
+    } catch (error) {
+      console.error("Error:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message,
+      });
+    }
+  }
+  // edit career handbook by post_id
+  async editCareerHandbook(req, res) {
+    const { post_id } = req.params;
+    const { title, category_id, content, last_modified_by } = req.body;
+    try {
+      const careerHandbook = await CareerHandbook.findByPk(post_id);
+      if (!careerHandbook) {
+        return res.status(404).json({ error: "Career handbook not found" });
+      }
+      careerHandbook.title = title;
+      careerHandbook.category_id = category_id;
+      careerHandbook.content = content;
+      careerHandbook.last_modified_by = last_modified_by;
+      await careerHandbook.save();
+      return res.json({ careerHandbook });
+    } catch (error) {
+      console.error("Error:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message,
+      });
+    }
+  }
+  // delete career handbook by post_id
+  async deleteCareerHandbook(req, res) {
+    try {
+      const { post_id } = req.params;
+      const careerHandbook = await CareerHandbook.findByPk(post_id);
+      await careerHandbook.destroy();
+      return res.json({ success: true });
     } catch (error) {
       console.error("Error:", error);
       return res.status(500).json({
