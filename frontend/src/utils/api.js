@@ -159,6 +159,10 @@ export const recruiterApis = {
     updateCompanyLogo: (company_id) => `/recruiter/company/edit-logo/${company_id}`,
     updateCompany: (company_id) => `/recruiter/company/edit/${company_id}`,
     updateCompanyBanner: (company_id) => `/recruiter/company/edit-banner/${company_id}`,
+    getBusinessLicensesByCompanyId: (company_id) => `/recruiter/business-licenses/${company_id}`,
+    checkBusinessLicense: (company_id) => `/recruiter/check-business-license/${company_id}`,
+    createBusinessLicense: (company_id) => `/recruiter/create-business-license/${company_id}`,
+    updateBusinessLicense: (license_id) => `/recruiter/update-business-license/${license_id}`,
 };
 
 export const usageApis = {

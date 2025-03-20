@@ -5,7 +5,7 @@ import classNames from "classnames/bind";
 import styles from "./Job.module.scss";
 import { adminApis, authAPI } from "~/utils/api";
 import { NextPageIcon, PrevPageIcon } from "~/components/Icons";
-import { FaBriefcase, FaBuilding, FaMapMarkerAlt, FaGraduationCap, FaClock, FaMoneyBillWave, FaUserTie, FaCalendarAlt, FaChartLine, FaCheckCircle, FaBan, FaTimes, FaUsers, FaGlobe, FaLock } from "react-icons/fa";
+import { FaBriefcase, FaBuilding, FaMapMarkerAlt, FaGraduationCap, FaClock, FaMoneyBillWave, FaUserTie, FaCalendarAlt, FaChartLine, FaCheckCircle, FaBan, FaTimes, FaUsers, FaGlobe, FaLock, FaPen } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 
 const cx = classNames.bind(styles);
@@ -35,11 +35,11 @@ function Job() {
     salary: '',
     location: '',
     status: '',
-    deadline: '',
-    quantity: '',
     education: '',
     experience: '',
-    rank: ''
+    rank: '',
+    deadline: '',
+    quantity: ''
   });
 
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
@@ -149,20 +149,30 @@ function Job() {
       salary: job.salary,
       location: job.location,
       status: job.status,
-      deadline: new Date(job.deadline).toISOString().split('T')[0],
-      quantity: job.quantity,
       education: job.education,
       experience: job.experience,
-      rank: job.rank
+      rank: job.rank,
+      deadline: job.deadline.split('T')[0],
+      quantity: job.quantity
     });
-    
     setIsEditModalOpen(true);
-    
   };
 
   const handleCloseModal = () => {
     setIsEditModalOpen(false);
     setSelectedJob(null);
+    setEditFormData({
+      title: '',
+      description: '',
+      salary: '',
+      location: '',
+      status: '',
+      education: '',
+      experience: '',
+      rank: '',
+      deadline: '',
+      quantity: ''
+    });
   };
 
   const handleInputChange = (e) => {
@@ -261,43 +271,6 @@ function Job() {
         autoClose: 3000
       });
     }
-  };
-
-  // Thêm component StatusModal
-  const StatusModal = ({ job, onClose }) => {
-    return (
-      <div className={cx('modal-overlay')} onClick={onClose}>
-        <div className={cx('modal-content')} onClick={e => e.stopPropagation()}>
-          <h3>Cập nhật trạng thái</h3>
-          <p>Tin tuyển dụng: {job.title}</p>
-          
-          <div className={cx('status-options')}>
-            <button 
-              className={cx('status-btn', 'active')}
-              onClick={() => handleUpdateStatus(job.job_id, 'Active')}
-            >
-              <FaCheckCircle /> Hoạt động
-            </button>
-            <button 
-              className={cx('status-btn', 'pending')}
-              onClick={() => handleUpdateStatus(job.job_id, 'Pending')}
-            >
-              <FaClock /> Chờ duyệt
-            </button>
-            <button 
-              className={cx('status-btn', 'closed')}
-              onClick={() => handleUpdateStatus(job.job_id, 'Closed')}
-            >
-              <FaLock /> Đã đóng
-            </button>
-          </div>
-
-          <button className={cx('close-btn')} onClick={onClose}>
-            <FaTimes /> Đóng
-          </button>
-        </div>
-      </div>
-    );
   };
 
   return (
@@ -457,15 +430,13 @@ function Job() {
                         {job.status === 'Closed' && 'Đã đóng'}
                       </div>
                     </td>
-                    <td>
-                      <div className={cx("actions")}>
-                        <button 
-                          className={cx("action-btn", "edit")}
-                          onClick={() => handleEditClick(job)}
-                        >
-                          Chỉnh sửa
-                        </button>
-                      </div>
+                    <td className={cx("actions")}>
+                      <button
+                        className={cx("edit-btn")}
+                        onClick={() => handleEditClick(job)}
+                      >
+                        <FaPen />
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -522,7 +493,7 @@ function Job() {
                 <input
                   type="text"
                   name="company_name"
-                  value={companyDetails[selectedJob.company_id]?.company_name || "Loading..."}
+                  value={companyDetails[selectedJob?.company_id]?.company_name || "Loading..."}
                   disabled
                 />
               </div>
@@ -645,13 +616,40 @@ function Job() {
       )}
 
       {showStatusModal && selectedJob && (
-        <StatusModal 
-          job={selectedJob}
-          onClose={() => {
-            setShowStatusModal(false);
-            setSelectedJob(null);
-          }}
-        />
+        <div className={cx('modal-overlay')}>
+          <div className={cx('modal-content')}>
+            <h3>Cập nhật trạng thái</h3>
+            <p>Tin tuyển dụng: {selectedJob.title}</p>
+            
+            <div className={cx('status-options')}>
+              <button 
+                className={cx('status-btn', 'active')}
+                onClick={() => handleUpdateStatus(selectedJob.job_id, 'Active')}
+              >
+                <FaCheckCircle /> Hoạt động
+              </button>
+              <button 
+                className={cx('status-btn', 'pending')}
+                onClick={() => handleUpdateStatus(selectedJob.job_id, 'Pending')}
+              >
+                <FaClock /> Chờ duyệt
+              </button>
+              <button 
+                className={cx('status-btn', 'closed')}
+                onClick={() => handleUpdateStatus(selectedJob.job_id, 'Closed')}
+              >
+                <FaLock /> Đã đóng
+              </button>
+            </div>
+
+            <button className={cx('close-btn')} onClick={() => {
+              setShowStatusModal(false);
+              setSelectedJob(null);
+            }}>
+              <FaTimes /> Đóng
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

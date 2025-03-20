@@ -230,7 +230,6 @@ const SearchCandidate = () => {
                     <div 
                       key={candidate.candidate_id} 
                       className={cx('candidate-card')}
-                      
                     >
                       <div className={cx('candidate-avatar')}>
                         <img src={candidate.profile_picture || images.avatar} alt="Avatar" />
@@ -239,17 +238,20 @@ const SearchCandidate = () => {
                       <div className={cx('candidate-info')}>
                         <h3 className={cx('candidate-name')}>{candidate.user.name}</h3>
                         <div className={cx('candidate-meta')}>
-                          <span><i className="fas fa-map-marker-alt"></i>{candidate.location}</span>
-                          <span>{candidate.current_job_title}</span>
+                          <span><i className="fas fa-map-marker-alt"></i>{candidate.location || 'Chưa cập nhật'}</span>
+                          <span>{candidate.current_job_title || 'Chưa cập nhật'}</span>
                         </div>
                         <div className={cx('skills')}>
-                          {candidate.skills.split(',').slice(0, 3).map((skill, index) => (
+                          {candidate.skills?.split(',')?.slice(0, 3)?.map((skill, index) => (
                             <span key={index} className={cx('skill-tag')}>{skill.trim()}</span>
-                          ))}
+                          )) || <span className={cx('skill-tag')}>Chưa cập nhật kỹ năng</span>}
                         </div>
                       </div>
 
-                      <button className={cx('view-profile-btn')} onClick={() => handleCandidateClick(candidate.candidate_id)}>
+                      <button 
+                        className={cx('view-profile-btn')} 
+                        onClick={() => handleCandidateClick(candidate.candidate_id)}
+                      >
                         View Profile
                       </button>
                     </div>

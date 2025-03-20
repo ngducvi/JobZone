@@ -25,7 +25,6 @@ const TopCompany = () => {
         },
       });
       setTopCompany(response.data.topCompany);
-      console.log(response.data.topCompany);
       setTotalPages(response.data.totalPages);
     };
     fetchTopCompany();

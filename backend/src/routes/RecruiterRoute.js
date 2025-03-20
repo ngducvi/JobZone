@@ -28,4 +28,8 @@ router.delete('/delete-job/:job_id', recruiterController.deleteJob.bind(recruite
 router.put('/company/edit-logo/:company_id', upload.single('logo'), recruiterController.updateCompanyLogoWithCompanyId.bind(recruiterController));
 router.put('/company/edit/:company_id', upload.single('logo'), recruiterController.updateCompany.bind(recruiterController));
 router.put('/company/edit-banner/:company_id', upload.single('banner'), recruiterController.updateCompanyBannerWithCompanyId.bind(recruiterController));
+router.get('/business-licenses/:company_id', recruiterController.getBusinessLicensesByCompanyId.bind(recruiterController));
+router.get('/check-business-license/:company_id', recruiterController.checkBusinessLicense.bind(recruiterController));
+router.post('/create-business-license/:company_id', recruiterController.createBusinessLicense.bind(recruiterController));
+router.put('/update-business-license/:license_id', recruiterController.updateBusinessLicense.bind(recruiterController));
 module.exports = router;

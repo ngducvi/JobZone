@@ -237,42 +237,57 @@ function RecruiterJobs() {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 8;
+  const [hasBusinessLicense, setHasBusinessLicense] = useState(false);
+  const [isCheckingLicense, setIsCheckingLicense] = useState(true);
 
   const token = localStorage.getItem("token");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsCheckingLicense(true);
         // Fetch company info
         const responseCompany = await authAPI().get(recruiterApis.getAllRecruiterCompanies);
         setCompanyInfo(responseCompany.data.companies[0]);
 
-        // Fetch jobs
-        const responseJobs = await authAPI().get(
-          recruiterApis.getAllJobsByCompanyId(responseCompany.data.companies[0].company_id)
+        // Check business license
+        const responseCheckLicense = await authAPI().get(
+          recruiterApis.checkBusinessLicense(responseCompany.data.companies[0].company_id)
         );
-        setJobs(responseJobs.data.jobs);
+        setHasBusinessLicense(responseCheckLicense.data.businessLicense);
 
-        // Calculate job statistics
-        const stats = responseJobs.data.jobs.reduce((acc, job) => {
-          acc.totalJobs++;
-          acc[`${job.status.toLowerCase()}Jobs`]++;
-          return acc;
-        }, { totalJobs: 0, activeJobs: 0, pendingJobs: 0, expiredJobs: 0, draftJobs: 0 });
-        
-        setJobStats(stats);
-
-        // Get all job applications for each job
-        const applications = {};
-        for (const job of responseJobs.data.jobs) {
-          const responseJobApplications = await authAPI().get(
-            recruiterApis.getAllJobApplicationsByJobId(job.job_id)
+        if (responseCheckLicense.data.businessLicense) {
+          // Only fetch other data if business license exists
+          // Fetch jobs
+          const responseJobs = await authAPI().get(
+            recruiterApis.getAllJobsByCompanyId(responseCompany.data.companies[0].company_id)
           );
-          applications[job.job_id] = responseJobApplications.data.jobApplications;
+          setJobs(responseJobs.data.jobs);
+
+          // Calculate job statistics
+          const stats = responseJobs.data.jobs.reduce((acc, job) => {
+            acc.totalJobs++;
+            acc[`${job.status.toLowerCase()}Jobs`]++;
+            return acc;
+          }, { totalJobs: 0, activeJobs: 0, pendingJobs: 0, expiredJobs: 0, draftJobs: 0 });
+          
+          setJobStats(stats);
+
+          // Get all job applications for each job
+          const applications = {};
+          for (const job of responseJobs.data.jobs) {
+            const responseJobApplications = await authAPI().get(
+              recruiterApis.getAllJobApplicationsByJobId(job.job_id)
+            );
+            applications[job.job_id] = responseJobApplications.data.jobApplications;
+          }
+          setJobApplications(applications);
         }
-        setJobApplications(applications);
       } catch (error) {
         console.error(error);
+        toast.error("Có lỗi xảy ra khi tải dữ liệu");
+      } finally {
+        setIsCheckingLicense(false);
       }
     };
 
@@ -364,6 +379,39 @@ function RecruiterJobs() {
     }
     return pages;
   };
+
+  const handleAddLicense = () => {
+    navigate("/recruiter/settings", { state: { activeTab: 'license' } });
+  };
+
+  if (isCheckingLicense) {
+    return (
+      <div className={cx("wrapper")}>
+        <div className={cx("loading")}>
+          <i className="fa-solid fa-spinner fa-spin"></i>
+          <p>Đang tải...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!hasBusinessLicense) {
+    return (
+      <div className={cx("wrapper")}>
+        <div className={cx("no-license")}>
+          <div className={cx("message")}>
+            <i className="fa-solid fa-exclamation-triangle"></i>
+            <h2>Bạn cần cập nhật giấy phép kinh doanh</h2>
+            <p>Để sử dụng tính năng quản lý tin tuyển dụng, vui lòng cập nhật thông tin giấy phép kinh doanh của công ty.</p>
+            <button className={cx("add-license-btn")} onClick={handleAddLicense}>
+              <i className="fa-solid fa-plus"></i>
+              Thêm giấy phép kinh doanh
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cx('wrapper')}>

@@ -36,6 +36,7 @@ const { v4: uuid } = require("uuid");
 const cloudinary = require("../utils/cloudinary");
 const path = require("path");
 const fs = require("fs");
+const BusinessLicenses = require("../models/BusinessLicenses");
 class RecruiterController {
   constructor() {
     this.generateEducationId = () => {
@@ -58,6 +59,9 @@ class RecruiterController {
     };
     this.generateJobId = () => {
       return "job-" + Math.random().toString(36).substr(2, 9);
+    };
+    this.generateBusinessLicenseId = () => {
+      return "bl-" + Math.random().toString(36).substr(2, 9);
     };
   }
   async verifyEmail(req, res) {
@@ -858,6 +862,79 @@ class RecruiterController {
         message: error.message,
         code: -1,
       });
+    }
+  }
+  // get business licenses by company_id
+  async getBusinessLicensesByCompanyId(req, res) {
+    try {
+      const companyId = req.params.company_id;
+      const businessLicenses = await BusinessLicenses.findAll({
+        where: { company_id: companyId },
+      });
+      return res.json({ businessLicenses: businessLicenses });
+    } catch (error) {
+      res.status(400).send(error);
+    }
+  }
+  // check xem đã có giấy phép kinh doanh chưa
+  async checkBusinessLicense(req, res) {
+    const companyId = req.params.company_id;
+    try {
+      const businessLicense = await BusinessLicenses.findOne({
+        where: { company_id: companyId },
+      });
+      if (businessLicense) {
+        return res.json({ businessLicense: businessLicense });
+      } else {
+        return res.json({ businessLicense: null });
+      }
+    } catch (error) {
+      res.status(400).send(error);
+    }
+  }
+  // create business license with company_id
+  async createBusinessLicense(req, res) {
+    const companyId = req.params.company_id;
+    try {
+      const businessLicense = await BusinessLicenses.create({
+        license_id: this.generateBusinessLicenseId(),
+        company_id: companyId,
+        business_license_status: "pending",
+        tax_id: req.body.tax_id,
+        registration_number: req.body.registration_number,
+        license_issue_date: req.body.license_issue_date,
+        license_expiry_date: req.body.license_expiry_date,
+        contact_email: req.body.contact_email,
+        contact_phone: req.body.contact_phone,
+        industry: req.body.industry,
+        founded_year: req.body.founded_year,
+      });
+      return res.json({ businessLicense: businessLicense });
+    } catch (error) {
+      res.status(400).send(error);
+    }
+  }
+  // update business license with business_license_id
+  async updateBusinessLicense(req, res) {
+    const businessLicenseId = req.params.license_id;
+    try {
+      const businessLicense = await BusinessLicenses.findByPk(businessLicenseId);
+      if (!businessLicense) {
+        return res.status(404).json({ message: "Không tìm thấy giấy phép" });
+      }
+
+      // Giữ nguyên status cũ nếu không có trong request body
+      const updatedData = {
+        ...req.body,
+        business_license_status: req.body.business_license_status || businessLicense.business_license_status
+      };
+
+      await businessLicense.update(updatedData);
+      
+      return res.json({ businessLicense: businessLicense });
+    } catch (error) {
+      console.error(error);
+      res.status(400).json({ message: "Có lỗi xảy ra khi cập nhật giấy phép" });
     }
   }
 }

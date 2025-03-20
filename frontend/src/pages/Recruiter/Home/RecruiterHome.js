@@ -7,7 +7,17 @@ import images from "~/assets/images";
 import { authAPI, userApis, recruiterApis } from "~/utils/api";
 import UserContext from "~/context/UserContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faStar, faCrown, faGem, faEye, faCheck, faTimes, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { navigate } from "react-router-dom";
+import {
+  faStar,
+  faCrown,
+  faGem,
+  faEye,
+  faCheck,
+  faTimes,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
+import { toast } from "react-toastify";
 
 const cx = classNames.bind(styles);
 
@@ -19,6 +29,7 @@ const planDetails = {
 };
 
 function RecruiterHome() {
+  const navigate = useNavigate();
   const { user, setUser } = useContext(UserContext);
   const [recruiter, setRecruiter] = useState(null);
   const [companyInfo, setCompanyInfo] = useState(null);
@@ -32,11 +43,12 @@ function RecruiterHome() {
     totalSaved: 0,
     totalCVs: 0,
   });
-  const [plan, setPlan] = useState('Basic');
+  const [plan, setPlan] = useState("Basic");
   const [showCompanyInfo, setShowCompanyInfo] = useState(false);
   const [jobs, setJobs] = useState([]);
   const [jobApplications, setJobApplications] = useState({});
   const token = localStorage.getItem("token");
+  const [hasBusinessLicense, setHasBusinessLicense] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,6 +62,21 @@ function RecruiterHome() {
         setCompanyInfo(responseCompany.data.companies[0]);
         setPlan(responseCompany.data.companies[0].plan);
         console.log("plan", plan);
+
+        // Check business license
+        const responseCheckLicense = await authAPI().get(
+          recruiterApis.checkBusinessLicense(responseCompany.data.companies[0].company_id)
+        );
+        setHasBusinessLicense(responseCheckLicense.data.businessLicense);
+
+        // get business licenses
+        const responseBusinessLicenses = await authAPI().get(
+          recruiterApis.getBusinessLicensesByCompanyId("7")
+        );
+        console.log(
+          "businessLicenses",
+          responseBusinessLicenses.data.businessLicenses
+        );
 
         //
         const responseJob = await authAPI().get(
@@ -86,8 +113,8 @@ function RecruiterHome() {
           recruiterApis.getDashboardStats
         );
       } catch (error) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        // localStorage.removeItem("token");
+        // localStorage.removeItem("user");
         console.log(error);
       }
     };
@@ -98,6 +125,24 @@ function RecruiterHome() {
 
   return (
     <div className={cx("wrapper")}>
+      {!hasBusinessLicense && (
+        <div className={cx("license-warning")}>
+          <div className={cx("warning-content")}>
+            <i className="fa-solid fa-exclamation-triangle"></i>
+            <div className={cx("warning-text")}>
+              <h3>Cập nhật giấy phép kinh doanh</h3>
+              <p>Vui lòng cập nhật thông tin giấy phép kinh doanh để sử dụng đầy đủ tính năng</p>
+            </div>
+            <button 
+              className={cx("update-btn")}
+              onClick={() => navigate("/recruiter/settings", { state: { activeTab: 'license' } })}
+            >
+              Cập nhật ngay
+            </button>
+          </div>
+        </div>
+      )}
+      
       <div className={cx("user-info")}>
         <div className={cx("user-header")}>
           <Avatar src={recruiter?.avatar || images.avatar} alt="Avatar" />
@@ -117,8 +162,8 @@ function RecruiterHome() {
           <div className={cx("membership-info")}>
             <div className={cx("membership-level")}>
               <span style={{ color: planDetails[plan]?.color }}>
-                <FontAwesomeIcon icon={planDetails[plan]?.icon} />{" "}
-                Gói: {plan || "Chưa có gói nào"}
+                <FontAwesomeIcon icon={planDetails[plan]?.icon} /> Gói:{" "}
+                {plan || "Chưa có gói nào"}
               </span>
               <span className={cx("level")}>Hạng Công ty</span>
             </div>
