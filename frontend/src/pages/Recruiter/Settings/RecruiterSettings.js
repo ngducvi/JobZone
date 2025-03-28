@@ -720,7 +720,14 @@ const RecruiterSettings = () => {
                   </button>
                 </div>
 
-                {businessLicense?.business_license_verified_at && (
+                {businessLicense?.business_license_status === 'pending' ? (
+                  <div className={cx("verification-info-pending", "pending")}>
+                    <p>
+                      <i className="fa-solid fa-clock"></i>
+                      Đang chờ xét duyệt
+                    </p>
+                  </div>
+                ) : businessLicense?.business_license_verified_at && (
                   <div className={cx("verification-info")}>
                     <p>
                       <i className="fa-solid fa-check-circle"></i>

@@ -163,6 +163,7 @@ export const recruiterApis = {
     checkBusinessLicense: (company_id) => `/recruiter/check-business-license/${company_id}`,
     createBusinessLicense: (company_id) => `/recruiter/create-business-license/${company_id}`,
     updateBusinessLicense: (license_id) => `/recruiter/update-business-license/${license_id}`,
+    searchCandidates: '/recruiter/search-candidates',
 };
 
 export const usageApis = {

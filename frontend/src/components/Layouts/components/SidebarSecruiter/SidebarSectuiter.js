@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import classNames from "classnames/bind";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { toast } from "react-hot-toast";
+import toast from 'react-hot-toast';
 import { faStar, faCrown, faGem } from "@fortawesome/free-solid-svg-icons";
 
 import styles from "./SidebarSectuiter.module.scss";
@@ -94,12 +94,12 @@ const sidebarIcons = [
     to: "/recruiter/my-services",
     minPlan: "Basic"
   },
-  {
-    icon: <i className="fa-solid fa-calendar"></i>,
-    title: "Lịch sử hoạt động",
-    to: "/recruiter/activity-history",
-    minPlan: "Basic"
-  },
+  // {
+  //   icon: <i className="fa-solid fa-calendar"></i>,
+  //   title: "Lịch sử hoạt động",
+  //   to: "/recruiter/activity-history",
+  //   minPlan: "Basic"
+  // },
   {
     icon: <i className="fa-solid fa-gear"></i>,
     title: "Cài đặt tài khoản",
@@ -239,17 +239,21 @@ const SidebarSectuiter = () => {
                 className={cx("item-btn", {
                   actived: item.to === location.pathname,
                   disabled: !canAccessFeature(item.minPlan) || item.disabled,
-                  [`plan-${item.minPlan?.toLowerCase()}`]: item.minPlan // Thêm optional chaining
+                  [`plan-${item.minPlan?.toLowerCase()}`]: item.minPlan
                 })}
                 onClick={(e) => {
                   if (!canAccessFeature(item.minPlan) || item.disabled) {
                     e.preventDefault();
-                    toast.info(
+                    toast(
                       !canAccessFeature(item.minPlan)
                         ? `Tính năng này chỉ khả dụng cho gói ${item.minPlan} trở lên`
                         : item.comingSoon
                         ? "Tính năng sẽ sớm ra mắt!"
-                        : "Tính năng đang được phát triển!"
+                        : "Tính năng đang được phát triển!",
+                      {
+                        icon: '🔒',
+                        duration: 3000,
+                      }
                     );
                   }
                 }}

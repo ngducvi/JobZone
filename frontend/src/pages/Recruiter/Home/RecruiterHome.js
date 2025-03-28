@@ -167,24 +167,6 @@ function RecruiterHome() {
               </span>
               <span className={cx("level")}>Hạng Công ty</span>
             </div>
-            <div className={cx("membership-points")}>
-              <div className={cx("point-row")}>
-                <span>Basic</span>
-                <span>Pro</span>
-                <span>ProMax</span>
-              </div>
-              <div className={cx("point-values")}>
-                <span>{recruiter?.points || 0}</span>
-                <span>200</span>
-                <span>800</span>
-              </div>
-              <div className={cx("progress-bar")}>
-                <div
-                  className={cx("progress")}
-                  style={{ width: `${(recruiter?.points / 800) * 100}%` }}
-                ></div>
-              </div>
-            </div>
           </div>
         </div>
 
