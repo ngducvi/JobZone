@@ -25,17 +25,228 @@ $primary-green: #02a346;
 }
 
 .wrapper {
-  padding: 24px;
-  background: linear-gradient(135deg, rgba($primary-blue, 0.02), rgba($primary-green, 0.02));
   min-height: 100vh;
-  animation: fadeIn 0.5s ease-out;
+  background: linear-gradient(135deg, #f6f9fc 0%, #f1f4f8 100%);
   margin-top: 50px;
 }
 
-.upload-section {
+.header-section {
+  background: linear-gradient(135deg, #013a74 0%, #02a346 100%);
+  padding: 60px 0 100px;
+  margin-bottom: -60px;
+  
+  .header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    text-align: center;
+    color: white;
+    padding: 0 24px;
+
+    .header-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 25px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: float 3s ease-in-out infinite;
+
+      svg {
+        font-size: 32px;
+        color: white;
+      }
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    p {
+      font-size: 18px;
+      opacity: 0.9;
+    }
+  }
+}
+
+.container {
   max-width: 1200px;
   margin: 0 auto;
-  animation: slideIn 0.6s ease-out;
+  padding: 0 24px;
+}
+
+.upload-section {
+  .upload-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    padding: 32px;
+    margin-bottom: 24px;
+  }
+
+  .dropzone {
+    border: 2px dashed #dfe6e9;
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    background: #f8f9fa;
+
+    &:hover {
+      border-color: #013a74;
+      background: #f1f9ff;
+    }
+
+    &.is-active {
+      border-color: #02a346;
+      background: #e6fff0;
+    }
+
+    &.has-file {
+      border-color: #02a346;
+      background: #e6fff0;
+    }
+
+    .dropzone-content {
+      .icon {
+        font-size: 48px;
+        color: #013a74;
+        margin-bottom: 16px;
+
+        .has-file & {
+          color: #02a346;
+        }
+      }
+
+      .upload-text {
+        .primary-text {
+          display: block;
+          font-size: 18px;
+          color: #2d3748;
+          font-weight: 500;
+          margin-bottom: 8px;
+        }
+
+        .secondary-text {
+          color: #718096;
+          font-size: 14px;
+        }
+      }
+
+      .file-info {
+        .file-name {
+          display: block;
+          font-size: 16px;
+          color: #2d3748;
+          font-weight: 500;
+          margin-bottom: 4px;
+        }
+
+        .file-size {
+          color: #718096;
+          font-size: 14px;
+        }
+      }
+    }
+  }
+
+  .upload-info {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid #eee;
+
+    .info-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      color: #718096;
+
+      svg {
+        font-size: 24px;
+        color: #013a74;
+      }
+
+      h3 {
+        font-size: 14px;
+        font-weight: 500;
+        color: #2d3748;
+        margin-bottom: 4px;
+      }
+
+      p {
+        font-size: 13px;
+      }
+    }
+  }
+
+  .upload-btn {
+    width: 100%;
+    padding: 16px;
+    margin-top: 24px;
+    background: #013a74;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+
+    &:hover:not(:disabled) {
+      background: darken(#013a74, 5%);
+    }
+
+    &:disabled {
+      background: #cbd5e0;
+      cursor: not-allowed;
+    }
+
+    &.loading {
+      background: #718096;
+      cursor: wait;
+    }
+
+    svg {
+      font-size: 20px;
+    }
+  }
+}
+
+.upload-tips {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #dfe6e9;
+
+  h3 {
+    color: #2d3436;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #636e72;
+      margin-bottom: 0.5rem;
+
+      i {
+        color: #00b894;
+      }
+    }
+  }
 }
 
 .upload-banner {
@@ -305,6 +516,31 @@ $primary-green: #02a346;
 
     .upload-area {
       padding: 24px 16px;
+    }
+  }
+
+  .header-section {
+    padding: 40px 0 80px;
+    margin-bottom: -40px;
+
+    .header-content {
+      h1 {
+        font-size: 24px;
+      }
+
+      p {
+        font-size: 16px;
+      }
+    }
+  }
+
+  .upload-section {
+    .upload-card {
+      padding: 20px;
+    }
+
+    .dropzone {
+      padding: 24px;
     }
   }
 }

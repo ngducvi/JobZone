@@ -1,18 +1,30 @@
 // UpCV page
 
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useState, useContext } from 'react';
 import classNames from 'classnames/bind';
 import styles from './UpCV.module.scss';
 import { useDropzone } from 'react-dropzone';
-import upCVImage from '../../../assets/images/cv_banner.png';
+import { authAPI, userApis } from '~/utils/api';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCloudUploadAlt, faFileAlt, faTimes } from '@fortawesome/free-solid-svg-icons';
+import axios from 'axios';
+import UserContext from "~/context/UserContext";
 
 const cx = classNames.bind(styles);
 
-const UpCV = () => {
+function UpCV() {
     const [selectedFile, setSelectedFile] = useState(null);
-
-    const onDrop = useCallback(acceptedFiles => {
-        setSelectedFile(acceptedFiles[0]);
+    const [isLoading, setIsLoading] = useState(false);
+    const navigate = useNavigate();
+    const { user } = useContext(UserContext);
+    console.log('user', user);
+   
+    const onDrop = useCallback((acceptedFiles) => {
+        if (acceptedFiles.length > 0) {
+            setSelectedFile(acceptedFiles[0]);
+        }
     }, []);
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -22,95 +34,114 @@ const UpCV = () => {
             'application/msword': ['.doc'],
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
         },
-        maxSize: 5242880 // 5MB
+        maxFiles: 1
     });
 
-    const handleUpload = () => {
+    const removeFile = () => {
+        setSelectedFile(null);
+    };
+    console.log('user', user);
+    const handleUpload = async () => {
         if (!selectedFile) {
-            alert('Vui lòng chọn file CV trước khi tải lên');
+            toast.error('Please select a file to upload');
             return;
         }
-        // Xử lý upload file
-        console.log('Uploading file:', selectedFile);
+
+        setIsLoading(true);
+        try {
+            const user_id = localStorage.getItem('user_id');
+            const token = localStorage.getItem('token');
+
+            // Log để debug
+            console.log('Selected File:', selectedFile);
+            console.log('User ID:', user_id);
+            console.log('Token:', token);
+
+            // Chuẩn bị dữ liệu gửi đi
+            const formData = {
+                user_id: user.id,
+                cv_name: selectedFile.name,
+                cv_link: selectedFile.path || selectedFile.name // Sử dụng path nếu có, không thì dùng name
+            };
+
+            console.log('Request Payload:', formData);
+
+            // Gọi API với đầy đủ headers
+            const response = await axios({
+                method: 'post',
+                url: 'http://localhost:8080/api/v1/user/candidate-cv/cv-id',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                data: formData
+            });
+
+            console.log('API Response:', response);
+
+            if (response.data.code === 1) {
+                toast.success('Tạo hồ sơ ứng viên thành công!');
+                navigate('/user/manager-cv');
+            } else {
+                toast.error(response.data.message || 'Tạo hồ sơ thất bại');
+            }
+        } catch (error) {
+            console.error('Full Error:', error);
+            console.error('Error Response:', error.response?.data);
+            toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi tạo hồ sơ');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
         <div className={cx('wrapper')}>
+            <h2 className={cx('title')}>Upload Your CV</h2>
             <div className={cx('upload-section')}>
-                <div className={cx('upload-banner')}>
-                    <div className={cx('banner-content')}>
-                        <h2>Upload CV để các cơ hội việc làm tự tìm đến bạn</h2>
-                        <p>Giảm đến 50% thời gian cần thiết để tìm được một công việc phù hợp</p>
-                    </div>
-                    <div className={cx('banner-image')}>
-                        <img src={upCVImage} alt="Upload CV" />
-                    </div>
-                </div>
-
-                <div className={cx('upload-box')}>
-                    <p className={cx('upload-desc')}>
-                        Bạn đã có sẵn CV của mình, chỉ cần tải CV lên, hệ thống sẽ tự động đề xuất CV của bạn tới những nhà tuyển dụng ưu tín.
-                        <br />
-                        Tiết kiệm thời gian, tìm việc thông minh, nắm bắt cơ hội và làm chủ đường đua nghề nghiệp của chính mình.
-                    </p>
-
-                    <div {...getRootProps()} className={cx('upload-area', { active: isDragActive })}>
-                        <input {...getInputProps()} className={cx('file-input')} />
-                        <label className={cx('upload-label')}>
-                            <span>{selectedFile ? selectedFile.name : 'Tải lên CV từ máy tính, chọn hoặc kéo thả'}</span>
-                            <small>Hỗ trợ định dạng .doc, .docx, .pdf có kích thước dưới 5MB</small>
-                            <button className={cx('choose-btn')}>
-                                {selectedFile ? 'Chọn file khác' : 'Chọn CV'}
+                <div
+                    {...getRootProps()}
+                    className={cx('dropzone', {
+                        'dropzone-active': isDragActive,
+                        'has-file': selectedFile
+                    })}
+                >
+                    <input {...getInputProps()} />
+                    <FontAwesomeIcon icon={faCloudUploadAlt} className={cx('upload-icon')} />
+                    {selectedFile ? (
+                        <div className={cx('file-info')}>
+                            <FontAwesomeIcon icon={faFileAlt} className={cx('file-icon')} />
+                            <span className={cx('file-name')}>{selectedFile.name}</span>
+                            <button onClick={(e) => { e.stopPropagation(); removeFile(); }} className={cx('remove-file')}>
+                                <FontAwesomeIcon icon={faTimes} />
                             </button>
-                        </label>
-                    </div>
-
-                    <button 
-                        className={cx('upload-btn')} 
-                        onClick={handleUpload}
-                        disabled={!selectedFile}
-                    >
-                        <i className="fas fa-cloud-upload-alt"></i>
-                        {' '}Tải CV lên
-                    </button>
+                        </div>
+                    ) : (
+                        <div className={cx('upload-text')}>
+                            <p>Drag & drop your CV here</p>
+                            <p className={cx('upload-hint')}>or click to select file</p>
+                            <p className={cx('file-types')}>Supported formats: PDF, DOC, DOCX</p>
+                        </div>
+                    )}
                 </div>
-
-                <div className={cx('features-grid')}>
-                    <div className={cx('feature-card')}>
-                        <div className={cx('feature-icon', 'green')}>
-                            <i className="fas fa-check-circle"></i>
-                        </div>
-                        <h3>Nhận về các cơ hội tốt nhất</h3>
-                        <p>CV của bạn sẽ được ưu tiên hiển thị tới các nhà tuyển dụng đã xác thực. Nhận được tới mời với những cơ hội việc làm hấp dẫn từ các doanh nghiệp uy tín.</p>
-                    </div>
-
-                    <div className={cx('feature-card')}>
-                        <div className={cx('feature-icon', 'blue')}>
-                            <i className="fas fa-chart-line"></i>
-                        </div>
-                        <h3>Theo dõi số liệu, tối ưu CV</h3>
-                        <p>Theo dõi số lượt xem CV. Biết chính xác nhà tuyển dụng nào trên TopCV đang quan tâm đến CV của bạn.</p>
-                    </div>
-
-                    <div className={cx('feature-card')}>
-                        <div className={cx('feature-icon', 'purple')}>
-                            <i className="fas fa-share"></i>
-                        </div>
-                        <h3>Chia sẻ CV bất cứ nơi đâu</h3>
-                        <p>Upload một lần và sử dụng đường link gửi tới nhiều nhà tuyển dụng.</p>
-                    </div>
-
-                    <div className={cx('feature-card')}>
-                        <div className={cx('feature-icon', 'red')}>
-                            <i className="fas fa-handshake"></i>
-                        </div>
-                        <h3>Kết nối nhanh chóng với nhà tuyển dụng</h3>
-                        <p>Dễ dàng kết nối với các nhà tuyển dụng nào xem và quan tâm tới CV của bạn</p>
-                    </div>
-                </div>
+                <button
+                    className={cx('upload-button', { loading: isLoading })}
+                    onClick={handleUpload}
+                    disabled={!selectedFile || isLoading}
+                >
+                    {isLoading ? 'Uploading...' : 'Upload CV'}
+                </button>
+            </div>
+            <div className={cx('tips')}>
+                <h3>Tips for an Effective CV:</h3>
+                <ul>
+                    <li>Keep it clear and concise</li>
+                    <li>Highlight relevant experience</li>
+                    <li>Check for spelling and grammar</li>
+                    <li>Include up-to-date contact information</li>
+                </ul>
             </div>
         </div>
     );
-};
+}
 
 export default UpCV;

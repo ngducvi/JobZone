@@ -23,6 +23,7 @@ function Payments() {
           search: searchTerm,
         },
       });
+    
       setPaymentData(result.data.payments);
       setTotalPages(result.data.totalPages);
       setLoading(false);

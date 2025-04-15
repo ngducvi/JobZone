@@ -31,5 +31,7 @@ router.put('/company/edit-banner/:company_id', upload.single('banner'), recruite
 router.get('/business-licenses/:company_id', recruiterController.getBusinessLicensesByCompanyId.bind(recruiterController));
 router.get('/check-business-license/:company_id', recruiterController.checkBusinessLicense.bind(recruiterController));
 router.post('/create-business-license/:company_id', recruiterController.createBusinessLicense.bind(recruiterController));
-router.put('/update-business-license/:license_id', recruiterController.updateBusinessLicense.bind(recruiterController));
+router.put('/update-business-license/:license_id', upload.single('business_license_file'), recruiterController.updateBusinessLicense.bind(recruiterController));
+router.put('/company/update-business-license-file/:license_id', upload.single('business_license_file'), recruiterController.updateBusinessLicenseFile.bind(recruiterController));
+router.post('/search-candidates', recruiterController.searchCandidates.bind(recruiterController));
 module.exports = router;

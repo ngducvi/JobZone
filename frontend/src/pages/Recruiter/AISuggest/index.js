@@ -1,0 +1,1 @@
+export { default } from './RecruiterAISuggest.module.scss'

@@ -53,6 +53,11 @@ UserCv.init({
         allowNull: true,
         defaultValue: DataTypes.NOW,
     },
+    is_template: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+    },
 }, {
     sequelize,
     modelName: 'UserCv',

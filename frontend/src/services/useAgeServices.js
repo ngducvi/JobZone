@@ -22,6 +22,28 @@ const useAgeServices = {
       throw error;
     }
   },
+  // Lấy tất cả mô hình NLP
+   // Lấy tất cả mô hình NLP
+   getAllModelsNLP: async () => {
+    try {
+      const response = await api.get(usageApis.getAllModelsNLP);
+      return response.data; // Trả về danh sách mô hình NLP
+    } catch (error) {
+      console.error('Error fetching NLP models:', error);
+      throw error;
+    }
+  },
+
+  // Lấy tất cả mô hình Voice
+  getAllModelsVoice: async () => {
+    try {
+      const response = await api.get(usageApis.getAllModelsVoice);
+      return response.data; // Trả về danh sách mô hình Voice
+    } catch (error) {
+      console.error('Error fetching voice models:', error);
+      throw error;
+    }
+  },
 
   // Tìm kiếm danh mục
   searchCategory: async (query) => {

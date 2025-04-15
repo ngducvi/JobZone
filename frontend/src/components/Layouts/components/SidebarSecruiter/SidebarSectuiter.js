@@ -105,6 +105,11 @@ const sidebarIcons = [
     title: "Cài đặt tài khoản",
     to: "/recruiter/settings",
   },
+  {
+    icon: <i className="fa-solid fa-file-lines"></i>,
+    title: "Tạo bài viết SEO",
+    to: "/templates/create-seo-blog",
+  },
   // {
   //   icon: <i className="fa-solid fa-bell"></i>,
   //   title: "Thông báo hệ thống",

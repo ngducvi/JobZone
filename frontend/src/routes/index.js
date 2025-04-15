@@ -64,11 +64,16 @@ import CandidateDetail from '~/pages/Recruiter/CandidateDetail/CandidateDetail';
 import PostJob from '~/pages/Recruiter/PostJob/PostJob';
 import PricingRecruiter from '~/pages/Recruiter/PricingRecruiter/PricingRecruiter';
 import CareerHandbookDetail from '~/pages/CareerHandbook/CareerHandbookDetail/CareerHandbookDetail';
+import RecruiterAISuggest from '~/pages/Recruiter/AISuggest/RecruiterAISuggest';
+import DashboardA from '~/pages/Admin/DashboardA/DashboardA';
+
+import CreateSeoBlog from '~/pages/CreateSeoBlog/CreateSeoBlog';
 const publicRoutes = [
     { path: '/', component: Dashboard },
     { path: '/user/verify-email', component: VerifyEmailSuccess, layout: null },
     { path: '/templates/all', component:  AllTemplates},
     { path: '/admin', component: Home, layout: AdminLayout},
+    { path: '/admin/dashboarda', component: DashboardA, layout: AdminLayout},
     { path: '/admin/users', component: Users, layout: AdminLayout},
     { path: '/admin/models', component: Models, layout: AdminLayout},
     { path: '/admin/payments', component: Payments, layout: AdminLayout},
@@ -79,6 +84,7 @@ const publicRoutes = [
     { path: '/admin/recruiter', component: Recruiter, layout: AdminLayout},
     { path: '/admin/career-handbook', component: CareerHandbook, layout: AdminLayout},
     { path: '/user', component: Usersinfo },
+    { path: '/templates/create-seo-blog', component: CreateSeoBlog, layout: RecruiterLayout },
     { path: '/tai-khoan/profile', component: Profile },
     { path: '/user/pay', component: Pay },
     { path: '/user/change-password', component: ChangePassword },
@@ -104,6 +110,7 @@ const publicRoutes = [
     { path: '/403', component: Forbidden, layout: null },
     { path: '/recruiter', component: RecruiterHome, layout: RecruiterLayout},
     { path: '/recruiter/cv-management', component: RecruiterCVManagement , layout: RecruiterLayout},
+    { path: '/recruiter/ai-suggest', component: RecruiterAISuggest , layout: RecruiterLayout},
     { path: '/recruiter/campaigns', component: RecruiterCampaigns , layout: RecruiterLayout},
     { path: '/recruiter/jobs', component: RecruiterJobs , layout: RecruiterLayout},
     { path: '/recruiter/reports', component: RecruiterReports , layout: RecruiterLayout},

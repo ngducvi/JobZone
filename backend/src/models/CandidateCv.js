@@ -20,25 +20,25 @@ CandidateCv.init({
     },
     cv_name: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
     },
     cv_link: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
     },
     is_template: {
         type: DataTypes.BOOLEAN,
-        allowNull: false,
+        allowNull: true,
         defaultValue: false,
     },
     created_at: {
         type: DataTypes.DATE,
-        allowNull: false,
+        allowNull: true,
         defaultValue: DataTypes.NOW,
     },
     updated_at: {
         type: DataTypes.DATE,
-        allowNull: false,
+        allowNull: true,
         defaultValue: DataTypes.NOW,
     },
 }, {

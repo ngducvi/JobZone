@@ -40,6 +40,8 @@ export const adminApis = {
     deleteCareerHandbook: (id) => `/admin/career-handbook/delete/${id}`,
     updateStatusCandidate: (candidate_id) => `/admin/candidate/update-status/${candidate_id}`,
     updateStatusJob: (job_id) => `/admin/job/update-status/${job_id}`,
+    updateBusinessLicenseStatus: (id) => `/admin/company/update-business-license-status/${id}`,
+    getCountCandidates: '/admin/candidate/count-all',
 };
 
 export const userApis = {
@@ -163,6 +165,7 @@ export const recruiterApis = {
     checkBusinessLicense: (company_id) => `/recruiter/check-business-license/${company_id}`,
     createBusinessLicense: (company_id) => `/recruiter/create-business-license/${company_id}`,
     updateBusinessLicense: (license_id) => `/recruiter/update-business-license/${license_id}`,
+    updateBusinessLicenseFile: (license_id) => `/recruiter/company/update-business-license-file/${license_id}`,
     searchCandidates: '/recruiter/search-candidates',
 };
 

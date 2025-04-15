@@ -40,4 +40,6 @@ router.patch("/career-handbook/edit/:post_id", adminController.editCareerHandboo
 router.delete("/career-handbook/delete/:post_id", adminController.deleteCareerHandbook.bind(adminController));
 router.patch("/candidate/update-status/:candidate_id", adminController.updateStatusCandidate.bind(adminController));
 router.patch("/job/update-status/:job_id", adminController.updateStatusJob.bind(adminController));
+router.patch("/company/update-business-license-status/:license_id", adminController.updateBusinessLicenseStatus.bind(adminController));
+router.get("/candidate/count-all", adminController.countAllCandidates.bind(adminController));
 module.exports = router;

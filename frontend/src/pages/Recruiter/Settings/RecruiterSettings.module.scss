@@ -523,10 +523,11 @@
     padding: 16px;
     border-radius: 12px;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
     font-size: 15px;
     animation: slideDown 0.3s ease-out;
+    transition: all 0.3s ease;
   
     @keyframes slideDown {
       from {
@@ -559,9 +560,52 @@
       }
     }
   
+    &.verified {
+      background-color: #ECFDF5;
+      border: 1px solid #D1FAE5;
+      color: #065F46;
+  
+      i {
+        color: #10B981;
+      }
+    }
+  
+    &.expired {
+      background-color: #FEF2F2;
+      border: 1px solid #FECACA;
+      color: #991B1B;
+  
+      i {
+        color: #EF4444;
+        font-size: 20px;
+      }
+    }
+  
+    &.warning {
+      background-color: #FFFBEB;
+      border: 1px solid #FEF3C7;
+      color: #92400E;
+  
+      i {
+        color: #F59E0B;
+        font-size: 20px;
+      }
+    }
+  
     i {
       font-size: 18px;
+      margin-top: 2px;
     }
+  }
+  
+  .expired-title, .warning-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  
+  .expired-detail, .warning-detail {
+    font-size: 14px;
+    opacity: 0.9;
   }
   
   // Thêm styles cho banner upload
@@ -727,23 +771,24 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 20px;
+    padding: 10px 16px;
     background: white;
     border: 1px solid #e5e7eb;
-    border-radius: 10px;
+    border-radius: 8px;
     color: #013a74;
     text-decoration: none;
     font-weight: 500;
     transition: all 0.3s;
-  
+    
     &:hover {
       background: #f3f4f6;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+      border-color: #013a74;
+      text-decoration: underline;
     }
-  
+    
     i {
-      font-size: 18px;
+      font-size: 16px;
+      color: #ef4444;
     }
   }
   
@@ -850,6 +895,258 @@
       &:hover {
         background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
       }
+    }
+  }
+  
+  .file-upload {
+    margin-top: 24px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    background-color: #f9fafb;
+    
+    label {
+      display: block;
+      margin-bottom: 12px;
+      
+      i {
+        margin-right: 8px;
+        color: #013a74;
+      }
+    }
+  }
+  
+  .file-upload-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .file-preview {
+    padding: 12px;
+    border-radius: 8px;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+  }
+  
+  .file-name-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #374151;
+    word-break: break-all;
+    
+    i {
+      color: #013a74;
+    }
+  }
+  
+  .file-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+  
+  .upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    color: #013a74;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    
+    &:hover {
+      background: #f3f4f6;
+      border-color: #013a74;
+    }
+    
+    i {
+      font-size: 14px;
+    }
+  }
+  
+  .file-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #059669;
+    
+    i {
+      font-size: 14px;
+    }
+  }
+  
+  // Responsive styles
+  @media (max-width: 768px) {
+    .file-upload {
+      .upload-container {
+        padding: 16px;
+      }
+      
+      .file-preview {
+        img {
+          max-height: 150px;
+        }
+      }
+    }
+  }
+  
+  .file-url {
+    margin-top: 8px;
+    padding: 8px;
+    background-color: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #075985;
+    word-break: break-all;
+    max-width: 100%;
+    overflow: auto;
+  }
+  
+  .license-upload {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 32px;
+    background: #f9fafb;
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px dashed #d1d5db;
+  
+    label {
+      font-size: 15px;
+      font-weight: 500;
+      color: #374151;
+    }
+  }
+  
+  .license-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+  }
+  
+  .license-preview {
+    width: 100%;
+    height: 300px;
+    object-fit: contain;
+    border-radius: 16px;
+    border: 3px solid white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s;
+    background-color: white;
+    
+    &:hover {
+      transform: scale(1.01);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+    }
+  }
+  
+  .license-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .license-btn {
+    color: #013a74;
+    border-color: #013a74;
+    
+    &:hover {
+      background: rgba(1, 58, 116, 0.1);
+    }
+  }
+  
+  .upload-license-btn {
+    background: #013a74;
+    color: white;
+    
+    &:hover {
+      background: #024590;
+      border-color: #024590;
+    }
+  }
+  
+  .license-hint {
+    color: #6b7280;
+    font-size: 14px;
+    margin-top: 4px;
+    font-style: italic;
+  }
+  
+  .verified-file-message {
+    margin-top: 12px;
+    padding: 10px 16px;
+    background-color: #ECFDF5;
+    border: 1px solid #D1FAE5;
+    border-radius: 8px;
+    color: #065F46;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    
+    i {
+      color: #10B981;
+      font-size: 16px;
+    }
+  }
+  
+  .verified-title {
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  
+  .verified-detail {
+    font-size: 13px;
+    opacity: 0.9;
+  }
+  
+  .expiry-label {
+    color: #EF4444;
+    font-weight: 600;
+    margin-left: 8px;
+    animation: pulse 1.5s infinite;
+    
+    @keyframes pulse {
+      0% {
+        opacity: 0.7;
+      }
+      50% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0.7;
+      }
+    }
+  }
+  
+  .expired-input {
+    border-color: #FECACA !important;
+    background-color: #FEF2F2 !important;
+    
+    &:focus {
+      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1) !important;
+    }
+  }
+  
+  .expired-action {
+    background: linear-gradient(135deg, #EF4444, #B91C1C) !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+    
+    &:hover {
+      background: linear-gradient(135deg, #DC2626, #991B1B) !important;
+      box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4) !important;
     }
   }
   

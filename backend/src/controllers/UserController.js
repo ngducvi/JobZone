@@ -66,6 +66,12 @@ class UserController {
     this.generateCandidateId = () => {
       return "cand-" + Math.random().toString(36).substr(2, 9);
     };
+    this.generateCandidateCvId = () => {
+      return "cand-cv-" + Math.random().toString(36).substr(2, 9);
+    };
+    this.generateUserCvId = () => {
+      return "user-cv-" + Math.random().toString(36).substr(2, 9);
+    };
   }
   async getCurrentUser(req, res) {
     try {
@@ -408,10 +414,9 @@ class UserController {
                       <table border="0" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
                           <td style="padding: 40px 0; text-align: center; background: linear-gradient(135deg, #013a74 0%, #02a346 100%);">
-                            <img src="${
-                              process.env.LOGO_URL ||
-                              "https://your-logo-url.com"
-                            }" alt="JobZone" style="max-width: 180px; height: auto; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));">
+                            <img src="${process.env.LOGO_URL ||
+        "https://your-logo-url.com"
+        }" alt="JobZone" style="max-width: 180px; height: auto; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));">
                           </td>
                         </tr>
                       </table>
@@ -428,9 +433,8 @@ class UserController {
                             <h1 style="margin: 0 0 20px; font-size: 28px; font-weight: 700; color: #013a74; text-align: center; letter-spacing: -0.5px;">Xác Minh Email của Bạn</h1>
                             
                             <p style="margin: 0 0 25px; font-size: 16px; line-height: 1.6; color: #4b5563;">
-                              Xin chào <span style="font-weight: 600; color: #013a74;">${
-                                user.name
-                              }</span>,
+                              Xin chào <span style="font-weight: 600; color: #013a74;">${user.name
+        }</span>,
                             </p>
                             
                             <p style="margin: 0 0 25px; font-size: 16px; line-height: 1.6; color: #4b5563;">
@@ -472,9 +476,8 @@ class UserController {
                             <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
                               <tr>
                                 <td style="background: linear-gradient(135deg, #013a74 0%, #02a346 100%); border-radius: 8px; box-shadow: 0 4px 12px rgba(1, 58, 116, 0.2);">
-                                  <a href="${
-                                    process.env.BASE_URL
-                                  }/user/verify-email?token=${token}&status=success" 
+                                  <a href="${process.env.BASE_URL
+        }/user/verify-email?token=${token}&status=success" 
                                      style="display: inline-block; padding: 16px 40px; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none;">
                                     Xác Minh Email Ngay
                                   </a>
@@ -949,12 +952,68 @@ class UserController {
     try {
       const candidateCv = await CandidateCv.findAll({
         where: { user_id: req.user.id },
+        order: [["created_at", "DESC"]],
       });
       return res.json({ candidateCv });
     } catch (error) {
       return res.status(500).send({
         message: error.message,
         code: -1,
+      });
+    }
+  }
+  // tạo cv mới 
+  async createNewCV(req, res) {
+    try {
+      const { template_id, name } = req.body;
+      const user_id = req.user.id;
+
+      // 1. Tạo CV mới trong bảng user_cvs
+      const newCV = await UserCv.create({
+        cv_id: this.generateUserCvId(),
+        user_id,
+        template_id,
+        name,
+        created_at: new Date(),
+        updated_at: new Date(),
+        status: 'published'
+      });
+
+      // 2. Lấy tất cả template fields của template đã chọn
+      const templateFields = await TemplateFields.findAll({
+        where: { template_id },
+        order: [['order', 'ASC']]
+      });
+
+      // 3. Tạo các cv_field_values trống cho mỗi template field
+      const fieldValuePromises = templateFields.map(field => {
+        return CvFieldValues.create({
+          cv_id: newCV.id,
+          field_id: field.id,
+          value: '' // Giá trị mặc định trống
+        });
+      });
+
+      await Promise.all(fieldValuePromises);
+
+      // 4. Lấy template để trả về
+      const template = await CvTemplates.findByPk(template_id);
+
+      return res.status(201).json({
+        message: 'Tạo CV mới thành công',
+        code: 1,
+        data: {
+          cv: newCV,
+          template: template,
+          fields: templateFields
+        }
+      });
+
+    } catch (error) {
+      console.error('Error creating new CV:', error);
+      return res.status(500).json({
+        message: error.message,
+        code: -1
       });
     }
   }
@@ -1250,6 +1309,26 @@ class UserController {
         created_by: req.user.id,
       });
       return res.json({ review });
+    } catch (error) {
+      return res.status(500).send({ message: error.message, code: -1 });
+    }
+  }
+  // create candidate cv with cv_id
+  async createCandidateCvWithCvId(req, res) {
+    try {
+      const { user_id, cv_name, cv_link } = req.body;
+      const candidateCv = await CandidateCv.create({
+        cv_id: this.generateCandidateCvId(),
+        user_id,
+        cv_name,
+        cv_link,
+        created_at: new Date(),
+      });
+      return res.status(200).send({
+        message: "Tạo hồ sơ ứng viên thành công",
+        code: 1,
+        candidateCv,
+      });
     } catch (error) {
       return res.status(500).send({ message: error.message, code: -1 });
     }
@@ -1655,6 +1734,7 @@ class UserController {
       });
     }
   }
+
 
   // get profile picture by candidate_id
   async getProfilePictureByCandidateId(req, res) {
@@ -2487,6 +2567,132 @@ class UserController {
       res.status(500).json({
         message: error.message,
         code: -1,
+      });
+    }
+  }
+
+  // Hàm cập nhật giá trị cho các trường trong CV
+  async updateCVFields(req, res) {
+    try {
+      const { cv_id } = req.params;
+      const { field_values } = req.body; // Mảng các {field_id, value}
+
+      // Kiểm tra quyền sở hữu CV
+      const cv = await UserCv.findOne({
+        where: {
+          id: cv_id,
+          user_id: req.user.id
+        }
+      });
+
+      if (!cv) {
+        return res.status(404).json({
+          message: 'Không tìm thấy CV hoặc bạn không có quyền chỉnh sửa',
+          code: -1
+        });
+      }
+
+      // Cập nhật từng field value
+      const updatePromises = field_values.map(({ field_id, value }) => {
+        return CvFieldValues.update(
+          { value },
+          {
+            where: {
+              cv_id,
+              field_id
+            }
+          }
+        );
+      });
+
+      await Promise.all(updatePromises);
+
+      // Cập nhật thời gian chỉnh sửa CV
+      await cv.update({
+        updated_at: new Date()
+      });
+
+      // Lấy tất cả giá trị mới của CV để trả về
+      const updatedValues = await CvFieldValues.findAll({
+        where: { cv_id }
+      });
+
+      return res.status(200).json({
+        message: 'Cập nhật CV thành công',
+        code: 1,
+        data: {
+          cv,
+          field_values: updatedValues
+        }
+      });
+
+    } catch (error) {
+      console.error('Error updating CV fields:', error);
+      return res.status(500).json({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
+
+  // Hàm lấy thông tin chi tiết của một CV
+  async getCVDetail(req, res) {
+    try {
+      const { cv_id } = req.params;
+
+      // Lấy thông tin CV và kiểm tra quyền sở hữu
+      const cv = await UserCv.findOne({
+        where: {
+          id: cv_id,
+          user_id: req.user.id
+        }
+      });
+
+      if (!cv) {
+        return res.status(404).json({
+          message: 'Không tìm thấy CV hoặc bạn không có quyền truy cập',
+          code: -1
+        });
+      }
+
+      // Lấy template
+      const template = await CvTemplates.findByPk(cv.template_id);
+
+      // Lấy tất cả fields của template
+      const templateFields = await TemplateFields.findAll({
+        where: { template_id: cv.template_id },
+        order: [['order', 'ASC']]
+      });
+
+      // Lấy tất cả giá trị của các fields
+      const fieldValues = await CvFieldValues.findAll({
+        where: { cv_id }
+      });
+
+      // Kết hợp thông tin fields và values
+      const fields = templateFields.map(field => {
+        const value = fieldValues.find(v => v.field_id === field.id);
+        return {
+          ...field.toJSON(),
+          value: value ? value.value : ''
+        };
+      });
+
+      return res.status(200).json({
+        message: 'Lấy thông tin CV thành công',
+        code: 1,
+        data: {
+          cv,
+          template,
+          fields
+        }
+      });
+
+    } catch (error) {
+      console.error('Error getting CV detail:', error);
+      return res.status(500).json({
+        message: error.message,
+        code: -1
       });
     }
   }

@@ -98,4 +98,7 @@ router.put('/candidate/edit-profile-picture/:candidate_id', upload.single('profi
 router.get('/candidate/profile-picture/:candidate_id', userController.getProfilePictureByCandidateId.bind(userController));
 router.put('/candidate/edit-profile-picture-cloudinary/:candidate_id', upload.single('profile_picture'), userController.updateProfilePictureByCandidateIdCloudinary.bind(userController));
 router.post('/company/review', userController.createReviewCompany.bind(userController));
+router.post('/candidate-cv/cv-id', userController.createCandidateCvWithCvId.bind(userController));
+router.post('/create-cv', userController.createNewCV.bind(userController));
+router.put('/update-cv/:cv_id', userController.updateCVFields.bind(userController));
 module.exports = router;

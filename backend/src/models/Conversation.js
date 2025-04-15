@@ -53,6 +53,11 @@ Conversation.init({
     content: {
         type: DataTypes.TEXT,
         allowNull: false,
+    },
+    method_used:{
+        type: DataTypes.ENUM('website', 'api_key'),
+        allowNull: false,
+        defaultValue: 'website',
     }
 }, {
     sequelize,

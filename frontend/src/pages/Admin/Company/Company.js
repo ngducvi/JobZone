@@ -3,7 +3,7 @@ import classNames from "classnames/bind";
 import styles from "./Company.module.scss";
 import { adminApis, authAPI } from "~/utils/api";
 import { NextPageIcon, PrevPageIcon } from "~/components/Icons";
-import { FaBuilding, FaUser, FaGlobe, FaMapMarkerAlt, FaUsers, FaCalendarAlt, FaCheckCircle, FaClock, FaBan, FaChartLine, FaStar } from "react-icons/fa";
+import { FaBuilding, FaUser, FaGlobe, FaMapMarkerAlt, FaUsers, FaCalendarAlt, FaCheckCircle, FaClock, FaBan, FaChartLine, FaStar, FaFileContract, FaSearchPlus, FaSearchMinus } from "react-icons/fa";
 import { toast } from 'react-hot-toast';
 import useScrollTop from '~/hooks/useScrollTop';
 const cx = classNames.bind(styles);
@@ -16,6 +16,11 @@ function Company() {
     const [selectedRecruiter, setSelectedRecruiter] = useState(null);
     const [showStatusModal, setShowStatusModal] = useState(false);
     const [activeTab, setActiveTab] = useState('active');
+    const [showLicenseModal, setShowLicenseModal] = useState(false);
+    const [selectedLicense, setSelectedLicense] = useState(null);
+    const [showImageModal, setShowImageModal] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [licenseId, setLicenseId] = useState(null);
 
 
     const fetchData = async () => {
@@ -25,9 +30,10 @@ function Company() {
                 params: { page: activePage },
             });
             const reviews = await authAPI().get(adminApis.getAllReviewsByCompanyId());
-            console.log("reviews",reviews.data);
+            console.log("reviews", reviews.data);
             setRecruiterData(result.data.recruiterCompanies);
-            console.log("recruiterCompanies",result.data.recruiterCompanies);
+            console.log("recruiterCompanies", result.data.recruiterCompanies);
+            console.log("businessLicense", result.data.recruiterCompanies[0].company.businessLicense);
             setTotalPages(result.data.totalPages);
             setLoading(false);
         } catch (error) {
@@ -35,7 +41,7 @@ function Company() {
             setLoading(false);
         }
     };
-    
+
 
     useEffect(() => {
         fetchData();
@@ -46,24 +52,43 @@ function Company() {
             setActivePage(newPage);
         }
     };
-  // Thêm useEffect để scroll lên đầu trang
-  useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  }, []);
+    // Thêm useEffect để scroll lên đầu trang
+    useEffect(() => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }, []);
     const handleUpdateStatus = async (recruiterId, newStatus) => {
         try {
+            // Kiểm tra trạng thái giấy phép của công ty
+            const recruiter = recruiterData.find(item => item.recruiter_id === recruiterId);
+            const licenseStatus = recruiter?.company?.businessLicense?.business_license_status;
+
+            // Kiểm tra điều kiện cập nhật trạng thái
+            if (newStatus === 'active' && licenseStatus !== 'verified') {
+                toast.error('Không thể kích hoạt công ty khi giấy phép chưa được xác thực!', {
+                    duration: 3000,
+                    position: 'top-right',
+                    icon: '❌',
+                    style: {
+                        background: '#f44336',
+                        color: '#fff',
+                        fontWeight: 'bold'
+                    }
+                });
+                return;
+            }
+
             await authAPI().patch(adminApis.updateStatusRecruiterCompany(recruiterId), {
                 status: newStatus
             });
-            
+
             // Thông báo chi tiết dựa trên trạng thái
             let message = '';
             let icon = '✅';
-            
-            switch(newStatus) {
+
+            switch (newStatus) {
                 case 'active':
                     message = 'Đã kích hoạt tài khoản nhà tuyển dụng thành công';
                     icon = '🚀';
@@ -79,7 +104,7 @@ function Company() {
                 default:
                     message = 'Cập nhật trạng thái thành công';
             }
-            
+
             toast.success(message, {
                 duration: 3000,
                 position: 'top-right',
@@ -95,7 +120,7 @@ function Company() {
             await fetchData();
             setShowStatusModal(false);
             setSelectedRecruiter(null);
-            
+
         } catch (error) {
             console.error("Error updating status:", error);
             toast.error('Có lỗi xảy ra khi cập nhật trạng thái', {
@@ -112,30 +137,40 @@ function Company() {
     };
 
     const StatusModal = ({ recruiter, onClose }) => {
+        const licenseStatus = recruiter?.company?.businessLicense?.business_license_status;
+        
         return (
             <div className={cx('modal-overlay')} onClick={onClose}>
                 <div className={cx('modal-content')} onClick={e => e.stopPropagation()}>
                     <h3>Cập nhật trạng thái</h3>
                     <p>Nhà tuyển dụng: {recruiter?.company?.company_name}</p>
                     
+                    {licenseStatus !== 'verified' && (
+                        <div className={cx('license-warning')}>
+                            <FaBan className={cx('warning-icon')} />
+                            <p>Giấy phép kinh doanh chưa được xác thực. Không thể kích hoạt tài khoản.</p>
+                        </div>
+                    )}
+
                     <div className={cx('status-options')}>
-                        <button 
+                        <button
                             className={cx('status-btn', 'active')}
                             onClick={() => handleUpdateStatus(recruiter.recruiter_id, 'active')}
+                            disabled={licenseStatus !== 'verified'}
                         >
-                            Hoạt động
+                            <FaCheckCircle /> Hoạt động
                         </button>
-                        <button 
+                        <button
                             className={cx('status-btn', 'pending')}
                             onClick={() => handleUpdateStatus(recruiter.recruiter_id, 'pending')}
                         >
-                            Chờ duyệt
+                            <FaClock /> Chờ duyệt
                         </button>
-                        <button 
+                        <button
                             className={cx('status-btn', 'rejected')}
                             onClick={() => handleUpdateStatus(recruiter.recruiter_id, 'rejected')}
                         >
-                            Từ chối
+                            <FaBan /> Từ chối
                         </button>
                     </div>
 
@@ -149,7 +184,7 @@ function Company() {
 
     // Lọc data theo tab
     const filteredData = recruiterData.filter(item => {
-        switch(activeTab) {
+        switch (activeTab) {
             case 'active':
                 return item.status === 'active';
             case 'pending':
@@ -185,6 +220,317 @@ function Company() {
                     <span className={cx('review-total')}>
                         ({item.company.reviews?.length || 0} đánh giá)
                     </span>
+                </div>
+            </div>
+        );
+    };
+
+    const handleViewLicense = (license) => {
+        setSelectedLicense(license);
+        setLicenseId(license.license_id);
+        setShowLicenseModal(true);
+    };
+
+    const handleUpdateLicenseStatus = async (status) => {
+        try {
+            await authAPI().patch(adminApis.updateBusinessLicenseStatus(licenseId), {
+                business_license_status: status
+            });
+
+            // Show success message based on status
+            let message = '';
+            switch (status) {
+                case 'verified':
+                    message = 'Đã xác thực giấy phép kinh doanh';
+                    break;
+                case 'pending':
+                    message = 'Đã chuyển trạng thái về chờ xác thực';
+                    break;
+                case 'rejected':
+                    message = 'Đã từ chối giấy phép kinh doanh';
+                    break;
+                default:
+                    message = 'Đã cập nhật trạng thái giấy phép';
+            }
+
+            toast.success(message, {
+                duration: 3000,
+                position: 'top-right',
+                icon: '✅',
+                style: {
+                    background: '#4caf50',
+                    color: '#fff',
+                    fontWeight: 'bold'
+                }
+            });
+
+            // Refresh data and close modal
+            await fetchData();
+            setShowLicenseModal(false);
+            setLicenseId(null);
+        } catch (error) {
+            console.error("Error updating license status:", error);
+            toast.error('Có lỗi xảy ra khi cập nhật trạng thái giấy phép', {
+                duration: 3000,
+                position: 'top-right',
+                icon: '❌',
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: 'bold'
+                }
+            });
+        }
+    };
+
+    const LicenseModal = ({ license, onClose }) => {
+        const getLicenseStatusBadge = (status) => {
+            switch (status) {
+                case 'verified':
+                    return <span className={cx('badge', 'verified')}>
+                        <FaCheckCircle /> Đã xác thực
+                    </span>;
+                case 'pending':
+                    return <span className={cx('badge', 'pending')}>
+                        <FaClock /> Chờ xác thực
+                    </span>;
+                case 'rejected':
+                    return <span className={cx('badge', 'rejected')}>
+                        <FaBan /> Đã từ chối
+                    </span>;
+                default:
+                    return null;
+            }
+        };
+
+        // Kiểm tra tính hợp lệ của giấy phép
+        const checkLicenseValidity = () => {
+            const currentDate = new Date();
+            const expiryDate = new Date(license.license_expiry_date);
+            const issueDate = new Date(license.license_issue_date);
+            
+            const validityChecks = [
+                {
+                    condition: license.tax_id && license.tax_id.length >= 10,
+                    message: 'Mã số thuế hợp lệ',
+                    error: 'Mã số thuế không hợp lệ (cần ít nhất 10 ký tự)'
+                },
+                {
+                    condition: license.registration_number && license.registration_number.length >= 5,
+                    message: 'Số đăng ký kinh doanh hợp lệ',
+                    error: 'Số đăng ký kinh doanh không hợp lệ'
+                },
+                {
+                    condition: issueDate < currentDate,
+                    message: 'Ngày cấp hợp lệ',
+                    error: 'Ngày cấp không hợp lệ'
+                },
+                {
+                    condition: expiryDate > currentDate,
+                    message: 'Giấy phép còn hiệu lực',
+                    error: 'Giấy phép đã hết hạn'
+                },
+                {
+                    condition: license.business_license_file,
+                    message: 'Đã tải lên file giấy phép',
+                    error: 'Chưa tải lên file giấy phép'
+                },
+                {
+                    condition: license.contact_email && license.contact_email.includes('@'),
+                    message: 'Email liên hệ hợp lệ',
+                    error: 'Email liên hệ không hợp lệ'
+                },
+                {
+                    condition: license.contact_phone && license.contact_phone.length >= 10,
+                    message: 'Số điện thoại hợp lệ',
+                    error: 'Số điện thoại không hợp lệ'
+                }
+            ];
+
+            return validityChecks;
+        };
+
+        const validityResults = checkLicenseValidity();
+
+        return (
+            <div className={cx('modal-overlay')} onClick={onClose}>
+                <div className={cx('license-modal-content')} onClick={e => e.stopPropagation()}>
+                    <h3>Thông tin giấy phép kinh doanh</h3>
+                    <p className={cx('company-name')}>Công ty: {license.company_name}</p>
+
+                    <div className={cx('license-status')}>
+                        {getLicenseStatusBadge(license.business_license_status)}
+                        {license.business_license_verified_at && (
+                            <p className={cx('verified-info')}>
+                                Xác thực bởi: {license.business_license_verified_by}<br />
+                                Ngày xác thực: {new Date(license.business_license_verified_at).toLocaleDateString('vi-VN')}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className={cx('validation-section')}>
+                        <h4>Kiểm tra tính hợp lệ:</h4>
+                        <div className={cx('validation-checks')}>
+                            {validityResults.map((check, index) => (
+                                <div key={index} className={cx('validation-item', { valid: check.condition })}>
+                                    {check.condition ? (
+                                        <FaCheckCircle className={cx('icon-valid')} />
+                                    ) : (
+                                        <FaBan className={cx('icon-invalid')} />
+                                    )}
+                                    <span>{check.condition ? check.message : check.error}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className={cx('license-details')}>
+                        <div className={cx('license-row')}>
+                            <div className={cx('license-field')}>
+                                <label>Mã số thuế:</label>
+                                <span>{license.tax_id}</span>
+                            </div>
+                            <div className={cx('license-field')}>
+                                <label>Số đăng ký kinh doanh:</label>
+                                <span>{license.registration_number}</span>
+                            </div>
+                        </div>
+
+                        <div className={cx('license-row')}>
+                            <div className={cx('license-field')}>
+                                <label>Ngày cấp:</label>
+                                <span>{new Date(license.license_issue_date).toLocaleDateString('vi-VN')}</span>
+                            </div>
+                            <div className={cx('license-field')}>
+                                <label>Ngày hết hạn:</label>
+                                <span>{new Date(license.license_expiry_date).toLocaleDateString('vi-VN')}</span>
+                            </div>
+                        </div>
+
+                        <div className={cx('license-row')}>
+                            <div className={cx('license-field')}>
+                                <label>Email liên hệ:</label>
+                                <span>{license.contact_email}</span>
+                            </div>
+                            <div className={cx('license-field')}>
+                                <label>Số điện thoại:</label>
+                                <span>{license.contact_phone}</span>
+                            </div>
+                        </div>
+
+                        <div className={cx('license-row')}>
+                            <div className={cx('license-field')}>
+                                <label>Ngành nghề:</label>
+                                <span>{license.industry}</span>
+                            </div>
+                            <div className={cx('license-field')}>
+                                <label>Năm thành lập:</label>
+                                <span>{license.founded_year}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={cx('license-file')}>
+                        <label>File giấy phép:</label>
+                        <img
+                            src={license.business_license_file}
+                            alt="Business License"
+                            onClick={() => {
+                                setSelectedImage(license.business_license_file);
+                                setShowImageModal(true);
+                            }}
+                            style={{ cursor: 'pointer' }}
+                        />
+                        <div className={cx('license-actions')}>
+                            <button
+                                className={cx('action-btn', 'verify')}
+                                onClick={() => handleUpdateLicenseStatus('verified')}
+                                disabled={license.business_license_status === 'verified' || !validityResults.every(check => check.condition)}
+                            >
+                                <FaCheckCircle /> Xác thực
+                            </button>
+                            <button
+                                className={cx('action-btn', 'pending')}
+                                onClick={() => handleUpdateLicenseStatus('pending')}
+                                disabled={license.business_license_status === 'pending'}
+                            >
+                                <FaClock /> Chờ xác thực
+                            </button>
+                            <button
+                                className={cx('action-btn', 'reject')}
+                                onClick={() => handleUpdateLicenseStatus('rejected')}
+                                disabled={license.business_license_status === 'rejected'}
+                            >
+                                <FaBan /> Từ chối
+                            </button>
+                        </div>
+                    </div>
+
+                    <button className={cx('close-btn')} onClick={() => {
+                        onClose();
+                        setLicenseId(null);
+                    }}>
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
+    const ImageModal = ({ image, onClose }) => {
+        const [isZoomed, setIsZoomed] = useState(false);
+        const [scale, setScale] = useState(1);
+
+        const handleZoomIn = () => {
+            if (scale < 2) {
+                setScale(prev => prev + 0.25);
+            }
+        };
+
+        const handleZoomOut = () => {
+            if (scale > 0.5) {
+                setScale(prev => prev - 0.25);
+            }
+        };
+
+        const toggleZoom = () => {
+            setIsZoomed(!isZoomed);
+            setScale(1); // Reset scale when toggling full zoom
+        };
+
+        return (
+            <div className={styles['modal-overlay']} onClick={onClose}>
+                <div className={styles['image-modal-content']} onClick={e => e.stopPropagation()}>
+                    <div className={styles['image-container']}>
+                        <img
+                            src={image}
+                            alt="Business License"
+                            className={`${styles['full-size-image']} ${isZoomed ? styles['zoomed'] : ''}`}
+                            style={{ transform: `scale(${scale})` }}
+                            onClick={toggleZoom}
+                        />
+                    </div>
+
+                    <div className={styles['zoom-controls']}>
+                        <button
+                            onClick={handleZoomOut}
+                            disabled={scale <= 0.5}
+                            title="Thu nhỏ"
+                        >
+                            <FaSearchMinus />
+                        </button>
+                        <button
+                            onClick={handleZoomIn}
+                            disabled={scale >= 2}
+                            title="Phóng to"
+                        >
+                            <FaSearchPlus />
+                        </button>
+                    </div>
+
+                    <button className={styles['close-btn']} onClick={onClose}>
+                        Đóng
+                    </button>
                 </div>
             </div>
         );
@@ -245,7 +591,7 @@ function Company() {
             <div className={cx('main-content')}>
                 <div className={cx('tabs-wrapper')}>
                     <div className={cx('tabs')}>
-                        <button 
+                        <button
                             className={cx('tab-btn', { active: activeTab === 'all' })}
                             onClick={() => setActiveTab('all')}
                             data-count={counts.total}
@@ -253,7 +599,7 @@ function Company() {
                             <FaChartLine className={cx('tab-icon')} />
                             Tất cả
                         </button>
-                        <button 
+                        <button
                             className={cx('tab-btn', { active: activeTab === 'active' })}
                             onClick={() => setActiveTab('active')}
                             data-count={counts.active}
@@ -261,7 +607,7 @@ function Company() {
                             <FaCheckCircle className={cx('tab-icon')} />
                             Đang hoạt động
                         </button>
-                        <button 
+                        <button
                             className={cx('tab-btn', { active: activeTab === 'pending' })}
                             onClick={() => setActiveTab('pending')}
                             data-count={counts.pending}
@@ -269,7 +615,7 @@ function Company() {
                             <FaClock className={cx('tab-icon')} />
                             Chờ duyệt
                         </button>
-                        <button 
+                        <button
                             className={cx('tab-btn', { active: activeTab === 'rejected' })}
                             onClick={() => setActiveTab('rejected')}
                             data-count={counts.rejected}
@@ -301,6 +647,7 @@ function Company() {
                                 <div className={cx('header-cell')}>Người đại diện</div>
                                 <div className={cx('header-cell')}>Ngày tạo</div>
                                 <div className={cx('header-cell')}>Trạng thái</div>
+                                <div className={cx('header-cell')}>Trạng thái giấy phép</div>
                                 <div className={cx('header-cell')}>Thao tác</div>
                             </div>
                         </div>
@@ -313,9 +660,9 @@ function Company() {
                                         <div className={cx('table-cell')}>
                                             <div className={cx('company-info-cell')}>
                                                 <div className={cx('company-logo')}>
-                                                    <img 
-                                                        src={`${process.env.REACT_APP_API_URL}/uploads/company/${item.company.logo}`}
-                                                        alt={item.company.company_name} 
+                                                    <img
+                                                        src={item.company.logo}
+                                                        alt={item.company.company_name}
                                                     />
                                                 </div>
                                                 <div className={cx('company-details')}>
@@ -335,9 +682,9 @@ function Company() {
                                             </div>
                                         </div>
                                         <div className={cx('table-cell')}>
-                                            <a 
-                                                href={item.company.website} 
-                                                target="_blank" 
+                                            <a
+                                                href={item.company.website}
+                                                target="_blank"
                                                 rel="noopener noreferrer"
                                                 className={cx('website-link')}
                                             >
@@ -362,7 +709,7 @@ function Company() {
                                         </div>
                                         <div className={cx('table-cell')}>
                                             <div className={cx('status-cell')}>
-                                                <div 
+                                                <div
                                                     className={cx('status', item.status)}
                                                     onClick={() => {
                                                         setSelectedRecruiter(item);
@@ -376,8 +723,24 @@ function Company() {
                                             </div>
                                         </div>
                                         <div className={cx('table-cell')}>
+                                            <div className={cx('status-cell')}>
+                                                <div className={cx('status', item.company.businessLicense.business_license_status)}>
+                                                    {item.company.businessLicense.business_license_status === 'verified' && 'Đã xác thực'}
+                                                    {item.company.businessLicense.business_license_status === 'pending' && 'Chờ xác thực'}
+                                                    {item.company.businessLicense.business_license_status === 'rejected' && 'Đã từ chối'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className={cx('table-cell')}>
                                             <div className={cx('actions-cell')}>
                                                 <div className={cx('actions')}>
+                                                    <button
+                                                        className={cx('action-btn', 'view-license')}
+                                                        onClick={() => handleViewLicense(item.company.businessLicense)}
+                                                        
+                                                    >
+                                                        <FaFileContract /> Xem giấy phép
+                                                    </button>
                                                     <button className={cx('action-btn', 'edit')}>
                                                         Chỉnh sửa
                                                     </button>
@@ -391,8 +754,8 @@ function Company() {
                     </div>
 
                     <div className={cx('pagination')}>
-                        <button 
-                            className={cx('page-btn')} 
+                        <button
+                            className={cx('page-btn')}
                             onClick={() => handlePageChange(activePage - 1)}
                             disabled={activePage === 1}
                         >
@@ -401,7 +764,7 @@ function Company() {
                         <span className={cx('page-info')}>
                             Trang {activePage} / {totalPages}
                         </span>
-                        <button 
+                        <button
                             className={cx('page-btn')}
                             onClick={() => handlePageChange(activePage + 1)}
                             disabled={activePage === totalPages}
@@ -413,12 +776,29 @@ function Company() {
             </div>
 
             {showStatusModal && selectedRecruiter && (
-                <StatusModal 
+                <StatusModal
                     recruiter={selectedRecruiter}
                     onClose={() => {
                         setShowStatusModal(false);
                         setSelectedRecruiter(null);
                     }}
+                />
+            )}
+
+            {showLicenseModal && selectedLicense && (
+                <LicenseModal
+                    license={selectedLicense}
+                    onClose={() => {
+                        setShowLicenseModal(false);
+                        setSelectedLicense(null);
+                    }}
+                />
+            )}
+
+            {showImageModal && (
+                <ImageModal
+                    image={selectedImage}
+                    onClose={() => setShowImageModal(false)}
                 />
             )}
         </div>

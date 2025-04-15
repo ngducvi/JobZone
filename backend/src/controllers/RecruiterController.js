@@ -588,8 +588,11 @@ class RecruiterController {
   async getCandidateDetailByCandidateId(req, res) {
     try {
       const candidateId = req.params.candidate_id;
-      const user_id = req.user.id;
       const candidate = await Candidate.findByPk(candidateId);
+      
+      // Lấy user_id của candidate thay vì của recruiter
+      const candidateUserId = candidate.user_id;
+
       // get candidateExperiences by candidate_id
       const candidateExperiences = await CandidateExperiences.findAll({
         where: { candidate_id: candidateId },
@@ -612,10 +615,14 @@ class RecruiterController {
       });
       // get candidateCvs by candidate_id
       const candidateCvs = await CandidateCv.findAll({
-        where: { user_id: user_id },
+        where: { user_id: candidateUserId },
       });
       // get user by user_id từ candidate
-      const user = await User.findByPk(candidate.user_id);
+      const user = await User.findByPk(candidateUserId);
+      // get user_cv by user_id của candidate
+      const userCvs = await UserCv.findAll({ 
+        where: { user_id: candidateUserId }
+      });
       return res.json({
         candidate: candidate,
         candidateExperiences: candidateExperiences,
@@ -625,6 +632,7 @@ class RecruiterController {
         candidateLanguages: candidateLanguages,
         candidateCvs: candidateCvs,
         user: user,
+        userCvs: userCvs,
       });
     } catch (error) {
       res.status(400).send(error);
@@ -923,18 +931,150 @@ class RecruiterController {
         return res.status(404).json({ message: "Không tìm thấy giấy phép" });
       }
 
-      // Giữ nguyên status cũ nếu không có trong request body
+      
+      // Cập nhật dữ liệu
       const updatedData = {
-        ...req.body,
+        tax_id: req.body.tax_id || businessLicense.tax_id,
+        registration_number: req.body.registration_number || businessLicense.registration_number,
+        license_issue_date: req.body.license_issue_date || businessLicense.license_issue_date,
+        license_expiry_date: req.body.license_expiry_date || businessLicense.license_expiry_date,
+        contact_email: req.body.contact_email || businessLicense.contact_email,
+        contact_phone: req.body.contact_phone || businessLicense.contact_phone,
+        industry: req.body.industry || businessLicense.industry,
+        founded_year: req.body.founded_year || businessLicense.founded_year,
+        business_license_file: req.body.business_license_file || businessLicense.business_license_file,
         business_license_status: req.body.business_license_status || businessLicense.business_license_status
       };
 
       await businessLicense.update(updatedData);
       
-      return res.json({ businessLicense: businessLicense });
+      return res.status(200).json({
+        message: "Cập nhật giấy phép kinh doanh thành công",
+        code: 1,
+        businessLicense: businessLicense
+      });
     } catch (error) {
       console.error(error);
-      res.status(400).json({ message: "Có lỗi xảy ra khi cập nhật giấy phép" });
+      return res.status(500).json({ 
+        message: "Có lỗi xảy ra khi cập nhật giấy phép",
+        code: -1,
+        error: error.message 
+      });
+    }
+  }
+  // Update file giấy phép kinh doanh
+  async updateBusinessLicenseFile(req, res) {
+    try {
+      const businessLicense = await BusinessLicenses.findByPk(req.params.license_id);
+      if (!businessLicense) {
+        return res.status(404).send({
+          message: "Không tìm thấy giấy phép",
+          code: -1,
+        });
+      }
+      let filename = req.file.filename;
+      filename = filename.split(".");
+      filename = filename[0] + uuid() + "." + filename[1];
+      try {
+        const result = await cloudinary.uploader.upload(req.file.path, {
+          resource_type: "image",
+          folder: "business_licenses",
+          public_id: `business_license_${req.params.license_id}_${Date.now()}`,
+        });
+        await businessLicense.update({ business_license_file: result.secure_url });
+        return res.status(200).send({
+          message: "Cập nhật file giấy phép thành công",
+          code: 1,
+          businessLicense,
+        });
+      } catch (error) {
+        return res.status(500).send({
+          message: "Lỗi khi tải lên file giấy phép",
+          code: -1,
+        });
+      }
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1,
+      });
+    }
+
+  }
+  // Thêm method search candidates
+  async searchCandidates(req, res) {
+    try {
+      const { 
+        industry, 
+        gender, 
+        expected_salary, 
+        employment_type,
+        experience,
+        is_actively_searching,
+        ...otherFilters 
+      } = req.body;
+      
+      let whereClause = {};
+      
+      // Thêm điều kiện tìm kiếm theo industry
+      if (industry && industry !== 'all') {
+        whereClause.industry = industry;
+      }
+
+      // Thêm điều kiện tìm kiếm theo gender
+      if (gender && gender !== 'all') {
+        whereClause.gender = gender;
+      }
+
+      // Thêm điều kiện tìm kiếm theo expected_salary
+      if (expected_salary && expected_salary !== 'all') {
+        const [min, max] = expected_salary.split('-').map(Number);
+        if (max) {
+          whereClause.expected_salary = {
+            [Op.between]: [min, max]
+          };
+        } else {
+          whereClause.expected_salary = {
+            [Op.gte]: min
+          };
+        }
+      }
+
+      // Thêm điều kiện tìm kiếm theo employment_type
+      if (employment_type && employment_type !== 'all') {
+        whereClause.employment_type = employment_type;
+      }
+
+      // Thêm điều kiện tìm kiếm theo experience
+      if (experience && experience !== 'all') {
+        whereClause.experience = experience;
+      }
+      
+      // Thêm điều kiện tìm kiếm theo trạng thái tìm việc
+      if (is_actively_searching !== undefined) {
+        whereClause.is_actively_searching = is_actively_searching;
+      }
+
+      const candidates = await Candidate.findAll({
+        where: whereClause,
+        include: [{
+          model: User,
+          attributes: ['name', 'email']
+        }],
+        order: [['created_at', 'DESC']]
+      });
+
+      return res.json({
+        message: "Tìm kiếm ứng viên thành công",
+        candidates: candidates
+      });
+
+    } catch (error) {
+      console.error('Search candidates error:', error);
+      return res.status(500).json({
+        message: "Đã có lỗi xảy ra khi tìm kiếm ứng viên",
+        error: error.message
+      });
     }
   }
 }

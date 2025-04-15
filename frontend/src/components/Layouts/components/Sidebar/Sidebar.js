@@ -142,7 +142,12 @@ const sidebarIcons = [
         icon: <i className="fa-solid fa-chart-line"></i>,
         title: "Thị trường và xu hướng tuyển dụng",
         to: "/career-handbook/recruitment-trends"
-      }
+      },
+      {
+        icon: <i className="fa-solid fa-file-lines"></i>,
+        title: "Tạo bài viết SEO",
+        to: "/templates/create-seo-blog",
+      },
     ]
   },
   {

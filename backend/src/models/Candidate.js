@@ -121,6 +121,10 @@ Candidate.init({
         type: DataTypes.BOOLEAN,
         allowNull: true,
     },
+    industry:{
+        type: DataTypes.STRING,
+        allowNull: true,
+    }
 
 }, {
     sequelize,

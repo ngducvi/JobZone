@@ -28,12 +28,12 @@ const sidebarIcons = [
         to: "/admin",
       },
       {
-        title: "Dashboard B",
-        to: "/admin/dashboard-b",
+        title: "Thông kê ứng viên",
+        to: "/admin/dashboarda",
       },
       {
-        title: "Dashboard C",
-        to: "/admin/dashboard-c",
+        title: "Thông kê công ty",
+        to: "/admin/dashboard/company",
       },
     ],
   },

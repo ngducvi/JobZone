@@ -11,6 +11,7 @@ const Candidate = require("../models/Candidate");
 const RecruiterCompanies = require("../models/RecruiterConpanies");
 const CareerHandbook = require("../models/CareerHandbook");
 const Reviews = require("../models/Reviews");
+const BusinessLicenses = require("../models/BusinessLicenses");
 
 class AdminController {
   constructor() {
@@ -380,6 +381,11 @@ class AdminController {
       totalPages: Math.ceil(candidates.count / limit),
     });
   }
+  // get count candidates
+  async getCountCandidates(req, res) {
+    const candidates = await Candidate.count();
+    return res.json({ count: candidates });
+  }
   // get all companies
   async getAllCompanies(req, res) {
     const { page = 1, limit = 10 } = req.query;
@@ -411,8 +417,8 @@ class AdminController {
       const companyIds = recruiterCompanies.rows.map((rc) => rc.company_id);
       const userIds = recruiterCompanies.rows.map((rc) => rc.user_id);
 
-      // Fetch companies and users
-      const [companies, users] = await Promise.all([
+      // Fetch companies, users, and business licenses
+      const [companies, users, businessLicenses] = await Promise.all([
         Company.findAll({
           where: { company_id: companyIds },
           raw: true,
@@ -421,6 +427,10 @@ class AdminController {
           where: { id: userIds },
           raw: true,
         }),
+        BusinessLicenses.findAll({
+          where: { company_id: companyIds },
+          raw: true,
+        })
       ]);
 
       // Get reviews for each company
@@ -433,6 +443,12 @@ class AdminController {
         companyReviews[companyId] = reviews;
       }
 
+      // Tạo map để dễ dàng tìm kiếm business license theo company_id
+      const businessLicenseMap = businessLicenses.reduce((map, license) => {
+        map[license.company_id] = license;
+        return map;
+      }, {});
+
       // Map data
       const recruiterCompaniesWithDetails = recruiterCompanies.rows.map(
         (recruiter) => {
@@ -441,30 +457,43 @@ class AdminController {
           );
           const user = users.find((u) => u.id === recruiter.user_id);
 
+          // Lấy business license chính xác theo company_id
+          const businessLicense = businessLicenseMap[recruiter.company_id];
+
           return {
             ...recruiter,
             company: company
               ? {
-                  ...company,
-                  reviews: companyReviews[recruiter.company_id] || [],
-                }
+                ...company,
+                reviews: companyReviews[recruiter.company_id] || [],
+                businessLicense: businessLicense || null  // Map business license đúng với company_id
+              }
               : null,
             user: user
               ? {
-                  id: user.id,
-                  name: user.name,
-                  email: user.email,
-                  phone: user.phone,
-                  username: user.username,
-                  role: user.role,
-                  avatar: user.avatar,
-                  created_at: user.created_at,
-                  updated_at: user.updated_at,
-                }
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                username: user.username,
+                role: user.role,
+                avatar: user.avatar,
+                created_at: user.created_at,
+                updated_at: user.updated_at,
+              }
               : null,
           };
         }
       );
+
+      // Log để debug
+      console.log("Company IDs:", companyIds);
+      console.log("Business Licenses Map:", businessLicenseMap);
+      console.log("Mapped Data:", recruiterCompaniesWithDetails.map(rc => ({
+        recruiter_id: rc.recruiter_id,
+        company_id: rc.company_id,
+        businessLicense: rc.company?.businessLicense
+      })));
 
       return res.json({
         recruiterCompanies: recruiterCompaniesWithDetails,
@@ -478,6 +507,28 @@ class AdminController {
       });
     }
   }
+  // eidt business_license_status by license_id
+  async updateBusinessLicenseStatus(req, res) {
+    const { license_id } = req.params;
+    const { business_license_status } = req.body;
+    try {
+      const businessLicense = await BusinessLicenses.findByPk(license_id);
+      if (!businessLicense) {
+        return res.status(404).json({ error: "Business license not found" });
+      }
+      businessLicense.business_license_status = business_license_status;
+      await businessLicense.save();
+      return res.json({ businessLicense });
+    } catch (error) {
+      console.error("Error:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message,
+      });
+    }
+  }
+  // get all candidates
+
   // get all reviews
   async getAllReviews(req, res) {
     try {
