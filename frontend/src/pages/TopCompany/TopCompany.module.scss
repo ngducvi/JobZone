@@ -127,6 +127,16 @@
       gap: 8px;
       white-space: nowrap;
 
+      &.clear-search {
+        background: #f3f4f6;
+        color: #4b5563;
+        
+        &:hover {
+          background: #e5e7eb;
+          color: #1f2937;
+        }
+      }
+
       i {
         font-size: 18px;
         transition: transform 0.3s ease;
@@ -231,6 +241,10 @@
         height: 48px;
         font-size: 14px;
         justify-content: center;
+
+        &.clear-search {
+          height: 40px;
+        }
       }
     }
   }

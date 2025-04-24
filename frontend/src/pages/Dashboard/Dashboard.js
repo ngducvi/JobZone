@@ -24,9 +24,6 @@ const cx = classNames.bind(styles);
 const Dashboard = () => {
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState("month");
-  const [countConversations, setCountConversations] = useState(0);
-  const [recentConversations, setRecentConversations] = useState([]);
-  const [balance, setBalance] = useState();
   const { user } = useContext(UserContext);
   const [provinces, setProvinces] = useState([]);
   const [districts, setDistricts] = useState([]);
@@ -35,72 +32,76 @@ const Dashboard = () => {
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const locationRef = useRef(null);
   const [activeJobTab, setActiveJobTab] = useState("highSalary");
+  
+  // Thêm state để lưu trữ danh sách công việc cho từng loại
+  const [jobsByExperience, setJobsByExperience] = useState([]);
+  const [jobsByWorkingTime, setJobsByWorkingTime] = useState([]);
+  const [jobsBySalary, setJobsBySalary] = useState([]);
+  const [jobsByWorkingLocation, setJobsByWorkingLocation] = useState([]);
+  const [displayedJobs, setDisplayedJobs] = useState([]); // Jobs hiện tại đang hiển thị
 
   const token = localStorage.getItem("token");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const mockJobs = {
-    highSalary: [
-      {
-        id: 1,
-        title: "Senior Frontend Developer",
-        company: "FPT Software",
-        salary: "$3000 - $5000",
-        location: "Ho Chi Minh City",
-        logo: images.company_1
-      },
-      {
-        id: 2,
-        title: "Technical Project Manager",
-        company: "Viettel Group",
-        salary: "$4000 - $6000", 
-        location: "Ha Noi",
-        logo: images.company_1
-      },
-      {
-        id: 3,
-        title: "Solutions Architect",
-        company: "VNG Corporation",
-        salary: "$5000 - $7000",
-        location: "Ho Chi Minh City",
-        logo: images.company_1
-      }
-    ],
-    noExperience: [
-      {
-        id: 4,
-        title: "Junior Web Developer",
-        company: "Tiki Corporation",
-        salary: "$800 - $1200",
-        location: "Ho Chi Minh City",
-        logo: images.company_1
-      },
-      // Thêm các job khác...
-    ],
-    remote: [
-      {
-        id: 7,
-        title: "Remote React Developer",
-        company: "Sendo",
-        salary: "$2000 - $3500",
-        location: "Remote",
-        logo: images.company_1
-      },
-      // Thêm các job khác...
-    ],
-    partTime: [
-      {
-        id: 10,
-        title: "Part-time Content Writer",
-        company: "Lazada Vietnam",
-        salary: "$500 - $800",
-        location: "Ho Chi Minh City",
-        logo: images.company_1
-      },
-      // Thêm các job khác...
-    ]
-  };
+
+  // Fetch data khi component mount
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      // Fetch tất cả loại công việc
+      const [
+        experienceRes,
+        workingTimeRes,
+        salaryRes,
+        remoteRes
+      ] = await Promise.all([
+        authAPI().get(userApis.getJobsByExperience),
+        authAPI().get(userApis.getJobsByWorkingTime),
+        authAPI().get(userApis.getJobsBySalary),
+        authAPI().get(userApis.getJobsByWorkingLocationRemote)
+      ]);
+
+      // Lưu dữ liệu vào state, đảm bảo lấy đúng cấu trúc data
+      setJobsByExperience(experienceRes.data.jobs?.rows || []);
+      setJobsByWorkingTime(workingTimeRes.data.jobs?.rows || []);
+      setJobsBySalary(salaryRes.data.jobs?.rows || []);
+      setJobsByWorkingLocation(remoteRes.data.jobs?.rows || []);
+
+      // Set default displayed jobs (Công việc ngàn đô)
+      setDisplayedJobs(salaryRes.data.jobs?.rows || []);
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+      toast.error("Có lỗi xảy ra khi tải dữ liệu công việc");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  // Handle tab change
+  useEffect(() => {
+    switch (activeJobTab) {
+      case "highSalary":
+        setDisplayedJobs(jobsBySalary);
+        break;
+      case "noExperience":
+        setDisplayedJobs(jobsByExperience);
+        break;
+      case "remote":
+        setDisplayedJobs(jobsByWorkingLocation);
+        break;
+      case "partTime":
+        setDisplayedJobs(jobsByWorkingTime);
+        break;
+      default:
+        setDisplayedJobs([]);
+    }
+  }, [activeJobTab, jobsBySalary, jobsByExperience, jobsByWorkingLocation, jobsByWorkingTime]);
+
   // Thêm useEffect để scroll lên đầu trang
   useEffect(() => {
     window.scrollTo({
@@ -372,21 +373,29 @@ const Dashboard = () => {
               </Tabs.Tab>
             </Tabs>
             <div className={cx("jobs-container")}>
-              <div className={cx("jobs-grid")}>
-                {mockJobs[activeJobTab]?.map(job => (
-                  <div key={job.id} onClick={() => handleJobClick(job.id)}>
+              {isLoading ? (
+                <div className={cx("loading-container")}>
+                  <LoadingPage />
+                </div>
+              ) : displayedJobs && displayedJobs.length > 0 ? (
+                <div className={cx("jobs-grid")}>
+                  {displayedJobs.map((job) => (
                     <JobCard
-                      key={job.id}
-                      title={job.title}
-                      company={job.company}
-                      salary={job.salary}
-                      location={job.location}
-                      logo={job.logo}
+                      key={job.job_id}
+                      job={{
+                        ...job,
+                        company_logo: job.company_logo || `https://i.pravatar.cc/${Math.floor(Math.random() * 1000) + 1}`
+                      }}
+                      onClick={() => handleJobClick(job.job_id)}
                     />
-                    
-                  </div>
-                ))}
-              </div>
+                    // tên công vi
+                  ))}
+                </div>
+              ) : (
+                <div className={cx("no-jobs-message")}>
+                  <p>Không có công việc nào phù hợp</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

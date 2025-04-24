@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from "react"
+import { useEffect, useState, useContext, useRef } from "react"
 import UserContext from "~/context/UserContext"
 import classNames from "classnames/bind"
 import styles from "./RecruiterSettings.module.scss"
@@ -21,6 +21,9 @@ const RecruiterSettings = () => {
     company_name: "",
     description: "",
     address: "",
+    address_detail: "",
+    province_id: "",
+    district_id: "",
     website: "",
     company_emp: "",
     logo: null,
@@ -46,6 +49,14 @@ const RecruiterSettings = () => {
   const [licenseFilePreview, setLicenseFilePreview] = useState(null)
   // Thêm state để quản lý thông tin hết hạn
   const [expiryStatus, setExpiryStatus] = useState(null);
+
+  // Thêm state cho địa chỉ
+  const [provinces, setProvinces] = useState([])
+  const [districts, setDistricts] = useState([])
+  const [selectedProvince, setSelectedProvince] = useState(null)
+  const [selectedDistrict, setSelectedDistrict] = useState(null)
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false)
+  const locationRef = useRef(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -91,6 +102,9 @@ const RecruiterSettings = () => {
           company_name: company.company_name,
           description: company.description,
           address: company.address,
+          address_detail: company.address_detail,
+          province_id: company.province_id,
+          district_id: company.district_id,
           website: company.website,
           company_emp: company.company_emp,
           logo: company.logo,
@@ -107,6 +121,80 @@ const RecruiterSettings = () => {
     }
     fetchData()
   }, [])
+
+  // Fetch provinces khi component mount
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      try {
+        const response = await fetch("https://esgoo.net/api-tinhthanh/1/0.htm")
+        const data = await response.json()
+        if (Array.isArray(data.data)) {
+          setProvinces(data.data)
+        } else {
+          setProvinces([])
+        }
+      } catch (error) {
+        console.error("Error fetching provinces:", error)
+        setProvinces([])
+      }
+    }
+    fetchProvinces()
+  }, [])
+
+  // Fetch districts khi chọn province
+  useEffect(() => {
+    const fetchDistricts = async () => {
+      if (!selectedProvince) {
+        setDistricts([])
+        return
+      }
+      try {
+        const formattedId = selectedProvince.toString().padStart(2, "0")
+        const response = await fetch(`https://esgoo.net/api-tinhthanh/2/${formattedId}.htm`)
+        const data = await response.json()
+        if (Array.isArray(data.data)) {
+          setDistricts(data.data)
+        } else {
+          setDistricts([])
+        }
+      } catch (error) {
+        console.error("Error fetching districts:", error)
+        setDistricts([])
+      }
+    }
+    fetchDistricts()
+  }, [selectedProvince])
+
+  // Handle clicks outside location dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (locationRef.current && !locationRef.current.contains(event.target)) {
+        setShowLocationDropdown(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  // Thêm hàm xử lý chọn tỉnh/thành
+  const handleProvinceSelect = (provinceId) => {
+    setSelectedProvince(provinceId)
+    setSelectedDistrict(null) // Reset district when province changes
+    setFormData(prev => ({
+      ...prev,
+      province_id: provinceId,
+      district_id: ""
+    }))
+  }
+
+  // Thêm hàm xử lý chọn quận/huyện
+  const handleDistrictSelect = (districtId) => {
+    setSelectedDistrict(districtId)
+    setFormData(prev => ({
+      ...prev,
+      district_id: districtId
+    }))
+  }
 
   // useEffect kiểm tra hạn giấy phép khi businessLicense thay đổi
   useEffect(() => {
@@ -204,11 +292,26 @@ const RecruiterSettings = () => {
     try {
       setIsLoading(true)
       const formDataToSend = new FormData()
+      
+      // Tạo địa chỉ đầy đủ
+      const selectedProvinceName = provinces.find(p => p.id === selectedProvince)?.name || ""
+      const selectedDistrictName = districts.find(d => d.id === selectedDistrict)?.name || ""
+      const fullAddress = [
+        formData.address_detail,
+        selectedDistrictName,
+        selectedProvinceName
+      ].filter(Boolean).join(", ")
+
+      // Thêm các trường vào FormData
       Object.keys(formData).forEach((key) => {
         if (key === "logo" && formData[key] instanceof File) {
           formDataToSend.append("logo", formData[key])
         } else if (key !== "logo") {
-          formDataToSend.append(key, formData[key])
+          if (key === "address") {
+            formDataToSend.append(key, fullAddress)
+          } else {
+            formDataToSend.append(key, formData[key])
+          }
         }
       })
 
@@ -225,25 +328,12 @@ const RecruiterSettings = () => {
       toast.success("🎉 Cập nhật thông tin công ty thành công!", {
         position: "top-right",
         autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
       })
 
       setIsEditing(false)
     } catch (error) {
       console.error("Error updating company:", error)
-      toast.error("❌ Không thể cập nhật thông tin công ty", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      })
+      toast.error("❌ Không thể cập nhật thông tin công ty")
     } finally {
       setIsLoading(false)
     }
@@ -647,7 +737,7 @@ const RecruiterSettings = () => {
                 <button
                   className={cx("edit-btn")}
                   onClick={() => setIsEditing(!isEditing)}
-                  disabled={isLoading || statusRecruiterCompany === 'pending' || statusRecruiterCompany === 'rejected'}
+                  disabled={isLoading || statusRecruiterCompany === 'rejected'}
                 >
                   {isEditing ? (
                     <>
@@ -665,7 +755,7 @@ const RecruiterSettings = () => {
               {statusRecruiterCompany === 'pending' && (
                 <div className={cx("status-message", "pending")}>
                   <i className="fa-solid fa-info-circle"></i>
-                  Thông tin công ty của bạn đang được xem xét. Vui lòng đợi phê duyệt từ quản trị viên.
+                  Thông tin công ty của bạn đang được xem xét. Bạn vẫn có thể chỉnh sửa thông tin trong thời gian chờ duyệt.
                 </div>
               )}
 
@@ -814,6 +904,76 @@ const RecruiterSettings = () => {
                     disabled={!isEditing || isLoading}
                     placeholder="Ví dụ: 50"
                   />
+                </div>
+
+                <div className={cx("form-group", "address-group")}>
+                  <label>Địa chỉ chi tiết</label>
+                  <input
+                    type="text"
+                    name="address_detail"
+                    value={formData.address_detail}
+                    onChange={handleInputChange}
+                    disabled={!isEditing || isLoading}
+                    placeholder="Số nhà, tên đường..."
+                  />
+                </div>
+
+                <div className={cx("form-group", "location-group")} ref={locationRef}>
+                  <label>Tỉnh/Thành phố và Quận/Huyện</label>
+                  <div className={cx("location-selector")} onClick={() => setShowLocationDropdown(true)}>
+                    <span className={cx("location-text")}>
+                      {selectedProvince ? 
+                        `${provinces.find(p => p.id === selectedProvince)?.name || ""}, 
+                         ${districts.find(d => d.id === selectedDistrict)?.name || "Chọn Quận/Huyện"}` 
+                        : "Chọn địa điểm"}
+                    </span>
+                    <i className={cx("fa-solid fa-chevron-down", { rotated: showLocationDropdown })}></i>
+                  </div>
+
+                  {showLocationDropdown && (
+                    <>
+                      <div className={cx("location-overlay")} onClick={() => setShowLocationDropdown(false)} />
+                      <div className={cx("location-dropdown")}>
+                        <div className={cx("provinces-list")}>
+                          <div className={cx("dropdown-header")}>
+                            <h4>Chọn Tỉnh/Thành phố</h4>
+                            <input type="text" placeholder="Tìm kiếm..." className={cx("search-input")} />
+                          </div>
+                          <div className={cx("dropdown-content")}>
+                            {provinces.map((province) => (
+                              <div
+                                key={province.id}
+                                className={cx("location-item", { selected: selectedProvince === province.id })}
+                                onClick={() => handleProvinceSelect(province.id)}
+                              >
+                                {province.name}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {selectedProvince && (
+                          <div className={cx("districts-list")}>
+                            <div className={cx("dropdown-header")}>
+                              <h4>Chọn Quận/Huyện</h4>
+                              <input type="text" placeholder="Tìm kiếm..." className={cx("search-input")} />
+                            </div>
+                            <div className={cx("dropdown-content")}>
+                              {districts.map((district) => (
+                                <div
+                                  key={district.id}
+                                  className={cx("location-item", { selected: selectedDistrict === district.id })}
+                                  onClick={() => handleDistrictSelect(district.id)}
+                                >
+                                  {district.name}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {isEditing && (

@@ -1150,3 +1150,164 @@
     }
   }
   
+  .location-group {
+    position: relative;
+  }
+  
+  .location-selector {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s;
+  
+    &:hover {
+      border-color: #d1d5db;
+    }
+  
+    .location-text {
+      color: #111827;
+      font-size: 15px;
+    }
+  
+    i {
+      color: #6b7280;
+      transition: transform 0.3s;
+  
+      &.rotated {
+        transform: rotate(180deg);
+      }
+    }
+  }
+  
+  .location-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+  }
+  
+  .location-dropdown {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    margin-bottom: 4px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.1);
+    z-index: 11;
+    display: flex;
+    gap: 1px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+  
+    .provinces-list,
+    .districts-list {
+      flex: 1;
+      max-height: 400px;
+      display: flex;
+      flex-direction: column;
+      background: white;
+    }
+  
+    .dropdown-header {
+      padding: 16px;
+      border-bottom: 1px solid #e5e7eb;
+  
+      h4 {
+        font-size: 14px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 12px;
+      }
+  
+      .search-input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 14px;
+  
+        &:focus {
+          outline: none;
+          border-color: #013a74;
+          box-shadow: 0 0 0 3px rgba(1, 58, 116, 0.1);
+        }
+      }
+    }
+  
+    .dropdown-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+  
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+  
+      &::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+      }
+  
+      &::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 3px;
+      }
+    }
+  
+    .location-item {
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 14px;
+      color: #374151;
+  
+      &:hover {
+        background: #f3f4f6;
+      }
+  
+      &.selected {
+        background: rgba(1, 58, 116, 0.1);
+        color: #013a74;
+        font-weight: 500;
+      }
+    }
+  }
+  
+  .address-group {
+    margin-bottom: 20px;
+  }
+  
+  // Responsive styles for location dropdown
+  @media (max-width: 768px) {
+    .location-dropdown {
+      position: fixed;
+      top: auto;
+      bottom: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 500px;
+      max-height: 70vh;
+      flex-direction: column;
+  
+      .provinces-list,
+      .districts-list {
+        max-height: 300px;
+      }
+    }
+  
+    .location-overlay {
+      background: rgba(0, 0, 0, 0.5);
+    }
+  }
+  

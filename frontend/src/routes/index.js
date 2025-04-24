@@ -84,7 +84,7 @@ const publicRoutes = [
     { path: '/admin/recruiter', component: Recruiter, layout: AdminLayout},
     { path: '/admin/career-handbook', component: CareerHandbook, layout: AdminLayout},
     { path: '/user', component: Usersinfo },
-    { path: '/templates/create-seo-blog', component: CreateSeoBlog, layout: RecruiterLayout },
+    { path: '/templates/create-seo-blog', component: CreateSeoBlog },
     { path: '/tai-khoan/profile', component: Profile },
     { path: '/user/pay', component: Pay },
     { path: '/user/change-password', component: ChangePassword },

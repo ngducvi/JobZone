@@ -46,153 +46,103 @@ class OpenAIController {
     return supplier;
   }
   async streamChat(req, res) {
+    // Set SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
     const prompt = req.query.prompt;
     const model = req.query.model;
-    // const user_id = req.user.id;
+    console.log('Stream Chat Request:', { prompt, model });
+
     if (!prompt) {
-      res.write(`data: ${JSON.stringify("Prompt là bắt buộc.")}\n\n`);
-      res.end();
-      return;
+        console.log('Error: Prompt is required');
+        res.write(`data: ${JSON.stringify("Prompt là bắt buộc.")}\n\n`);
+        res.end();
+        return;
     }
     if (!model) {
-      res.write(`data: ${JSON.stringify("Model là bắt buộc.")}\n\n`);
-      res.end();
-      return;
+        console.log('Error: Model is required');
+        res.write(`data: ${JSON.stringify("Model là bắt buộc.")}\n\n`);
+        res.end();
+        return;
     }
+
     const bot = await Bot.findOne({ where: { name: model } });
     if (!bot) {
-      res.write(`data: ${JSON.stringify("Không tìm thấy bot.")}\n\n`);
-      return res.end();
+        console.log('Error: Bot not found for model:', model);
+        res.write(`data: ${JSON.stringify("Không tìm thấy bot.")}\n\n`);
+        return res.end();
     }
+
     const supplier = await this.configClientSupplier(bot);
     if (!supplier) {
-      res.write(`data: ${JSON.stringify("Không tìm thấy nhà cung cấp.")}\n\n`);
-      res.end();
-      return;
-    }
-    try {
-      if (supplier.id == "anthropic") {
-        const collectedMessages = [];
-        let stream = await this.client.messages.create({
-          model,
-          messages: [
-            { role: "user", content: prompt },
-          ],
-          max_tokens: 4096,
-          stream: true
-        });
-        let inputTokens = 0;
-        let outputTokens = 0;
-        for await (const messageStreamEvent of stream) {
-          if (messageStreamEvent.type === "message_start") {
-            console.log("message_start:", messageStreamEvent);
-            inputTokens = messageStreamEvent.message.usage.input_tokens;
-          }
-          else if (messageStreamEvent.type === "content_block_delta") {
-            const chunkMessage = messageStreamEvent.delta.text;
-            if (chunkMessage) {
-              collectedMessages.push(chunkMessage);
-              res.write(`data: ${JSON.stringify(chunkMessage)}\n\n`);
-            }
-          }
-          else if (messageStreamEvent.type === "message_delta") {
-            // outputTokens = messageStreamEvent.usage.output_tokens;
-            // const conversation = await Conversation.create({
-            //   id: Common.generateToken(10),
-            //   bot_id: bot.id,
-            //   user_id: user_id,
-            //   status: "completed",
-            //   completed_at: new Date().getTime(),
-            //   content: collectedMessages.join(""),
-            // });
-            // // Create token usage record
-            // await TokenUsage.create({
-            //   user_id: user_id,
-            //   conversation_id: conversation.id,
-            //   bot_id: bot.id,
-            //   token_count: inputTokens + outputTokens,
-            //   input_count: inputTokens,
-            //   output_count: outputTokens,
-            // });
-            // // Update wallet balance
-            // const wallet = await Wallet.findOne({ where: { user_id: user_id } });
-            // if (!wallet) {
-            //   throw new Error(`Không tìm thấy ví cho user_id: ${user_id}`);
-            // }
-            // let total_price = (inputTokens + outputTokens) * bot.output_rate;
-            // if (total_price < 0) {
-            //   total_price = 1;
-            // }
-            // wallet.balance -= total_price;
-            // await wallet.save();
-          }
-        }
+        console.log('Error: Supplier not found for bot:', bot.id);
+        res.write(`data: ${JSON.stringify("Không tìm thấy nhà cung cấp.")}\n\n`);
+        res.end();
         return;
-      }
-      else {
-        let stream = await this.client.chat.completions.create({
-          model,
-          messages: [
-            { role: "assistant", content: "Bạn là chuyên gia về lĩnh vực kinh doanh, marketing" },
-            { role: "user", content: prompt },
-          ],
-          stream: true,
-          stream_options: { include_usage: true },
-        });
-        const collectedMessages = [];
-        for await (const chunk of stream.iterator()) {
-          const chunkMessage = chunk?.choices?.[0]?.delta?.content;
-          const chunkUsage = chunk?.usage;
-          if (chunkMessage) {
-            collectedMessages.push(chunkMessage);
-            res.write(`data: ${JSON.stringify(chunkMessage)}\n\n`);
-          }
-          if (chunkUsage) {
-            // const id = chunk.id;
-            // const completionTokens = chunkUsage?.completion_tokens || 0;
-            // const promptTokens = chunkUsage?.prompt_tokens || 0;
-            // const totalTokens = chunkUsage?.total_tokens || 0;
+    }
 
-            // const conversation = await Conversation.create({
-            //   id: Common.generateToken(10),
-            //   bot_id: bot.id,
-            //   user_id: user_id,
-            //   status: "completed",
-            //   completed_at: new Date().getTime(),
-            //   content: collectedMessages.join(""),
-            // });
-
-            // // Create token usage record
-            // await TokenUsage.create({
-            //   user_id: user_id,
-            //   conversation_id: conversation.id,
-            //   bot_id: bot.id,
-            //   token_count: totalTokens,
-            //   input_count: promptTokens,
-            //   output_count: completionTokens,
-            // });
-
-            // // Update wallet balance
-            // const wallet = await Wallet.findOne({ where: { user_id: user_id } });
-            // if (!wallet) {
-            //   throw new Error(`Không tìm thấy ví cho user_id: ${user_id}`);
-            // }
-            // let total_price =
-            //   promptTokens * bot.input_rate + completionTokens * bot.output_rate;
-            // if (total_price < 0) {
-            //   total_price = 1;
-            // }
-            // wallet.balance -= total_price;
-            // await wallet.save();
-          }
+    try {
+        console.log('Starting chat stream with supplier:', supplier.id);
+        if (supplier.id == "anthropic") {
+            const collectedMessages = [];
+            let stream = await this.client.messages.create({
+                model,
+                messages: [
+                    { role: "user", content: prompt },
+                ],
+                max_tokens: 4096,
+                stream: true
+            });
+            let inputTokens = 0;
+            let outputTokens = 0;
+            for await (const messageStreamEvent of stream) {
+                if (messageStreamEvent.type === "message_start") {
+                    console.log("message_start:", messageStreamEvent);
+                    inputTokens = messageStreamEvent.message.usage.input_tokens;
+                }
+                else if (messageStreamEvent.type === "content_block_delta") {
+                    const chunkMessage = messageStreamEvent.delta.text;
+                    if (chunkMessage) {
+                        collectedMessages.push(chunkMessage);
+                        res.write(`data: ${JSON.stringify(chunkMessage)}\n\n`);
+                    }
+                }
+                else if (messageStreamEvent.type === "message_delta") {
+                }
+            }
+            return;
         }
-      }
-      res.end();
-      return;
+        else {
+            let stream = await this.client.chat.completions.create({
+                model,
+                messages: [
+                    { role: "assistant", content: "Bạn là chuyên gia về lĩnh vực đó" },
+                    { role: "user", content: prompt },
+                ],
+                stream: true,
+                stream_options: { include_usage: true },
+            });
+            const collectedMessages = [];
+            for await (const chunk of stream.iterator()) {
+                const chunkMessage = chunk?.choices?.[0]?.delta?.content;
+                const chunkUsage = chunk?.usage;
+                if (chunkMessage) {
+                    collectedMessages.push(chunkMessage);
+                    res.write(`data: ${JSON.stringify(chunkMessage)}\n\n`);
+                }
+                if (chunkUsage) {
+                }
+            }
+        }
+        res.end();
+        return;
     } catch (error) {
-      console.log(error);
-      res.write(`data: ${JSON.stringify("Lỗi trong quá trình xử lý")}\n\n`);
-      res.end();
+        console.error('Error in streamChat:', error);
+        res.write(`data: ${JSON.stringify("Lỗi trong quá trình xử lý")}\n\n`);
+        res.end();
     }
   }
   async getBase64FromUrl(url) {
@@ -352,7 +302,7 @@ class OpenAIController {
             const stream = await this.client.messages.create({
                 model,
                 messages: [{ role: "user", content: prompt }],
-                max_tokens: 4096,
+                max_tokens: 100000,
                 stream: false, // No streaming
             });
 
@@ -395,15 +345,15 @@ class OpenAIController {
         });
 
         // Update wallet balance
-        const wallet = await Wallet.findOne({ where: { user_id: user_id } });
-        if (!wallet) {
-            return res.status(404).json({ message: `Không tìm thấy ví cho user_id: ${user_id}` });
-        }
+        // const wallet = await Wallet.findOne({ where: { user_id: user_id } });
+        // if (!wallet) {
+        //     return res.status(404).json({ message: `Không tìm thấy ví cho user_id: ${user_id}` });
+        // }
 
-        let total_price = inputTokens * bot.input_rate + outputTokens * bot.output_rate;
-        if (total_price < 0) total_price = 1;
-        wallet.balance -= total_price;
-        await wallet.save();
+        // let total_price = inputTokens * bot.input_rate + outputTokens * bot.output_rate;
+        // if (total_price < 0) total_price = 1;
+        // wallet.balance -= total_price;
+        // await wallet.save();
         return res.json({ response: responseContent });
 
     } catch (error) {

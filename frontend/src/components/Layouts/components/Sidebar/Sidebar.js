@@ -69,21 +69,21 @@ const sidebarIcons = [
         to: "/user/up-cv",
         authRequired: false
       },
-      {
-        title: "Tạo Cover Letter",
-        to: "/jobs/cover-letter",
-        authRequired: false
-      },
+      // {
+      //   title: "Tạo Cover Letter",
+      //   to: "/jobs/cover-letter",
+      //   authRequired: false
+      // },
       {
         title: "Quản lý CV",
         to: "/user/manager-cv",
         authRequired: true
       },
-      {
-        title: "Quản lý Cover Letter",
-        to: "/jobs/manage-cover-letter",
-        authRequired: true
-      },
+      // {
+      //   title: "Quản lý Cover Letter",
+      //   to: "/jobs/manage-cover-letter",
+      //   authRequired: true
+      // },
       {
         title: "Dịch vụ tư vấn CV",
         to: "/jobs/cv-consulting",
@@ -100,11 +100,11 @@ const sidebarIcons = [
         to: "/user/job-zone-profile",
         authRequired: true
       },
-      {
-        title: "Test Template",
-        to: "/test-template",
-        authRequired: false
-      },
+      // {
+      //   title: "Test Template",
+      //   to: "/test-template",
+      //   authRequired: false
+      // },
     ]
   },
   // career handbook
@@ -226,7 +226,6 @@ const Sidebar = () => {
         const response = await authAPI().get(userApis.getCurrentUser);
         setUser(response.data.user);
         setCandidate(response.data.candidate);
-        console.log("response.data.candidate", response.data.candidate);
       } catch (error) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
@@ -338,20 +337,20 @@ const Sidebar = () => {
                         <span>Nâng cấp tài khoản VIP</span>
                       </Link>
                       
-                      <Link to="/gifts" className={cx("dropdown-item")}>
+                      {/* <Link to="/gifts" className={cx("dropdown-item")}>
                         <i className="fa-solid fa-gift"></i>
                         <span>Kích hoạt quà tặng</span>
-                      </Link>
+                      </Link> */}
                       
-                      <Link to="/cv" className={cx("dropdown-item")}>
+                      {/* <Link to="/cv" className={cx("dropdown-item")}>
                         <i className="fa-regular fa-eye"></i>
                         <span>Nhà tuyển dụng xem hồ sơ</span>
-                      </Link>
+                      </Link> */}
                       
-                      <Link to="/job-alert" className={cx("dropdown-item")}>
+                      {/* <Link to="/job-alert" className={cx("dropdown-item")}>
                         <i className="fa-regular fa-bell"></i>
                         <span>Cài đặt gợi ý việc làm</span>
-                      </Link>
+                      </Link> */}
                       
                       <Link to="/notifications" className={cx("dropdown-item")}>
                         <i className="fa-solid fa-bell"></i>
@@ -363,7 +362,7 @@ const Sidebar = () => {
                         <span>Cài đặt nhận email</span>
                       </Link>
                       
-                      <Link to="/security" className={cx("dropdown-item")}>
+                      <Link to="/user" className={cx("dropdown-item")}>
                         <i className="fa-solid fa-shield"></i>
                         <span>Cài đặt bảo mật</span>
                       </Link>

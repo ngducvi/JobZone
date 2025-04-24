@@ -58,6 +58,7 @@ export const userApis = {
     forgotPassword: '/user/forget-password/',
     aiCompletion: '/ai/completion/',
     getAllTopCompany: '/user/top-company',
+    getAllTopCompanyPro: '/user/top-company-pro',
 
     createPaymentUrl: '/vnpay/create_payment_url',
 
@@ -138,6 +139,10 @@ export const userApis = {
     getAllReviewsByCompanyId: (company_id) => `/user/reviews/${company_id}`,
 
     getCareerHandbookByPostId: (post_id) => `/user/career-handbook/post/${post_id}`,
+    getJobsByExperience: '/user/jobs/experience',
+    getJobsByWorkingTime: '/user/jobs/working-time',
+    getJobsBySalary: '/user/jobs/salary',
+    getJobsByWorkingLocationRemote: '/user/jobs/working-location-remote',
 };
 
 

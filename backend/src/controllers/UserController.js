@@ -1388,6 +1388,146 @@ class UserController {
       totalPages: Math.ceil(jobs.count / limit),
     });
   }
+  // get job có experience không yêu cầu
+  async getJobsByExperience(req, res) {
+    const { page = 1, limit = 12 } = req.query;
+    const offset = (page - 1) * limit;
+    const jobs = await Job.findAndCountAll({
+      where: { experience: 'Không yêu cầu' },
+      limit,
+      offset,
+    });
+
+    // Get company IDs from jobs
+    const companyIds = jobs.rows.map(job => job.company_id);
+
+    // Get company details
+    const companies = await Company.findAll({
+      where: { company_id: companyIds }
+    });
+
+    // Add company details to jobs
+    const jobsWithCompanies = jobs.rows.map(job => {
+      const company = companies.find(c => c.company_id === job.company_id);
+      return {
+        ...job.toJSON(),
+        company_name: company.company_name,
+        company_logo: company.logo
+      };
+    });
+
+    return res.json({
+      jobs: {
+        rows: jobsWithCompanies,
+        count: jobs.count
+      }
+    });
+  }
+
+  async getJobsByWorkingTime(req, res) {
+    const { page = 1, limit = 12 } = req.query;
+    const offset = (page - 1) * limit;
+    const jobs = await Job.findAndCountAll({
+      where: { working_time: 'Bán thời gian' },
+      limit,
+      offset,
+    });
+
+    // Get company IDs from jobs
+    const companyIds = jobs.rows.map(job => job.company_id);
+
+    // Get company details
+    const companies = await Company.findAll({
+      where: { company_id: companyIds }
+    });
+
+    // Add company details to jobs
+    const jobsWithCompanies = jobs.rows.map(job => {
+      const company = companies.find(c => c.company_id === job.company_id);
+      return {
+        ...job.toJSON(),
+        company_name: company.company_name,
+        company_logo: company.logo
+      };
+    });
+
+    return res.json({
+      jobs: {
+        rows: jobsWithCompanies,
+        count: jobs.count
+      }
+    });
+  }
+
+  async getJobsBySalary(req, res) {
+    const { page = 1, limit = 12 } = req.query;
+    const offset = (page - 1) * limit;
+    const jobs = await Job.findAndCountAll({
+      where: { salary: { [Op.or]: ['Trên 50 triệu','30 - 50 triệu','25 - 30 triệu','20 - 25 triệu'] } },
+      limit,
+      offset,
+    });
+
+    // Get company IDs from jobs
+    const companyIds = jobs.rows.map(job => job.company_id);
+
+    // Get company details
+    const companies = await Company.findAll({
+      where: { company_id: companyIds }
+    });
+
+    // Add company details to jobs
+    const jobsWithCompanies = jobs.rows.map(job => {
+      const company = companies.find(c => c.company_id === job.company_id);
+      return {
+        ...job.toJSON(),
+        company_name: company.company_name,
+        company_logo: company.logo
+      };
+    });
+
+    return res.json({
+      jobs: {
+        rows: jobsWithCompanies,
+        count: jobs.count
+      }
+    });
+  }
+
+  async getJobsByWorkingLocationRemote(req, res) {
+    const { page = 1, limit = 12 } = req.query;
+    const offset = (page - 1) * limit;
+    const jobs = await Job.findAndCountAll({
+      where: { working_location: 'Remote' },
+      limit,
+      offset,
+    });
+
+    // Get company IDs from jobs
+    const companyIds = jobs.rows.map(job => job.company_id);
+
+    // Get company details
+    const companies = await Company.findAll({
+      where: { company_id: companyIds }
+    });
+
+    // Add company details to jobs
+    const jobsWithCompanies = jobs.rows.map(job => {
+      const company = companies.find(c => c.company_id === job.company_id);
+      return {
+        ...job.toJSON(),
+        company_name: company.company_name,
+        company_logo: company.logo
+      };
+    });
+
+    return res.json({
+      jobs: {
+        rows: jobsWithCompanies,
+        count: jobs.count
+      }
+    });
+  }
   // get all featured career handbook
   async getAllFeaturedCareerHandbook(req, res) {
     const careerHandbook = await CareerHandbook.findAll({
@@ -2634,6 +2774,26 @@ class UserController {
       });
     }
   }
+  // get all top company với plan là pro
+  async getAllTopCompanyPro(req, res) {
+    try {
+      const topCompany = await Company.findAll({
+        where: { plan: { [Op.or]: ['Pro', 'ProMax'] } },
+        limit: 10,
+      });
+      res.status(200).json({
+        message: "Thành công",
+        code: 1,
+        topCompany,
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
+  
 
   // Hàm lấy thông tin chi tiết của một CV
   async getCVDetail(req, res) {
@@ -2697,5 +2857,9 @@ class UserController {
     }
   }
 }
+
+
+
+
 
 module.exports = new UserController();

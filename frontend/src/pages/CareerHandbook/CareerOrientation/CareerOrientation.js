@@ -44,7 +44,11 @@ function CareerOrientation() {
           <h2>Bài viết nổi bật</h2>
           <div className={cx("featured-grid")}>
             {featuredPosts.map((post) => (
-              <div key={post.post_id} className={cx("featured-card")}>
+              <Link 
+                to={`/career-handbook/${post.post_id}`} 
+                key={post.post_id} 
+                className={cx("featured-card")}
+              >
                 <div className={cx("featured-image")}>
                   <img src={post.image || images.cat1} alt={post.title} />
                 </div>
@@ -63,7 +67,7 @@ function CareerOrientation() {
                     </span>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -89,7 +93,11 @@ function CareerOrientation() {
           <h2>Danh sách bài viết</h2>
           <div className={cx("post-grid")}>
             {careerHandbookData1.map((post) => (
-              <div key={post.post_id} className={cx("post-card")}>
+              <Link 
+                to={`/career-handbook/${post.post_id}`} 
+                key={post.post_id} 
+                className={cx("post-card")}
+              >
                 <div className={cx("post-image")}>
                   <img src={post.image || images.cat1} alt={post.title} />
                 </div>
@@ -108,7 +116,7 @@ function CareerOrientation() {
                     </span>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

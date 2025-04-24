@@ -5,7 +5,7 @@ import styles from "./JobSearch.module.scss";
 import JobCard from "~/components/JobCard/JobCard";
 import images from "~/assets/images";
 import { authAPI, userApis, recruiterApis } from "~/utils/api";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 const cx = classNames.bind(styles);
 
 const JobSearch = () => {
@@ -168,6 +168,7 @@ const JobSearch = () => {
   ];
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -207,6 +208,35 @@ const JobSearch = () => {
     fetchSavedJobs();
   }, []);
 
+  // Add useEffect to handle URL params
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const categoryId = params.get('category_id');
+    const keyword = params.get('keyword');
+    const locationParam = params.get('location');
+
+    // Set initial search values from URL params
+    if (keyword) {
+      setSearchTitle(keyword);
+    }
+    if (locationParam) {
+      setSearchLocation(locationParam);
+    }
+    if (categoryId) {
+      handleFilterChange('category_id', categoryId);
+      // Find and select the category in the list
+      const category = defaultCategories.find(cat => cat.category_id === categoryId);
+      if (category) {
+        setSelectedCategories([categoryId]);
+      }
+    }
+
+    // Trigger search if we have parameters
+    if (keyword || locationParam || categoryId) {
+      fetchFilteredJobs();
+    }
+  }, [location.search]); // Re-run when URL search params change
+
   const fetchFilteredJobs = async () => {
     try {
       const queryParams = new URLSearchParams();
@@ -215,6 +245,14 @@ const JobSearch = () => {
           queryParams.append(key, value);
         }
       });
+
+      // Add search title and location if present
+      if (searchTitle) {
+        queryParams.append('keyword', searchTitle);
+      }
+      if (searchLocation) {
+        queryParams.append('location', searchLocation);
+      }
 
       const response = await authAPI().get(
         `${userApis.filterJobs}?${queryParams.toString()}`
@@ -320,25 +358,29 @@ const JobSearch = () => {
     }));
   };
 
-  // Thêm hàm xử lý tìm kiếm
-  const handleSearch = () => {
+  // Modify handleSearch to use both state and URL params
+  const handleSearch = async () => {
     setIsSearching(true);
-    if (!searchTitle && !searchLocation) {
-      // Nếu không có từ khóa tìm kiếm, hiển thị tất cả jobs
-      fetchFilteredJobs();
-    } else {
-      // Filter jobs theo title và location
-      const filteredJobs = jobs.filter(job => {
-        const matchTitle = !searchTitle || 
-          job.title.toLowerCase().includes(searchTitle.toLowerCase());
-        const matchLocation = !searchLocation || 
-          job.location.toLowerCase().includes(searchLocation.toLowerCase());
-        return matchTitle && matchLocation;
+    try {
+      const params = new URLSearchParams();
+      if (searchTitle) params.append('keyword', searchTitle);
+      if (searchLocation) params.append('location', searchLocation);
+      
+      // Add other active filters
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value && value !== 'all') {
+          params.append(key, value);
+        }
       });
-      setJobs(filteredJobs);
-      setTotalJobs(filteredJobs.length);
+
+      const response = await authAPI().get(`${userApis.filterJobs}?${params.toString()}`);
+      setJobs(response.data.jobs || []);
+      setTotalJobs(response.data.jobs?.length || 0);
+    } catch (error) {
+      console.error('Error searching jobs:', error);
+    } finally {
+      setIsSearching(false);
     }
-    setIsSearching(false);
   };
 
   // Thêm hàm xử lý click vào job

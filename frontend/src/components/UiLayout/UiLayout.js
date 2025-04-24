@@ -13,12 +13,15 @@ import { NextPageIcon, PrevPageIcon } from "~/components/Icons";
 const cx = classNames.bind(styles);
 
 export function UiLayout() {
+  const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState("month")
   const [provinces, setProvinces] = useState([])
   const [districts, setDistricts] = useState([])
   const [selectedProvinces, setSelectedProvinces] = useState([])
   const [selectedDistricts, setSelectedDistricts] = useState([])
   const [showLocationDropdown, setShowLocationDropdown] = useState(false)
+  const [searchKeyword, setSearchKeyword] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("")
   const locationRef = useRef(null)
 
   // Fetch provinces on mount
@@ -156,6 +159,30 @@ export function UiLayout() {
     )
   }
 
+  const handleSearch = () => {
+    // Prepare search params
+    const searchParams = new URLSearchParams();
+    if (searchKeyword) searchParams.append('keyword', searchKeyword);
+    if (selectedProvinces.length) {
+      const provinceNames = selectedProvinces.map(id => 
+        provinces.find(p => p.id === id)?.name
+      ).filter(Boolean);
+      searchParams.append('location', provinceNames.join(', '));
+    }
+    if (selectedDistricts.length) {
+      const districtNames = selectedDistricts.map(id => 
+        districts.find(d => d.id === id)?.name
+      ).filter(Boolean);
+      if (districtNames.length) {
+        const currentLocation = searchParams.get('location') || '';
+        searchParams.set('location', `${currentLocation}, ${districtNames.join(', ')}`);
+      }
+    }
+    
+    // Navigate to search page with params
+    navigate(`/user/job-search?${searchParams.toString()}`);
+  };
+
   return (
     <div className={styles.wrapper}>
       {/* Grid background overlay */}
@@ -180,24 +207,16 @@ export function UiLayout() {
       {/* Search form */}
       <div className={styles.searchContainer}>
         <div className={styles.searchForm}>
-          {/* Category dropdown */}
-          <div className={styles.searchGroup}>
-            <i className="fa-solid fa-list"></i>
-            <select className={styles.categorySelect}>
-              <option value="">Danh mục Nghề</option>
-              <option value="kinh-doanh">Kinh doanh/Bán hàng</option>
-              <option value="marketing">Marketing/PR/Quảng cáo</option>
-              <option value="cskh">Chăm sóc khách hàng (Customer Service)</option>
-              <option value="nhan-su">Nhân sự/Hành chính/Pháp chế</option>
-              <option value="tai-chinh">Tài chính/Ngân hàng/Bảo hiểm</option>
-              <option value="it">Công nghệ Thông tin</option>
-            </select>
-          </div>
 
           {/* Search input */}
           <div className={styles.searchGroup}>
-            <i className="fa-solid fa-magnifying-glass"></i>
-            <input type="text" placeholder="Vị trí tuyển dụng, tên công ty" className={styles.searchInput} />
+            <input 
+              type="text" 
+              placeholder="Vị trí tuyển dụng, tên công ty" 
+              className={styles.searchInput}
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+            />
           </div>
 
           {/* Location dropdown */}
@@ -248,7 +267,7 @@ export function UiLayout() {
           </div>
 
           {/* Search button */}
-          <button className={styles.searchButton}>
+          <button className={styles.searchButton} onClick={handleSearch}>
             <i className="fa-solid fa-magnifying-glass"></i>
             <span>Tìm kiếm</span>
           </button>

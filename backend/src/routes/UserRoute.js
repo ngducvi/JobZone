@@ -12,6 +12,7 @@ router.get('/reset-password', userController.resetPassword.bind(userController))
 router.post('/forget-password', userController.forgetPassword.bind(userController));
 router.post('/change-password', userController.changePassword.bind(userController));
 router.get("/top-company", userController.getAllTopCompany.bind(userController));
+router.get("/top-company-pro", userController.getAllTopCompanyPro.bind(userController));
 router.get("/reviews/:company_id", userController.getAllReviewsByCompanyId.bind(userController));
 router.get("/career-handbook/:category_id", userController.getCareerHandbookByCategoryId.bind(userController));
 router.get("/career-handbook/post/:post_id", userController.getCareerHandbookByPostId.bind(userController));
@@ -33,6 +34,11 @@ router.get("/categories-post", userController.getAllCategoriesPost.bind(userCont
 router.get("/career-handbook", userController.getAllCareerHandbook.bind(userController));
 router.get("/career-handbook/featured", userController.getAllFeaturedCareerHandbook.bind(userController));
 router.get("/jobs", userController.getAllJobs.bind(userController));
+router.get("/jobs/experience", userController.getJobsByExperience.bind(userController));
+router.get("/jobs/working-time", userController.getJobsByWorkingTime.bind(userController));
+router.get("/jobs/salary", userController.getJobsBySalary.bind(userController));
+router.get("/jobs/working-location-remote", userController.getJobsByWorkingLocationRemote.bind(userController));
+
 router.get("/saved-jobs", userController.getAllSavedJobsByUser.bind(userController));
 router.get("/applied-jobs", userController.getAllAppliedJobsByUser.bind(userController));
 router.get("/viewed-jobs", userController.getAllViewedJobsByUser.bind(userController));

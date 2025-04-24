@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useRef } from "react";
 import classNames from "classnames/bind";
 import styles from "./RecruiterJobs.module.scss";
 import { authAPI, userApis, recruiterApis } from "~/utils/api";
@@ -54,6 +54,14 @@ function EditJobModal({ isOpen, onClose, jobData, onEdit, setSelectedJob }) {
   const [status, setStatus] = useState(jobData ? jobData.status : 'Chưa có trạng thái');
   const [categoryId, setCategoryId] = useState(jobData ? jobData.category_id : 'Chưa có chuyên ngành');
 
+  // Thêm state cho địa điểm
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [selectedProvince, setSelectedProvince] = useState(null);
+  const [selectedDistrict, setSelectedDistrict] = useState(null);
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const locationRef = useRef(null);
+
   // active, pending, closed
   const statusLabel = status === 'Active' ? 'Đang hiển thị' : status === 'Pending' ? 'Chờ duyệt' : 'Đã đóng';
 
@@ -75,6 +83,76 @@ function EditJobModal({ isOpen, onClose, jobData, onEdit, setSelectedJob }) {
     }
   }, [jobData]);
   
+  // Fetch provinces khi component mount
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      try {
+        const response = await fetch("https://esgoo.net/api-tinhthanh/1/0.htm");
+        const data = await response.json();
+        if (Array.isArray(data.data)) {
+          setProvinces(data.data);
+        } else {
+          setProvinces([]);
+        }
+      } catch (error) {
+        console.error("Error fetching provinces:", error);
+        setProvinces([]);
+      }
+    };
+    fetchProvinces();
+  }, []);
+
+  // Fetch districts khi chọn province
+  useEffect(() => {
+    const fetchDistricts = async () => {
+      if (!selectedProvince) {
+        setDistricts([]);
+        return;
+      }
+      try {
+        const formattedId = selectedProvince.toString().padStart(2, "0");
+        const response = await fetch(`https://esgoo.net/api-tinhthanh/2/${formattedId}.htm`);
+        const data = await response.json();
+        if (Array.isArray(data.data)) {
+          setDistricts(data.data);
+        } else {
+          setDistricts([]);
+        }
+      } catch (error) {
+        console.error("Error fetching districts:", error);
+        setDistricts([]);
+      }
+    };
+    fetchDistricts();
+  }, [selectedProvince]);
+
+  // Handle clicks outside location dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (locationRef.current && !locationRef.current.contains(event.target)) {
+        setShowLocationDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Thêm hàm xử lý chọn tỉnh/thành
+  const handleProvinceSelect = (provinceId) => {
+    setSelectedProvince(provinceId);
+    setSelectedDistrict(null);
+    const provinceName = provinces.find(p => p.id === provinceId)?.name || "";
+    setLocation(provinceName);
+  };
+
+  // Thêm hàm xử lý chọn quận/huyện
+  const handleDistrictSelect = (districtId) => {
+    setSelectedDistrict(districtId);
+    const provinceName = provinces.find(p => p.id === selectedProvince)?.name || "";
+    const districtName = districts.find(d => d.id === districtId)?.name || "";
+    setLocation(`${districtName}, ${provinceName}`);
+    setShowLocationDropdown(false);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -126,9 +204,59 @@ function EditJobModal({ isOpen, onClose, jobData, onEdit, setSelectedJob }) {
               <option value="Thỏa thuận">Thỏa thuận</option>
             </select>
           </div>
-          <div className={cx('form-group')}> 
+          <div className={cx('form-group', 'location-group')} ref={locationRef}> 
             <label htmlFor="location">Địa điểm làm việc</label>
-            <input type="text" id="location" value={location} onChange={(e) => setLocation(e.target.value)} required />
+            <div className={cx('location-selector')} onClick={() => setShowLocationDropdown(true)}>
+              <span className={cx('location-text')}>
+                {location || "Chọn địa điểm"}
+              </span>
+              <i className={cx('fa-solid fa-chevron-down', { rotated: showLocationDropdown })}></i>
+            </div>
+
+            {showLocationDropdown && (
+              <>
+                <div className={cx('location-overlay')} onClick={() => setShowLocationDropdown(false)} />
+                <div className={cx('location-dropdown')}>
+                  <div className={cx('provinces-list')}>
+                    <div className={cx('dropdown-header')}>
+                      <h4>Chọn Tỉnh/Thành phố</h4>
+                      <input type="text" placeholder="Tìm kiếm..." className={cx('search-input')} />
+                    </div>
+                    <div className={cx('dropdown-content')}>
+                      {provinces.map((province) => (
+                        <div
+                          key={province.id}
+                          className={cx('location-item', { selected: selectedProvince === province.id })}
+                          onClick={() => handleProvinceSelect(province.id)}
+                        >
+                          {province.name}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {selectedProvince && (
+                    <div className={cx('districts-list')}>
+                      <div className={cx('dropdown-header')}>
+                        <h4>Chọn Quận/Huyện</h4>
+                        <input type="text" placeholder="Tìm kiếm..." className={cx('search-input')} />
+                      </div>
+                      <div className={cx('dropdown-content')}>
+                        {districts.map((district) => (
+                          <div
+                            key={district.id}
+                            className={cx('location-item', { selected: selectedDistrict === district.id })}
+                            onClick={() => handleDistrictSelect(district.id)}
+                          >
+                            {district.name}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
           <div className={cx('form-group')}> 
             <label htmlFor="experience">Kinh nghiệm</label>

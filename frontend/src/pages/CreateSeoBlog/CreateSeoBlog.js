@@ -23,6 +23,10 @@ const CreateSeoBlog = () => {
   const [templates, setTemplates] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const currentPath = window.location.pathname;
+  const [copySuccess, setCopySuccess] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamError, setStreamError] = useState(null);
+  const [completionStatus, setCompletionStatus] = useState('');
 
   // Hàm kiểm tra tính hợp lệ của biểu mẫu
   const validateForm = () => {
@@ -59,47 +63,120 @@ const CreateSeoBlog = () => {
 
   const handleCreateSeoBlog = async () => {
     setLoading(true);
+    setIsStreaming(true);
+    setStreamError(null);
+    setCompletionStatus('');
     setSeoContent(""); // Reset lại nội dung cũ trước khi tạo mới
+    
     const token = localStorage.getItem("token");
     if (!token) {
-      setModalType("loginEmail");
-      setLoading(false);
-      return;
+        console.log('Error: No token found');
+        setModalType("loginEmail");
+        setLoading(false);
+        setIsStreaming(false);
+        return;
     }
+
+    let eventSource;
     try {
-      const prompt = `Bạn là ${role}, hãy viết một bài viết chuẩn SEO với từ khoá chính là "${mainKeyword}", từ khoá liên quan là "${relatedKeywords}", và những ý cần có trong bài viết là "${ideas}". Bài viết đảm bảo tự nhiên, hữu ích, và thân thiện với công cụ tìm kiếm.`;
-      const eventSource = new EventSourcePolyfill(
-        `${process.env.REACT_APP_API_URL}/openai/chat-stream?prompt=${encodeURIComponent(prompt)}&model=${encodeURIComponent(model)}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+        console.log('Creating SEO blog with:', { mainKeyword, relatedKeywords, ideas, role, model });
+        const prompt = `Bạn là ${role}, hãy viết một bài viết chuẩn SEO với từ khoá chính là "${mainKeyword}", từ khoá liên quan là "${relatedKeywords}", và những ý cần có trong bài viết là "${ideas}". Bài viết đảm bảo tự nhiên, hữu ích, và thân thiện với công cụ tìm kiếm.`;
+        
+        eventSource = new EventSourcePolyfill(
+            `${process.env.REACT_APP_API_URL}/openai/chat-stream?prompt=${encodeURIComponent(prompt)}&model=${encodeURIComponent(model)}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Accept': 'text/event-stream',
+                },
+                withCredentials: false,
+                heartbeatTimeout: 60000,
+            }
+        );
 
-      eventSource.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        setSeoContent((prev) => prev + data); // Dồn dữ liệu trả về vào seoContent
-      };
+        eventSource.onopen = (event) => {
+            console.log('SSE connection opened:', event);
+            setStreamError(null);
+        };
 
-      eventSource.onerror = (error) => {
-        eventSource.close();
-        setLoading(false);
-      };
+        eventSource.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                console.log('Received chunk:', data);
+                setSeoContent((prev) => prev + data);
+            } catch (error) {
+                console.error('Error parsing event data:', error);
+                setStreamError('Lỗi khi xử lý dữ liệu nhận được');
+            }
+        };
 
-      eventSource.onclose = () => {
-        console.log("SSE connection closed.");
-        setLoading(false);
-      };
+        eventSource.onerror = (error) => {
+            console.error('EventSource error:', error);
+            if (eventSource.readyState === EventSourcePolyfill.CLOSED) {
+                console.log('Connection was closed');
+                setIsStreaming(false);
+                if (seoContent) {
+                    setCompletionStatus('Đã hoàn thành! Bạn có thể sao chép nội dung.');
+                } else {
+                    setStreamError('Kết nối bị đóng trước khi nhận được nội dung');
+                }
+            }
+            eventSource.close();
+            setLoading(false);
+        };
+
+        eventSource.onclose = () => {
+            console.log('SSE connection closed.');
+            setIsStreaming(false);
+            if (seoContent) {
+                setCompletionStatus('Đã hoàn thành! Bạn có thể sao chép nội dung.');
+            }
+            setLoading(false);
+        };
+
     } catch (error) {
-      console.error("Error creating SEO blog:", error);
-      setSeoContent("Đã xảy ra lỗi khi tạo bài viết SEO.");
-      setLoading(false);
+        console.error('Error creating SEO blog:', error);
+        setStreamError('Lỗi khi tạo bài viết SEO');
+        setLoading(false);
+        setIsStreaming(false);
     }
+
+    // Cleanup function
+    return () => {
+        if (eventSource) {
+            eventSource.close();
+        }
+    };
   };
 
   const handleCardClick = (slug) => {
     window.location.href = `/templates/custom/${slug}`;
+  };
+
+  const handleCopyContent = () => {
+    if (seoContent) {
+      navigator.clipboard.writeText(seoContent)
+        .then(() => {
+          setCopySuccess(true);
+          setTimeout(() => setCopySuccess(false), 2000);
+        })
+        .catch(err => {
+          console.error('Failed to copy text:', err);
+          // Fallback copy method if clipboard API fails
+          const textArea = document.createElement('textarea');
+          textArea.value = seoContent;
+          document.body.appendChild(textArea);
+          textArea.select();
+          try {
+            document.execCommand('copy');
+            setCopySuccess(true);
+            setTimeout(() => setCopySuccess(false), 2000);
+          } catch (err) {
+            console.error('Fallback copy failed:', err);
+          }
+          document.body.removeChild(textArea);
+        });
+    }
   };
 
   return (
@@ -172,11 +249,45 @@ const CreateSeoBlog = () => {
                 </button>
               </div>
 
-              <a>{seoContent}</a>
+              {streamError && (
+                <div className={cx("error-message")}>
+                  {streamError}
+                </div>
+              )}
+
+              {seoContent && (
+                <div className={cx("result-container")}>
+                  <div className={cx("result-header")}>
+                    <h3>Nội dung đã tạo</h3>
+                    <div className={cx("header-actions")}>
+                      {isStreaming ? (
+                        <span className={cx("streaming-indicator")}>
+                          Đang tạo nội dung...
+                        </span>
+                      ) : completionStatus ? (
+                        <span className={cx("completion-status")}>
+                          {completionStatus}
+                        </span>
+                      ) : null}
+                      <button 
+                        className={cx("copy-button")} 
+                        onClick={handleCopyContent}
+                      >
+                        {copySuccess ? 'Đã sao chép!' : 'Sao chép'}
+                      </button>
+                    </div>
+                  </div>
+                  <div className={cx("result-content")}>
+                    {seoContent.split('\n').map((line, index) => (
+                      <p key={index}>{line}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          <div className={cx("sidebar")}>
+          {/* <div className={cx("sidebar")}>
             <h3 className={cx("sidebar-title")}>SEO Templates</h3>
             {isLoading ? (
               <div className={cx("loading")}>Đang tải...</div>
@@ -198,7 +309,7 @@ const CreateSeoBlog = () => {
                 Không tìm thấy templates
               </div>
             )}
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
