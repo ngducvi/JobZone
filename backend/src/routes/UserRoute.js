@@ -2,7 +2,7 @@ const express = require('express');
 const userController = require('../controllers/UserController');
 const jwtMiddleware = require('../middleware/JWTMiddleware');
 const multer = require('multer');
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
 router.post('/register', userController.registerUser.bind(userController));
@@ -107,4 +107,11 @@ router.post('/company/review', userController.createReviewCompany.bind(userContr
 router.post('/candidate-cv/cv-id', userController.createCandidateCvWithCvId.bind(userController));
 router.post('/create-cv', userController.createNewCV.bind(userController));
 router.put('/update-cv/:cv_id', userController.updateCVFields.bind(userController));
+router.put('/toggle-cv-template/:cv_id', userController.toggleCvTemplate.bind(userController));
+router.post(
+  "/create-candidate-cv-with-cv-id",
+  upload.single('cv_file'),
+  userController.createCandidateCvWithCvId.bind(userController)
+);
+router.get("/reviews/:user_id", userController.getAllReviewsByUserId.bind(userController));
 module.exports = router;

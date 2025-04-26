@@ -66,6 +66,9 @@ import PricingRecruiter from '~/pages/Recruiter/PricingRecruiter/PricingRecruite
 import CareerHandbookDetail from '~/pages/CareerHandbook/CareerHandbookDetail/CareerHandbookDetail';
 import RecruiterAISuggest from '~/pages/Recruiter/AISuggest/RecruiterAISuggest';
 import DashboardA from '~/pages/Admin/DashboardA/DashboardA';
+import ManagerReview from '~/pages/Userinfo/ManagerReview/ManagetReview';
+import Notifications from '~/pages/Userinfo/Notifications/Notifications';
+import SettingEmail from '~/pages/Userinfo/SettingEmail/SettingEmail';
 
 import CreateSeoBlog from '~/pages/CreateSeoBlog/CreateSeoBlog';
 const publicRoutes = [
@@ -86,6 +89,9 @@ const publicRoutes = [
     { path: '/user', component: Usersinfo },
     { path: '/templates/create-seo-blog', component: CreateSeoBlog },
     { path: '/tai-khoan/profile', component: Profile },
+    { path: '/tai-khoan/manager-review', component: ManagerReview },
+    { path: '/tai-khoan/notifications', component: Notifications },
+    { path: '/tai-khoan/setting-email', component: SettingEmail },
     { path: '/user/pay', component: Pay },
     { path: '/user/change-password', component: ChangePassword },
     { path: '/user/career-handbook', component: CareerHandbookUser },

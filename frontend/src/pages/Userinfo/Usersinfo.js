@@ -23,7 +23,7 @@ const menuItems = [
     color: "#0891b2"
   },
   {
-    to: "/user/applications",
+    to: "/user/jobs-applying",
     icon: "fa-solid fa-briefcase",
     title: "Việc làm đã ứng tuyển",
     description: "Xem và quản lý các công việc đã ứng tuyển",
@@ -31,7 +31,7 @@ const menuItems = [
     color: "#059669"
   },
   {
-    to: "/user/saved-jobs",
+    to: "/user/save-job",
     icon: "fa-regular fa-bookmark",
     title: "Việc làm đã lưu",
     description: "Xem danh sách việc làm đã lưu",
@@ -39,7 +39,7 @@ const menuItems = [
     color: "#7c3aed"
   },
   {
-    to: "/user/reviews",
+    to: "/tai-khoan/manager-review",
     icon: "fa-regular fa-star",
     title: "Đánh giá của tôi",
     description: "Quản lý đánh giá và nhận xét về công ty",
@@ -55,7 +55,7 @@ const menuItems = [
     color: "#ef4444"
   },
   {
-    to: "/user/notifications",
+    to: "/tai-khoan/notifications",
     icon: "fa-regular fa-bell",
     title: "Thông báo",
     description: "Tùy chỉnh cài đặt thông báo",

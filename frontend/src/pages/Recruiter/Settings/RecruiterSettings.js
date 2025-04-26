@@ -310,7 +310,7 @@ const RecruiterSettings = () => {
           if (key === "address") {
             formDataToSend.append(key, fullAddress)
           } else {
-            formDataToSend.append(key, formData[key])
+          formDataToSend.append(key, formData[key])
           }
         }
       })

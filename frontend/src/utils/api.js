@@ -143,6 +143,9 @@ export const userApis = {
     getJobsByWorkingTime: '/user/jobs/working-time',
     getJobsBySalary: '/user/jobs/salary',
     getJobsByWorkingLocationRemote: '/user/jobs/working-location-remote',
+    createCandidateCvWithCvId: '/user/create-candidate-cv-with-cv-id',
+    toggleCvTemplate: (cv_id) => `/user/toggle-cv-template/${cv_id}`,
+    getAllReviewsByUserId: (user_id) => `/user/reviews/${user_id}`,
 };
 
 

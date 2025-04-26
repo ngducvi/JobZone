@@ -379,7 +379,7 @@ const JobSearch = () => {
     } catch (error) {
       console.error('Error searching jobs:', error);
     } finally {
-      setIsSearching(false);
+    setIsSearching(false);
     }
   };
 

@@ -37,6 +37,8 @@ const path = require("path");
 const fs = require("fs");
 const RecruiterCompanies = require("../models/RecruiterConpanies");
 const Reviews = require("../models/Reviews");
+const fileService = require('../services/FileService');
+
 class UserController {
   constructor() {
     this.generateEducationId = () => {
@@ -1316,20 +1318,30 @@ class UserController {
   // create candidate cv with cv_id
   async createCandidateCvWithCvId(req, res) {
     try {
-      const { user_id, cv_name, cv_link } = req.body;
+      const { user_id, cv_name } = req.body;
+      
+      if (!req.file) {
+        return res.status(400).send({ message: "No file uploaded", code: -1 });
+      }
+
+      // Upload PDF to Cloudinary
+      const uploadResult = await fileService.uploadPDF(req.file.buffer);
+      
       const candidateCv = await CandidateCv.create({
         cv_id: this.generateCandidateCvId(),
         user_id,
         cv_name,
-        cv_link,
+        cv_link: uploadResult.secure_url,
         created_at: new Date(),
       });
+
       return res.status(200).send({
         message: "Tạo hồ sơ ứng viên thành công",
         code: 1,
         candidateCv,
       });
     } catch (error) {
+      console.error('Error creating candidate CV:', error);
       return res.status(500).send({ message: error.message, code: -1 });
     }
   }
@@ -1493,6 +1505,7 @@ class UserController {
       }
     });
   }
+  
 
   async getJobsByWorkingLocationRemote(req, res) {
     const { page = 1, limit = 12 } = req.query;
@@ -2793,7 +2806,25 @@ class UserController {
       });
     }
   }
-  
+  // get all reviews by user_id
+  async getAllReviewsByUserId(req, res) {
+    const user_id = req.params.user_id;
+    try {
+      const reviews = await Reviews.findAll({
+        where: { user_id: user_id }
+      });
+      res.status(200).json({
+        message: "Thành công",
+        code: 1,
+        reviews
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
 
   // Hàm lấy thông tin chi tiết của một CV
   async getCVDetail(req, res) {
@@ -2856,7 +2887,58 @@ class UserController {
       });
     }
   }
+
+  async toggleCvTemplate(req, res) {
+    try {
+      const { cv_id } = req.params;
+      const user_id = req.user.id; // Changed from req.user.user_id to req.user.id
+
+      // First, update all CVs of the user to not be templates
+      await CandidateCv.update(
+        { is_template: false },
+        {
+          where: {
+            user_id: user_id
+          }
+        }
+      );
+
+      // Then, update the specific CV's template status
+      const cv = await CandidateCv.findOne({
+        where: {
+          cv_id: cv_id,
+          user_id: user_id
+        }
+      });
+
+      if (!cv) {
+        return res.status(404).json({
+          code: 0,
+          message: "CV không tồn tại hoặc không thuộc về người dùng này"
+        });
+      }
+
+      // Toggle the template status
+      await cv.update({
+        is_template: !cv.is_template
+      });
+
+      return res.status(200).json({
+        code: 1,
+        message: cv.is_template ? "Đã cài làm mặc định" : "Đã hủy mặc định",
+        cv: cv
+      });
+
+    } catch (error) {
+      console.error("Error in toggleCvTemplate:", error);
+      return res.status(500).json({
+        code: 0,
+        message: "Đã có lỗi xảy ra khi cập nhật trạng thái mặc định của CV"
+      });
+    }
+  }
 }
+
 
 
 

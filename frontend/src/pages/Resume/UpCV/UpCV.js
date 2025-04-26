@@ -8,18 +8,28 @@ import { authAPI, userApis } from '~/utils/api';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCloudUploadAlt, faFileAlt, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { 
+    faCloudUploadAlt, 
+    faFileAlt, 
+    faTimes, 
+    faCheckCircle,
+    faFileUpload,
+    faShieldAlt,
+    faSearch,
+    faRocket
+} from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
 import UserContext from "~/context/UserContext";
+import PDFViewer from '~/components/PDFViewer/PDFViewer';
 
 const cx = classNames.bind(styles);
 
 function UpCV() {
     const [selectedFile, setSelectedFile] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [uploadedPdfUrl, setUploadedPdfUrl] = useState(null);
     const navigate = useNavigate();
     const { user } = useContext(UserContext);
-    console.log('user', user);
    
     const onDrop = useCallback((acceptedFiles) => {
         if (acceptedFiles.length > 0) {
@@ -40,55 +50,47 @@ function UpCV() {
     const removeFile = () => {
         setSelectedFile(null);
     };
-    console.log('user', user);
+
     const handleUpload = async () => {
         if (!selectedFile) {
-            toast.error('Please select a file to upload');
+            toast.error('Vui lòng chọn file để tải lên');
             return;
         }
 
         setIsLoading(true);
         try {
-            const user_id = localStorage.getItem('user_id');
             const token = localStorage.getItem('token');
+            const user_id = user.id;
 
-            // Log để debug
-            console.log('Selected File:', selectedFile);
-            console.log('User ID:', user_id);
-            console.log('Token:', token);
+            const formData = new FormData();
+            formData.append('cv_file', selectedFile);
+            formData.append('user_id', user_id);
+            formData.append('cv_name', selectedFile.name);
 
-            // Chuẩn bị dữ liệu gửi đi
-            const formData = {
-                user_id: user.id,
-                cv_name: selectedFile.name,
-                cv_link: selectedFile.path || selectedFile.name // Sử dụng path nếu có, không thì dùng name
-            };
-
-            console.log('Request Payload:', formData);
-
-            // Gọi API với đầy đủ headers
             const response = await axios({
                 method: 'post',
-                url: 'http://localhost:8080/api/v1/user/candidate-cv/cv-id',
+                url: 'http://localhost:8080/api/v1/user/create-candidate-cv-with-cv-id',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'multipart/form-data',
                     'Authorization': `Bearer ${token}`
                 },
                 data: formData
             });
 
-            console.log('API Response:', response);
-
             if (response.data.code === 1) {
-                toast.success('Tạo hồ sơ ứng viên thành công!');
+                toast.success('Tải lên CV thành công!');
+                if (response.data.data && response.data.data.cv_link) {
+                    setUploadedPdfUrl(response.data.data.cv_link);
+                }
+                setTimeout(() => {
                 navigate('/user/manager-cv');
+                }, 2000);
             } else {
-                toast.error(response.data.message || 'Tạo hồ sơ thất bại');
+                toast.error(response.data.message || 'Tải lên thất bại');
             }
         } catch (error) {
-            console.error('Full Error:', error);
-            console.error('Error Response:', error.response?.data);
-            toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi tạo hồ sơ');
+            console.error('Error:', error);
+            toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi tải lên CV');
         } finally {
             setIsLoading(false);
         }
@@ -96,49 +98,118 @@ function UpCV() {
 
     return (
         <div className={cx('wrapper')}>
-            <h2 className={cx('title')}>Upload Your CV</h2>
-            <div className={cx('upload-section')}>
+            <div className={cx('header-section')}>
+                <div className={cx('header-content')}>
+                    <div className={cx('header-icon')}>
+                        <FontAwesomeIcon icon={faFileUpload} />
+                    </div>
+                    <h1>Tải lên CV của bạn</h1>
+                    <p>Tải lên CV để nhà tuyển dụng có thể tìm thấy bạn dễ dàng hơn</p>
+                </div>
+            </div>
+
+            <div className={cx('container')}>
+                <div className={cx('upload-box')}>
+                    <p className={cx('upload-desc')}>
+                        Tải lên CV của bạn dưới dạng PDF, DOC hoặc DOCX. 
+                        CV của bạn sẽ được lưu trữ an toàn và chỉ được chia sẻ với nhà tuyển dụng khi bạn cho phép.
+                    </p>
+
                 <div
                     {...getRootProps()}
-                    className={cx('dropzone', {
-                        'dropzone-active': isDragActive,
+                        className={cx('upload-area', {
+                            'is-active': isDragActive,
                         'has-file': selectedFile
                     })}
                 >
                     <input {...getInputProps()} />
-                    <FontAwesomeIcon icon={faCloudUploadAlt} className={cx('upload-icon')} />
+                        <div className={cx('dropzone-content')}>
+                            <FontAwesomeIcon 
+                                icon={selectedFile ? faCheckCircle : faCloudUploadAlt} 
+                                className={cx('icon')}
+                            />
                     {selectedFile ? (
                         <div className={cx('file-info')}>
-                            <FontAwesomeIcon icon={faFileAlt} className={cx('file-icon')} />
                             <span className={cx('file-name')}>{selectedFile.name}</span>
-                            <button onClick={(e) => { e.stopPropagation(); removeFile(); }} className={cx('remove-file')}>
+                                    <span className={cx('file-size')}>
+                                        {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                                    </span>
+                                    <button 
+                                        onClick={(e) => { 
+                                            e.stopPropagation(); 
+                                            removeFile(); 
+                                        }} 
+                                        className={cx('remove-file')}
+                                    >
                                 <FontAwesomeIcon icon={faTimes} />
                             </button>
                         </div>
                     ) : (
                         <div className={cx('upload-text')}>
-                            <p>Drag & drop your CV here</p>
-                            <p className={cx('upload-hint')}>or click to select file</p>
-                            <p className={cx('file-types')}>Supported formats: PDF, DOC, DOCX</p>
+                                    <span className={cx('primary-text')}>
+                                        {isDragActive ? 'Thả file để tải lên' : 'Kéo và thả file vào đây'}
+                                    </span>
+                                    <span className={cx('secondary-text')}>hoặc click để chọn file</span>
                         </div>
                     )}
                 </div>
+                    </div>
+
                 <button
-                    className={cx('upload-button', { loading: isLoading })}
+                        className={cx('upload-btn', { loading: isLoading })}
                     onClick={handleUpload}
                     disabled={!selectedFile || isLoading}
                 >
-                    {isLoading ? 'Uploading...' : 'Upload CV'}
+                        {isLoading ? 'Đang tải lên...' : 'Tải lên CV'}
                 </button>
             </div>
-            <div className={cx('tips')}>
-                <h3>Tips for an Effective CV:</h3>
-                <ul>
-                    <li>Keep it clear and concise</li>
-                    <li>Highlight relevant experience</li>
-                    <li>Check for spelling and grammar</li>
-                    <li>Include up-to-date contact information</li>
-                </ul>
+
+                {uploadedPdfUrl && (
+                    <div className={cx('preview-section')}>
+                        <h3>Xem trước CV đã tải lên:</h3>
+                        <PDFViewer url={uploadedPdfUrl} />
+                        <div className={cx('pdf-actions')}>
+                            <a 
+                                href={uploadedPdfUrl} 
+                                download
+                                className={cx('download-link')}
+                            >
+                                <FontAwesomeIcon icon={faFileAlt} /> Tải xuống PDF
+                            </a>
+                        </div>
+                    </div>
+                )}
+
+                <div className={cx('features-grid')}>
+                    <div className={cx('feature-card')}>
+                        <div className={cx('feature-icon', 'blue')}>
+                            <FontAwesomeIcon icon={faFileUpload} />
+                        </div>
+                        <h3>Tải lên dễ dàng</h3>
+                        <p>Hỗ trợ nhiều định dạng file phổ biến và dung lượng lên đến 10MB</p>
+                    </div>
+                    <div className={cx('feature-card')}>
+                        <div className={cx('feature-icon', 'green')}>
+                            <FontAwesomeIcon icon={faShieldAlt} />
+                        </div>
+                        <h3>Bảo mật tuyệt đối</h3>
+                        <p>CV của bạn được mã hóa và lưu trữ an toàn trên hệ thống</p>
+                    </div>
+                    <div className={cx('feature-card')}>
+                        <div className={cx('feature-icon', 'purple')}>
+                            <FontAwesomeIcon icon={faSearch} />
+                        </div>
+                        <h3>Dễ dàng tìm kiếm</h3>
+                        <p>Nhà tuyển dụng có thể tìm thấy CV của bạn dễ dàng</p>
+                    </div>
+                    <div className={cx('feature-card')}>
+                        <div className={cx('feature-icon', 'red')}>
+                            <FontAwesomeIcon icon={faRocket} />
+                        </div>
+                        <h3>Cơ hội việc làm</h3>
+                        <p>Tăng cơ hội được tuyển dụng với CV chuyên nghiệp</p>
+                    </div>
+                </div>
             </div>
         </div>
     );

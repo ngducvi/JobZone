@@ -10,6 +10,7 @@ import SidebarContext from "~/context/SidebarContext";
 import UserContext from "~/context/UserContext";
 import { authAPI, userApis } from "~/utils/api";
 import Modal from "~/components/Modal/Modal";
+import { FaBell } from "react-icons/fa";
 
 const cx = classNames.bind(styles);
 
@@ -57,7 +58,7 @@ const sidebarIcons = [
   {
     icon: <i className="fa-solid fa-briefcase"></i>,
     title: "Resume",
-    to: "/profile/cv",
+    to: "/user/manager-cv",
     subMenu: [
       {
         title: "Tạo CV",
@@ -193,6 +194,7 @@ const Sidebar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [candidate, setCandidate] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
   const userSidebarIcons =
     user?.role === "admin"
       ? [
@@ -316,64 +318,72 @@ const Sidebar = () => {
 
             <div className={cx("user-section")}>
               {token ? (
-                <div className={cx("user-dropdown")}>
-                  <div className={cx("avatar-container")}>
-                    <Avatar src={candidate?.profile_picture || images.avatar} fontsize={"5px"} alt={"Avatar"} 
-                    />
-                    <div className={cx("dropdown-menu")}>
-                      <div className={cx("user-info")}>
-                        <span className={cx("user-name")}>{user?.name || "Vĩ Nguyễn Đức"}</span>
-                        <span className={cx("user-id")}>Mã ứng viên: #{user?.id || "9042870"}</span>
-                        <span className={cx("user-email")}>{user?.email || "ngducvicc@gmail.com"}</span>
+                <>
+                  <div className={cx("notification-icon")}>
+                    <Link to="/tai-khoan/notifications" className={cx("bell-icon")}>
+                      <FaBell />
+                    </Link>
+                    {unreadCount > 0 && <span className={cx("badge")}>{unreadCount}</span>}
+                  </div>
+                  <div className={cx("user-dropdown")}>
+                    <div className={cx("avatar-container")}>
+                      <Avatar src={candidate?.profile_picture || images.avatar} fontsize={"5px"} alt={"Avatar"} 
+                      />
+                      <div className={cx("dropdown-menu")}>
+                        <div className={cx("user-info")}>
+                          <span className={cx("user-name")}>{user?.name || "Vĩ Nguyễn Đức"}</span>
+                          <span className={cx("user-id")}>Mã ứng viên: #{user?.id || "9042870"}</span>
+                          <span className={cx("user-email")}>{user?.email || "ngducvicc@gmail.com"}</span>
+                        </div>
+                        
+                        <Link to="/user" className={cx("dropdown-item")}>
+                          <i className="fa-regular fa-user"></i>
+                          <span>Cài đặt thông tin cá nhân</span>
+                        </Link>
+                        
+                        <Link to="/vip" className={cx("dropdown-item")}>
+                          <i className="fa-solid fa-crown"></i>
+                          <span>Nâng cấp tài khoản VIP</span>
+                        </Link>
+                        
+                        {/* <Link to="/gifts" className={cx("dropdown-item")}>
+                          <i className="fa-solid fa-gift"></i>
+                          <span>Kích hoạt quà tặng</span>
+                        </Link> */}
+                        
+                        {/* <Link to="/cv" className={cx("dropdown-item")}>
+                          <i className="fa-regular fa-eye"></i>
+                          <span>Nhà tuyển dụng xem hồ sơ</span>
+                        </Link> */}
+                        
+                        {/* <Link to="/job-alert" className={cx("dropdown-item")}>
+                          <i className="fa-regular fa-bell"></i>
+                          <span>Cài đặt gợi ý việc làm</span>
+                        </Link> */}
+                        
+                        <Link to="/tai-khoan/notifications" className={cx("dropdown-item")}>
+                          <i className="fa-solid fa-bell"></i>
+                          <span>Cài đặt thông báo việc làm</span>
+                        </Link>
+                        
+                        <Link to="/tai-khoan/setting-email" className={cx("dropdown-item")}>
+                          <i className="fa-regular fa-envelope"></i>
+                          <span>Cài đặt nhận email</span>
+                        </Link>
+                        
+                        <Link to="/user" className={cx("dropdown-item")}>
+                          <i className="fa-solid fa-shield"></i>
+                          <span>Cài đặt bảo mật</span>
+                        </Link>
+                        
+                        <button className={cx("dropdown-item")} onClick={handleLogout}>
+                          <i className="fa-solid fa-arrow-right-from-bracket"></i>
+                          <span>Đăng xuất</span>
+                        </button>
                       </div>
-                      
-                      <Link to="/user" className={cx("dropdown-item")}>
-                        <i className="fa-regular fa-user"></i>
-                        <span>Cài đặt thông tin cá nhân</span>
-                      </Link>
-                      
-                      <Link to="/vip" className={cx("dropdown-item")}>
-                        <i className="fa-solid fa-crown"></i>
-                        <span>Nâng cấp tài khoản VIP</span>
-                      </Link>
-                      
-                      {/* <Link to="/gifts" className={cx("dropdown-item")}>
-                        <i className="fa-solid fa-gift"></i>
-                        <span>Kích hoạt quà tặng</span>
-                      </Link> */}
-                      
-                      {/* <Link to="/cv" className={cx("dropdown-item")}>
-                        <i className="fa-regular fa-eye"></i>
-                        <span>Nhà tuyển dụng xem hồ sơ</span>
-                      </Link> */}
-                      
-                      {/* <Link to="/job-alert" className={cx("dropdown-item")}>
-                        <i className="fa-regular fa-bell"></i>
-                        <span>Cài đặt gợi ý việc làm</span>
-                      </Link> */}
-                      
-                      <Link to="/notifications" className={cx("dropdown-item")}>
-                        <i className="fa-solid fa-bell"></i>
-                        <span>Cài đặt thông báo việc làm</span>
-                      </Link>
-                      
-                      <Link to="/email-settings" className={cx("dropdown-item")}>
-                        <i className="fa-regular fa-envelope"></i>
-                        <span>Cài đặt nhận email</span>
-                      </Link>
-                      
-                      <Link to="/user" className={cx("dropdown-item")}>
-                        <i className="fa-solid fa-shield"></i>
-                        <span>Cài đặt bảo mật</span>
-                      </Link>
-                      
-                      <button className={cx("dropdown-item")} onClick={handleLogout}>
-                        <i className="fa-solid fa-arrow-right-from-bracket"></i>
-                        <span>Đăng xuất</span>
-                      </button>
                     </div>
                   </div>
-                </div>
+                </>
               ) : (
                 <div className={cx("auth-buttons")}>
                   <button

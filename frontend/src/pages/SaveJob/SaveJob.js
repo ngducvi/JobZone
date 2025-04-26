@@ -21,7 +21,9 @@ const SaveJob = () => {
       try {
         const response = await authAPI().get(userApis.getAllSavedJobsByUser);
         setSavedJobs(response.data.savedJobs);
-        console.log('Saved jobs:', response.data.savedJobs);
+        // console.log('Saved jobs:', response.data.savedJobs);
+        const reviewsResponse = await authAPI().get(userApis.getAllReviewsByUserId(1));
+        console.log('Reviews:', reviewsResponse.data);
         
         // Khởi tạo trạng thái saved cho mỗi job
         const initialSavedStatus = {};

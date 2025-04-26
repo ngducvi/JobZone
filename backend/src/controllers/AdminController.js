@@ -12,6 +12,7 @@ const RecruiterCompanies = require("../models/RecruiterConpanies");
 const CareerHandbook = require("../models/CareerHandbook");
 const Reviews = require("../models/Reviews");
 const BusinessLicenses = require("../models/BusinessLicenses");
+const Notifications = require("../models/Notifications");
 
 class AdminController {
   constructor() {
@@ -23,6 +24,9 @@ class AdminController {
     };
     this.generateCareerHandbookId = () => {
       return "ch-" + Math.random().toString(36).substr(2, 9);
+    };
+    this.generateNotificationId = () => {
+      return "noti-" + Math.random().toString(36).substr(2, 9);
     };
   }
   randomString(length) {

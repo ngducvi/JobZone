@@ -1,0 +1,92 @@
+.pdf-viewer {
+    background: #f5f5f5;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 10px;
+        background: white;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+        .navigation {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            button {
+                padding: 8px 16px;
+                border: none;
+                background: #4a90e2;
+                color: white;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: background 0.3s ease;
+
+                &:hover:not(:disabled) {
+                    background: #357abd;
+                }
+
+                &:disabled {
+                    background: #ccc;
+                    cursor: not-allowed;
+                }
+            }
+
+            span {
+                font-size: 14px;
+                color: #666;
+            }
+        }
+
+        .zoom {
+            display: flex;
+            gap: 10px;
+
+            button {
+                padding: 8px 16px;
+                border: none;
+                background: #34a853;
+                color: white;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: background 0.3s ease;
+
+                &:hover {
+                    background: #2d8a46;
+                }
+            }
+        }
+    }
+
+    .canvas-container {
+        position: relative;
+        background: white;
+        padding: 20px;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        min-height: 500px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #666;
+            font-size: 16px;
+        }
+
+        .pdf-canvas {
+            max-width: 100%;
+            height: auto;
+        }
+    }
+} 

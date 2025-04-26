@@ -20,6 +20,7 @@
     "nodemailer": "^6.9.16",
     "nodemon": "^3.1.7",
     "openai": "^4.73.1",
+    "react-pdf": "^9.2.1",
     "sequelize": "^6.37.5",
     "vnpay": "^1.6.0"
   }

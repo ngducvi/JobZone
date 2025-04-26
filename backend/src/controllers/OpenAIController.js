@@ -147,7 +147,7 @@ class OpenAIController {
   }
   async getBase64FromUrl(url) {
     try {
-      const response = await fetch(url);
+      const response = await fetch(url);  
       const buffer = await response.arrayBuffer();
       const base64 = Buffer.from(buffer).toString('base64');
       const mimeType = response.headers.get("content-type") || "image/jpeg";

@@ -481,6 +481,22 @@ i.fa-arrow-right-to-bracket {
       font-size: 15px;
     }
   }
+
+  .notification-icon {
+    margin-right: 12px;
+
+    .bell-icon {
+      font-size: 18px;
+    }
+
+    .badge {
+      top: -4px;
+      right: -4px;
+      font-size: 10px;
+      min-width: 16px;
+      height: 16px;
+    }
+  }
 }
 
 // Overlay cho mobile menu
@@ -570,5 +586,44 @@ i.fa-arrow-right-to-bracket {
         background: rgba(1, 58, 116, 0.05);
       }
       }
+  }
+}
+
+.notification-icon {
+  position: relative;
+  margin-right: 16px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+
+  .bell-icon {
+    font-size: 20px;
+    color: #4b5563;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: #013a74;
+    }
+  }
+
+  .badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: #ef4444;
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
   }
 } 
