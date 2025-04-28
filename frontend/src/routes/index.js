@@ -69,6 +69,7 @@ import DashboardA from '~/pages/Admin/DashboardA/DashboardA';
 import ManagerReview from '~/pages/Userinfo/ManagerReview/ManagetReview';
 import Notifications from '~/pages/Userinfo/Notifications/Notifications';
 import SettingEmail from '~/pages/Userinfo/SettingEmail/SettingEmail';
+import NotificationsManager from '~/pages/Recruiter/NotificationsManager/NotificationsManager';
 
 import CreateSeoBlog from '~/pages/CreateSeoBlog/CreateSeoBlog';
 const publicRoutes = [
@@ -126,6 +127,7 @@ const publicRoutes = [
     { path: '/recruiter/candidate-detail/:candidate_id', component: CandidateDetail, layout: RecruiterLayout },
     { path: '/recruiter/post-job', component: PostJob, layout: RecruiterLayout },
     { path: '/recruiter/pricing', component: PricingRecruiter, layout: RecruiterLayout },
+    { path: '/recruiter/notifications-manager', component: NotificationsManager, layout: RecruiterLayout },
     { path: '/loading', component: LoadingPage, layout: null },
     { path: '/career-handbook/job-hunting', component: JobHunting },
     { path: '/career-handbook/industry-knowledge', component: IndustryKnowledge },

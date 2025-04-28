@@ -24,7 +24,21 @@ Notifications.init({
         allowNull: true,
     },
     type: {
-        type: DataTypes.ENUM('account_verification', 'job_application', 'application_response', 'system'),
+        type: DataTypes.ENUM(
+            
+            'account_verification',    // Duyệt tài khoản thành công
+            'job_application',         // Ứng viên nộp đơn ứng tuyển
+            'application_response',    // Nhà tuyển dụng phản hồi đơn ứng tuyển
+            'application_cancelled',   // Ứng viên hủy đơn ứng tuyển
+            'job_closed',             // Công việc đã đóng/hết hạn
+            'cv_reviewed',            // CV được duyệt/từ chối
+            'payment_success',        // Thanh toán thành công
+            'payment_failed',         // Thanh toán thất bại
+            'subscription_expiring',  // Gói dịch vụ sắp hết hạn
+            'subscription_expired',   // Gói dịch vụ đã hết hạn
+            'company_review',         // Có đánh giá mới về công ty
+            'system'                  // Thông báo hệ thống khác
+        ),
         allowNull: false,
     },
     title: {
@@ -59,6 +73,9 @@ Notifications.init({
     modelName: 'Notifications',
     tableName: 'notifications',
     timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+    underscored: true
 });
 
 module.exports = Notifications;

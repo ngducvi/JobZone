@@ -42,6 +42,7 @@ export const adminApis = {
     updateStatusJob: (job_id) => `/admin/job/update-status/${job_id}`,
     updateBusinessLicenseStatus: (id) => `/admin/company/update-business-license-status/${id}`,
     getCountCandidates: '/admin/candidate/count-all',
+    updateStatusRecruiterCompany: (recruiter_id) => `/admin/recruiter-companies/update-status/${recruiter_id}`,
 };
 
 export const userApis = {
@@ -146,6 +147,12 @@ export const userApis = {
     createCandidateCvWithCvId: '/user/create-candidate-cv-with-cv-id',
     toggleCvTemplate: (cv_id) => `/user/toggle-cv-template/${cv_id}`,
     getAllReviewsByUserId: (user_id) => `/user/reviews/${user_id}`,
+    getUserNotifications: '/user/notifications',
+    getUnreadNotificationsCount: '/user/notifications/unread/count',
+    markNotificationAsRead: (notificationId) => `/user/notifications/${notificationId}/read`,
+    markAllNotificationsAsRead: '/user/notifications/read-all',
+    deleteNotification: (notificationId) => `/user/notifications/${notificationId}`,
+    deleteAllReadNotifications: '/user/notifications/read/all',
 };
 
 
@@ -175,6 +182,12 @@ export const recruiterApis = {
     updateBusinessLicense: (license_id) => `/recruiter/update-business-license/${license_id}`,
     updateBusinessLicenseFile: (license_id) => `/recruiter/company/update-business-license-file/${license_id}`,
     searchCandidates: '/recruiter/search-candidates',
+    getNotifications: '/recruiter/notifications',
+    getUnreadNotificationsCount: '/recruiter/notifications/unread/count',
+    markNotificationAsRead: (notificationId) => `/recruiter/notifications/${notificationId}/read`,
+    markAllNotificationsAsRead: '/recruiter/notifications/read-all',
+    deleteNotification: (notificationId) => `/recruiter/notifications/${notificationId}`,
+    deleteAllReadNotifications: '/recruiter/notifications/read/all',
 };
 
 export const usageApis = {

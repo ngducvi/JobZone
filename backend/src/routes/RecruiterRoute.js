@@ -34,4 +34,10 @@ router.post('/create-business-license/:company_id', recruiterController.createBu
 router.put('/update-business-license/:license_id', upload.single('business_license_file'), recruiterController.updateBusinessLicense.bind(recruiterController));
 router.put('/company/update-business-license-file/:license_id', upload.single('business_license_file'), recruiterController.updateBusinessLicenseFile.bind(recruiterController));
 router.post('/search-candidates', recruiterController.searchCandidates.bind(recruiterController));
+router.get('/notifications', recruiterController.getNotifications.bind(recruiterController));
+router.get('/notifications/unread/count', recruiterController.getUnreadNotificationsCount.bind(recruiterController));
+router.put('/notifications/:notificationId/read', recruiterController.markNotificationAsRead.bind(recruiterController));
+router.put('/notifications/read-all', recruiterController.markAllNotificationsAsRead.bind(recruiterController));
+router.delete('/notifications/:notificationId', recruiterController.deleteNotification.bind(recruiterController));
+router.delete('/notifications/read/all', recruiterController.deleteAllReadNotifications.bind(recruiterController));
 module.exports = router;

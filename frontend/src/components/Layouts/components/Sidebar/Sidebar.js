@@ -11,6 +11,8 @@ import UserContext from "~/context/UserContext";
 import { authAPI, userApis } from "~/utils/api";
 import Modal from "~/components/Modal/Modal";
 import { FaBell } from "react-icons/fa";
+import socketService from "~/utils/socket";
+import { useNotification } from '~/context/NotificationContext';
 
 const cx = classNames.bind(styles);
 
@@ -194,7 +196,7 @@ const Sidebar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [candidate, setCandidate] = useState(null);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const { unreadCount, updateUnreadCount } = useNotification();
   const userSidebarIcons =
     user?.role === "admin"
       ? [
@@ -238,6 +240,43 @@ const Sidebar = () => {
       fetchUserData();
     }
   }, [token, setUser]);
+
+  useEffect(() => {
+    const setupSocket = async () => {
+      try {
+        const response = await authAPI().get(userApis.getCurrentUser);
+        const token = localStorage.getItem("token");
+        socketService.connect(token);
+        socketService.joinUserRoom(response.data.user.id);
+        
+        // Lắng nghe thông báo mới và cập nhật số lượng
+        socketService.onNewNotification(() => {
+          // Gọi API để lấy số lượng thông báo chưa đọc mới nhất
+          const fetchUnreadCount = async () => {
+            try {
+              const response = await authAPI().get(userApis.getUnreadNotificationsCount);
+              if (response.data.success) {
+                updateUnreadCount(response.data.count);
+              }
+            } catch (error) {
+              console.error('Error fetching unread notifications count:', error);
+            }
+          };
+          fetchUnreadCount();
+        });
+      } catch (error) {
+        console.error('Error setting up socket:', error);
+      }
+    };
+
+    if (token) {
+      setupSocket();
+    }
+
+    return () => {
+      socketService.disconnect();
+    };
+  }, [token, updateUnreadCount]);
 
   const handleLogout = () => {
     setIsDropdownOpen(false);
@@ -322,8 +361,8 @@ const Sidebar = () => {
                   <div className={cx("notification-icon")}>
                     <Link to="/tai-khoan/notifications" className={cx("bell-icon")}>
                       <FaBell />
+                      {unreadCount > 0 && <span className={cx("badge")}>{unreadCount}</span>}
                     </Link>
-                    {unreadCount > 0 && <span className={cx("badge")}>{unreadCount}</span>}
                   </div>
                   <div className={cx("user-dropdown")}>
                     <div className={cx("avatar-container")}>

@@ -121,6 +121,11 @@ const sidebarIcons = [
   //   title: "Hộp thư hỗ trợ",
   //   to: "/recruiter/support",
   // },
+  {
+    icon: <i className="fa-solid fa-bell"></i>,
+    title: "Quản lý thông báo",
+    to: "/recruiter/notifications-manager",
+  },
 ];
 
 const SidebarSectuiter = () => {

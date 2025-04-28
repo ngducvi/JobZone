@@ -25,7 +25,7 @@ router.get("/category/all", adminController.getAllCategories.bind(adminControlle
 router.get("/job/all", adminController.getAllJobs.bind(adminController));
 router.get("/recruiter-companies/all", adminController.getAllRecruiterCompanies.bind(adminController));
 router.get("/career-handbook/all", adminController.getAllCareerHandbooks.bind(adminController));
-router.patch("/recruiter-companies/update-status/:id", adminController.updateStatusRecruiterCompany.bind(adminController));
+router.patch("/recruiter-companies/update-status/:recruiter_id", adminController.updateStatusRecruiterCompany.bind(adminController));
 router.get("/job/count-all", adminController.countAllJobs.bind(adminController));
 router.put('/jobs/:id', adminController.editJob.bind(adminController));
 router.get("/company/detail/:id", adminController.getCompanyDetailByCompanyId.bind(adminController));
@@ -41,5 +41,6 @@ router.delete("/career-handbook/delete/:post_id", adminController.deleteCareerHa
 router.patch("/candidate/update-status/:candidate_id", adminController.updateStatusCandidate.bind(adminController));
 router.patch("/job/update-status/:job_id", adminController.updateStatusJob.bind(adminController));
 router.patch("/company/update-business-license-status/:license_id", adminController.updateBusinessLicenseStatus.bind(adminController));
+// router.patch("/company/update-status/:companyId", adminController.updateCompanyStatus.bind(adminController));
 router.get("/candidate/count-all", adminController.countAllCandidates.bind(adminController));
 module.exports = router;

@@ -2,6 +2,7 @@ import { Fragment } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { NotificationProvider } from './context/NotificationContext';
 
 import { publicRoutes } from './routes';
 import { DefaultLayout, RecruiterLayout } from '~/components/Layouts';
@@ -9,6 +10,7 @@ import { SidebarProvider } from '~/context/SidebarContext';
 
 function App() {
     return (
+        <NotificationProvider>
         <SidebarProvider>
             <Router>
                 <div className="App">
@@ -55,6 +57,7 @@ function App() {
                 </div>
             </Router>
         </SidebarProvider>
+        </NotificationProvider>
     );
 }
 

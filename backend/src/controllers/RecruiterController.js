@@ -37,6 +37,8 @@ const cloudinary = require("../utils/cloudinary");
 const path = require("path");
 const fs = require("fs");
 const BusinessLicenses = require("../models/BusinessLicenses");
+const Notifications = require("../models/Notifications");
+
 class RecruiterController {
   constructor() {
     this.generateEducationId = () => {
@@ -1073,6 +1075,189 @@ class RecruiterController {
       console.error('Search candidates error:', error);
       return res.status(500).json({
         message: "Đã có lỗi xảy ra khi tìm kiếm ứng viên",
+        error: error.message
+      });
+    }
+  }
+  // Get all notifications for a recruiter
+  async getNotifications(req, res) {
+    try {
+      const userId = req.user.id;
+      const { page = 1, limit = 10 } = req.query;
+      
+      const notifications = await Notifications.findAndCountAll({
+        where: { user_id: userId },
+        order: [['created_at', 'DESC']],
+        limit: parseInt(limit),
+        offset: (page - 1) * limit
+      });
+
+      return res.status(200).json({
+        message: "Lấy danh sách thông báo thành công",
+        code: 1,
+        notifications: notifications.rows,
+        total: notifications.count,
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(notifications.count / limit)
+      });
+    } catch (error) {
+      console.error('Error in getNotifications:', error);
+      return res.status(500).json({
+        message: "Lỗi khi lấy danh sách thông báo",
+        code: -1,
+        error: error.message
+      });
+    }
+  }
+
+  // Get count of unread notifications
+  async getUnreadNotificationsCount(req, res) {
+    try {
+      const userId = req.user.id;
+      const count = await Notifications.count({
+        where: { 
+          user_id: userId,
+          is_read: false 
+        }
+      });
+
+      return res.status(200).json({
+        message: "Lấy số thông báo chưa đọc thành công",
+        code: 1,
+        count
+      });
+    } catch (error) {
+      console.error('Error in getUnreadNotificationsCount:', error);
+      return res.status(500).json({
+        message: "Lỗi khi lấy số thông báo chưa đọc",
+        code: -1,
+        error: error.message
+      });
+    }
+  }
+
+  // Mark a notification as read
+  async markNotificationAsRead(req, res) {
+    try {
+      const { notificationId } = req.params;
+      const userId = req.user.id;
+
+      const [updated] = await Notifications.update(
+        { is_read: true },
+        {
+          where: {
+            id: notificationId,
+            user_id: userId
+          }
+        }
+      );
+
+      if (updated === 0) {
+        return res.status(404).json({
+          message: "Không tìm thấy thông báo",
+          code: -1
+        });
+      }
+
+      return res.status(200).json({
+        message: "Đánh dấu thông báo đã đọc thành công",
+        code: 1
+      });
+    } catch (error) {
+      console.error('Error in markNotificationAsRead:', error);
+      return res.status(500).json({
+        message: "Lỗi khi đánh dấu thông báo đã đọc",
+        code: -1,
+        error: error.message
+      });
+    }
+  }
+
+  // Mark all notifications as read
+  async markAllNotificationsAsRead(req, res) {
+    try {
+      const userId = req.user.id;
+
+      await Notifications.update(
+        { is_read: true },
+        {
+          where: {
+            user_id: userId,
+            is_read: false
+          }
+        }
+      );
+
+      return res.status(200).json({
+        message: "Đánh dấu tất cả thông báo đã đọc thành công",
+        code: 1
+      });
+    } catch (error) {
+      console.error('Error in markAllNotificationsAsRead:', error);
+      return res.status(500).json({
+        message: "Lỗi khi đánh dấu tất cả thông báo đã đọc",
+        code: -1,
+        error: error.message
+      });
+    }
+  }
+
+  // Delete a notification
+  async deleteNotification(req, res) {
+    try {
+      const { notificationId } = req.params;
+      const userId = req.user.id;
+
+      const deleted = await Notifications.destroy({
+        where: {
+          id: notificationId,
+          user_id: userId
+        }
+      });
+
+      if (deleted === 0) {
+        return res.status(404).json({
+          message: "Không tìm thấy thông báo",
+          code: -1
+        });
+      }
+
+      return res.status(200).json({
+        message: "Xóa thông báo thành công",
+        code: 1
+      });
+    } catch (error) {
+      console.error('Error in deleteNotification:', error);
+      return res.status(500).json({
+        message: "Lỗi khi xóa thông báo",
+        code: -1,
+        error: error.message
+      });
+    }
+  }
+
+  // Delete all read notifications
+  async deleteAllReadNotifications(req, res) {
+    try {
+      const userId = req.user.id;
+
+      const deleted = await Notifications.destroy({
+        where: {
+          user_id: userId,
+          is_read: true
+        }
+      });
+
+      return res.status(200).json({
+        message: "Xóa tất cả thông báo đã đọc thành công",
+        code: 1,
+        deletedCount: deleted
+      });
+    } catch (error) {
+      console.error('Error in deleteAllReadNotifications:', error);
+      return res.status(500).json({
+        message: "Lỗi khi xóa tất cả thông báo đã đọc",
+        code: -1,
         error: error.message
       });
     }

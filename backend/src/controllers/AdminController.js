@@ -13,6 +13,7 @@ const CareerHandbook = require("../models/CareerHandbook");
 const Reviews = require("../models/Reviews");
 const BusinessLicenses = require("../models/BusinessLicenses");
 const Notifications = require("../models/Notifications");
+const NotificationController = require("../controllers/NotificationController");
 
 class AdminController {
   constructor() {
@@ -564,19 +565,38 @@ class AdminController {
   }
   //   update status recruiter company
   async updateStatusRecruiterCompany(req, res) {
-    const { id } = req.params;
+    const { recruiter_id } = req.params;
     const { status } = req.body;
     try {
-      const recruiterCompany = await RecruiterCompanies.findByPk(id);
+      const recruiterCompany = await RecruiterCompanies.findByPk(recruiter_id);
       if (!recruiterCompany) {
         return res.status(404).json({ error: "Recruiter company not found" });
       }
+
+      // Validate status
+      const validStatuses = ['pending', 'active', 'rejected'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid status. Status must be one of: pending, active, rejected'
+        });
+      }
+
       recruiterCompany.status = status;
       await recruiterCompany.save();
-      return res.json({ recruiterCompany });
+
+      // Tạo thông báo cho nhà tuyển dụng
+      await NotificationController.createCompanyStatusNotification(recruiterCompany.user_id, status);
+
+      return res.status(200).json({ 
+        success: true,
+        message: 'Cập nhật trạng thái thành công',
+        recruiterCompany 
+      });
     } catch (error) {
       console.error("Error:", error);
       return res.status(500).json({
+        success: false,
         message: "Internal server error",
         error: error.message,
       });
@@ -587,15 +607,32 @@ class AdminController {
     try {
       const { candidate_id } = req.params;
       const { status } = req.body;
+
       const candidate = await Candidate.findByPk(candidate_id);
+      
+      if (!candidate) {
+        return res.status(404).json({ 
+          success: false,
+          message: 'Không tìm thấy ứng viên' 
+        });
+      }
+
       candidate.status = status;
       await candidate.save();
-      return res.json({ candidate });
+
+      // Tạo thông báo cho ứng viên
+      await NotificationController.createCandidateStatusNotification(candidate.user_id, status);
+
+      return res.status(200).json({ 
+        success: true,
+        message: 'Cập nhật trạng thái thành công',
+        candidate 
+      });
     } catch (error) {
-      console.error("Error:", error);
+      console.error('Error in updateStatusCandidate:', error);
       return res.status(500).json({
-        message: "Internal server error",
-        error: error.message,
+        success: false,
+        message: error.message || 'Lỗi khi cập nhật trạng thái ứng viên'
       });
     }
   }
@@ -803,6 +840,7 @@ class AdminController {
       });
     }
   }
+
   // delete career handbook by post_id
   async deleteCareerHandbook(req, res) {
     try {

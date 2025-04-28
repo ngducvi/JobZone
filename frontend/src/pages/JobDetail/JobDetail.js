@@ -1,3 +1,533 @@
+// // JobDetail page
+// import React, { useEffect, useState } from "react";
+// import { authAPI, userApis } from "~/utils/api";
+// import { useParams, Link, useNavigate } from "react-router-dom";
+// import classNames from "classnames/bind";
+// import styles from "./JobDetail.module.scss";
+// import UserInfo from "~/components/UserInfo";
+// import images from "~/assets/images";
+// import PopularKeywords from '~/components/PopularKeywords/PopularKeywords';
+// import useScrollTop from '~/hooks/useScrollTop';
+// import { toast } from "react-toastify";
+// import { toast as hotToast } from 'react-hot-toast';
+// const cx = classNames.bind(styles);
+
+// const JobDetail = () => {
+//   const navigate = useNavigate();
+//   const [job, setJob] = useState(null);
+//   const { id } = useParams();
+//   console.log(id);
+//   const [copied, setCopied] = useState(false);
+//   const [company, setCompany] = useState(null);
+//   const [savedStatus, setSavedStatus] = useState(false);
+//   const [appliedStatus, setAppliedStatus] = useState(false);
+//   const [loading, setLoading] = useState(true);
+//   const [applying, setApplying] = useState(false);
+  
+
+//   useEffect(() => {
+//     const fetchData = async () => {
+//       const response = await authAPI().get(userApis.getJobDetailByJobId(id));
+//       setJob(response.data.job);
+//       setCompany(response.data);
+//     }
+//     fetchData();
+//   }, [id]);
+
+//   useEffect(() => {
+//     const checkSavedStatus = async () => {
+//       try {
+//         const savedResponse = await authAPI().get(userApis.getAllSavedJobsByUser);
+//         const isJobSaved = savedResponse.data.savedJobs.some(
+//           savedJob => savedJob.job_id === id
+//         );
+//         setSavedStatus(isJobSaved);
+//       } catch (error) {
+//         console.error("Error checking saved status:", error);
+//       }
+//     };
+//     if (id) {
+//       checkSavedStatus();
+//     }
+//   }, [id]);
+
+//   useEffect(() => {
+//     const checkAppliedStatus = async () => {
+//       try {
+//         const response = await authAPI().get(userApis.checkApplicationStatus(id));
+//         setAppliedStatus(response.data.applied);
+//       } catch (error) {
+//         console.error("Error checking application status:", error);
+//       }
+//     };
+
+//     checkAppliedStatus();
+//   }, [id]);
+
+//   useEffect(() => {
+//     window.scrollTo({
+//       top: 0,
+//       behavior: 'smooth'
+//     });
+//   }, []); 
+//   const handleCopyLink = () => {
+//     navigator.clipboard.writeText(window.location.href);
+//     setCopied(true);
+//     setTimeout(() => setCopied(false), 2000);
+//   };
+
+//   const handleCompanyClick = (companyId) => {
+//     navigate(`/company-detail/${companyId}`);
+//   };
+
+//   const handleSaveJob = async () => {
+//     try {
+//       if (savedStatus) {
+//         await authAPI().delete(userApis.unsaveJob(id));
+//         setSavedStatus(false);
+//         toast.success("Đã hủy lưu công việc!", {
+//           position: "top-right",
+//           autoClose: 3000,
+//           hideProgressBar: false,
+//           closeOnClick: true,
+//           pauseOnHover: true,
+//           draggable: true,
+//         });
+//       } else {
+//         await authAPI().post(userApis.saveJob(id));
+//         setSavedStatus(true);
+//         toast.success("Đã lưu công việc thành công!", {
+//           position: "top-right",
+//           autoClose: 3000,
+//           hideProgressBar: false,
+//           closeOnClick: true,
+//           pauseOnHover: true,
+//           draggable: true,
+//         });
+//       }
+//       window.dispatchEvent(new Event('user-data-update'));
+//     } catch (error) {
+//       console.error("Error toggling save status:", error);
+//       if (error.response?.data?.message === 'Bạn đã lưu công việc này rồi') {
+//         setSavedStatus(true);
+//       }
+//     }
+//   };
+
+//   const handleApplyJob = async () => {
+//     try {
+//       setApplying(true);
+//       const response = await authAPI().post(userApis.applyJob, {
+//         job_id: id,
+//         recruiter_id: job.recruiter_id
+//       });
+
+//       if (response.data.success) {
+//         toast.success('Đơn ứng tuyển đã được gửi thành công!');
+//         setAppliedStatus(true);
+//       }
+//     } catch (error) {
+//       console.error('Error applying job:', error);
+//       toast.error('Có lỗi xảy ra khi gửi đơn ứng tuyển');
+//     } finally {
+//       setApplying(false);
+//     }
+//   };
+
+//   const handleWithdrawApplication = async () => {
+//     try {
+//       await authAPI().post(userApis.withdrawApplication, { job_id: id });
+//       toast.success("Đơn ứng tuyển đã được hủy thành công!", {
+//         position: "top-right",
+//         autoClose: 3000,
+//         hideProgressBar: false,
+//         closeOnClick: true,
+//         pauseOnHover: true,
+//         draggable: true,
+//       });
+//       setAppliedStatus(false);
+//     } catch (error) {
+//       console.error("Error withdrawing application:", error);
+//       toast.error("Có lỗi xảy ra khi hủy đơn ứng tuyển.", {
+//         position: "top-right",
+//         autoClose: 3000,
+//         hideProgressBar: false,
+//         closeOnClick: true,
+//         pauseOnHover: true,
+//         draggable: true,
+//       });
+//     }
+//   };
+
+//   if (loading) {
+//     return <div>Loading...</div>;
+//   }
+
+//   if (!job) {
+//     return <div>Không tìm thấy công việc</div>;
+//   }
+
+//   return (
+//     <div className={cx("wrapper")}>
+//       <div className={cx("container")}>
+//         {/* Left Column - Job Details */}
+//         <div className={cx("job-content")}>
+//           <div className={cx("job-header")}>
+//             <div className={cx("company-info")}>
+//               <img
+//                 src={company?.companyLogo || images.company_1}
+//                 alt=""
+//                 className={cx("company-logo")}
+//               />
+//               <div className={cx("info")}>
+//                 <h1 className={cx("job-title")}>{job?.title}</h1>
+//                 <button
+//                   className={cx("company-name")}
+//                   onClick={() => handleCompanyClick(company?.company_id)}
+//                 >
+//                   <i className="fas fa-building"></i>
+//                   {company?.companyName || "Công ty ABC"}
+//                 </button>
+//                 <div className={cx("deadline")}>
+//                   <i className="far fa-clock"></i>
+//                   Hạn nộp hồ sơ: {job?.deadline || "Không thời hạn"}
+//                 </div>
+//               </div>
+//             </div>
+//             <div className={cx("action-buttons")}>
+//               {appliedStatus ? (
+//                 <div className={cx("applied-status")}>
+//                   <button className={cx("apply-btn", "primary-btn")} disabled>
+//                     <i className="fas fa-check"></i>
+//                     Đã ứng tuyển
+//                   </button>
+//                   <button className={cx("withdraw-btn", "secondary-btn")} onClick={handleWithdrawApplication}>
+//                     <i className="fas fa-times"></i>
+//                     Hủy ứng tuyển
+//                   </button>
+//                 </div>
+//               ) : (
+//                 <button 
+//                   className={cx("apply-btn", "primary-btn")} 
+//                   onClick={handleApplyJob}
+//                   disabled={applying}
+//                 >
+//                   {applying ? 'Đang gửi...' : 'Ứng tuyển ngay'}
+//                 </button>
+//               )}
+//               <button 
+//                 className={cx("save-btn", "secondary-btn", { saved: savedStatus })}
+//                 onClick={handleSaveJob}
+//               >
+//                 <i className={`fa${savedStatus ? 's' : 'r'} fa-bookmark`}></i>
+//                 {savedStatus ? 'Đã Lưu' : 'Lưu Tin'}
+//               </button>
+//             </div>
+//           </div>
+
+//           <div className={cx("job-overview")}>
+//             <div className={cx("overview-item")}>
+//               <i className="fas fa-sack-dollar"></i>
+//               <div className={cx("overview-content")}>
+//                 <label>Mức lương</label>
+//                 <span>{job?.salary || "Thỏa thuận"}</span>
+//               </div>
+//             </div>
+//             <div className={cx("overview-item")}>
+//               <i className="fas fa-map-marker-alt"></i>
+//               <div className={cx("overview-content")}>
+//                 <label>Địa điểm</label>
+//                 <span>{job?.location}</span>
+//               </div>
+//             </div>
+//             <div className={cx("overview-item")}>
+//               <i className="fas fa-briefcase"></i>
+//               <div className={cx("overview-content")}>
+//                 <label>Kinh nghiệm</label>
+//                 <span>{job?.experience || "Không yêu cầu"}</span>
+//               </div>
+//             </div>
+//           </div>
+
+//           <div className={cx("job-description")}>
+//             <h2>Chi tiết tuyển dụng</h2>
+//             <div className={cx("section")}>
+//               <h3>Mô tả công việc</h3>
+//               <div dangerouslySetInnerHTML={{ __html: job?.description }} />
+//             </div>
+
+//             <div className={cx("section")}>
+//               <h3>Yêu cầu ứng viên</h3>
+//               <div
+//                 dangerouslySetInnerHTML={{ __html: job?.job_requirements }}
+//               />
+//             </div>
+//             {/* thu nhập */}
+//             <div className={cx("section")}>
+//               <h3>Thu nhập</h3>
+//               <div dangerouslySetInnerHTML={{ __html: job?.salary }} />
+//             </div>
+
+//             <div className={cx("section")}>
+//               <h3>Quyền lợi</h3>
+//               <div dangerouslySetInnerHTML={{ __html: job?.benefits }} />
+//             </div>
+//             {/* địa điểm làm việc */}
+//             <div className={cx("section")}>
+//               <h3>Địa điểm làm việc</h3>
+//               <div dangerouslySetInnerHTML={{ __html: job?.location }} />
+//             </div>
+//             {/* cách thức ứng tuyển  */}
+//             <div className={cx("section")}>
+//               <h3>Cách thức ứng tuyển</h3>
+//               Ứng viên nộp hồ sơ trực tuyến bằng cách bấm Ứng tuyển ngay dưới
+//               đây.
+//               {/* hạn nộp */}
+//               <div className={cx("deadline")}>
+//                 Hạn nộp: {job?.deadline || "Không thời hạn"}
+//               </div>
+//             </div>
+//             {/* Button ứng tuyển và Lưu Tin  */}
+//             <div className={cx("action-buttons")}>
+//               <button 
+//                 className={cx("apply-btn")}
+//                 onClick={handleApplyJob}
+//                 disabled={applying}
+//               >
+//                 {applying ? 'Đang gửi...' : 'Ứng tuyển ngay'}
+//               </button>
+//               <button 
+//                 className={cx("save-btn", "secondary-btn", { saved: savedStatus })}
+//                 onClick={handleSaveJob}
+//               >
+//                 <i className={`fa${savedStatus ? 's' : 'r'} fa-bookmark`}></i>
+//                 {savedStatus ? 'Đã Lưu' : 'Lưu Tin'}
+//               </button>
+//             </div>
+//             <div className={cx("report-btn")}>
+//               <i className="fas fa-exclamation-triangle"></i>
+//               Báo cáo tin tuyển dụng: Nếu bạn thấy rằng tin tuyển dụng này không
+//               đúng hoặc có dấu hiệu lừa đảo, hãy phản ánh với chúng tôi.
+//             </div>
+//           </div>
+
+//           <div className={cx("job-analysis")}>
+//             <div className={cx("analysis-card")}>
+//               <div className={cx("card-header")}>
+//                 <i className="fas fa-chart-line"></i>
+//                 <h3>Phân tích mức độ phù hợp</h3>
+//                 <span className={cx("match-rate")}>
+//                   <i className="fas fa-star"></i>
+//                   80% phù hợp
+//                 </span>
+//               </div>
+
+//               <div className={cx("analysis-content")}>
+//                 <div className={cx("analysis-item")}>
+//                   <div className={cx("question")}>
+//                     <i className="fas fa-check-circle"></i>
+//                     <span>Bạn phù hợp bao nhiêu % với việc làm này?</span>
+//                   </div>
+//                   <div className={cx("progress-bar")}>
+//                     <div 
+//                       className={cx("progress")} 
+//                       style={{ width: "80%" }}
+//                     ></div>
+//                   </div>
+//                   <span className={cx("percentage")}>80%</span>
+//                 </div>
+
+//                 <div className={cx("analysis-item")}>
+//                   <div className={cx("question")}>
+//                     <i className="fas fa-exclamation-circle"></i>
+//                     <span>Đâu là điểm ít phù hợp nhất trong CV của bạn?</span>
+//                   </div>
+//                   <div className={cx("weakness-points")}>
+//                     <div className={cx("point")}>
+//                       <i className="fas fa-times"></i>
+//                       <span>Thiếu kinh nghiệm về Docker</span>
+//                     </div>
+//                     <div className={cx("point")}>
+//                       <i className="fas fa-times"></i>
+//                       <span>Chưa có chứng chỉ AWS</span>
+//                     </div>
+//                   </div>
+//                 </div>
+
+//                 <div className={cx("analysis-item")}>
+//                   <div className={cx("question")}>
+//                     <i className="fas fa-lightbulb"></i>
+//                     <span>Kỹ năng nào của bạn phù hợp, kỹ năng nào cần thiếu so với yêu cầu của NTD?</span>
+//                   </div>
+//                   <div className={cx("skills-analysis")}>
+//                     <div className={cx("matching-skills")}>
+//                       <h4>Kỹ năng phù hợp</h4>
+//                       <div className={cx("skill-tags")}>
+//                         <span className={cx("tag", "match")}>
+//                           <i className="fas fa-check"></i>
+//                           ReactJS
+//                         </span>
+//                         <span className={cx("tag", "match")}>
+//                           <i className="fas fa-check"></i>
+//                           JavaScript
+//                         </span>
+//                         <span className={cx("tag", "match")}>
+//                           <i className="fas fa-check"></i>
+//                           HTML/CSS
+//                         </span>
+//                       </div>
+//                     </div>
+//                     <div className={cx("missing-skills")}>
+//                       <h4>Kỹ năng còn thiếu</h4>
+//                       <div className={cx("skill-tags")}>
+//                         <span className={cx("tag", "missing")}>
+//                           <i className="fas fa-times"></i>
+//                           Docker
+//                         </span>
+//                         <span className={cx("tag", "missing")}>
+//                           <i className="fas fa-times"></i>
+//                           AWS
+//                         </span>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 </div>
+
+//                 <div className={cx("upgrade-cta")}>
+//                   <button className={cx("upgrade-btn")}>
+//                     <i className="fas fa-crown"></i>
+//                     Xem ngay phân tích chi tiết
+//                   </button>
+//                   <span className={cx("price")}>
+//                     <span className={cx("original")}>20.000 VND</span>
+//                     <span className={cx("discount")}>10.000 VND</span>
+//                     <span className={cx("discount-tag")}>-50%</span>
+//                   </span>
+//                 </div>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+
+//         {/* Right Column - Company Info */}
+//         <div className={cx("company-profile")}>
+//           <div className={cx("company-card")}>
+//             <img src={company?.companyLogo || images.company_1} alt="" />
+//             <h3>{company?.companyName}</h3>
+//             <div className={cx("company-meta")}>
+//               <div>
+//                 <i className="fas fa-user-friends"></i>
+//                 <span>{company?.companySize || "100-499 nhân viên"}</span>
+//               </div>
+//               <div>
+//                 <i className="fas fa-briefcase"></i>
+//                 <span>{company?.companyIndustry || "Bán lẻ - Hàng tiêu dùng - FMCG"} </span>
+//               </div>
+//               <div>
+//                 <i className="fas fa-map-marker-alt"></i>
+//                 <span>{company?.companyAddress || "Hà Nội"}</span>
+//               </div>
+//             </div>
+//             <button
+//               className={cx("view-company")}
+//               onClick={() => handleCompanyClick(company?.companyId)}
+//             >
+//               Xem trang công ty <i className="fas fa-arrow-right"></i>
+//             </button>
+//           </div>
+
+//           <div className={cx("job-overview-card")}>
+//             <h3>Thông tin chung</h3>
+//             <div className={cx("overview-items")}>
+//               <div className={cx("item")}>
+//                 <i className="fas fa-chart-line"></i>
+//                 <div>
+//                   <label>Cấp bậc</label>
+//                   <span>{job?.rank || "Nhân viên"}</span>
+//                 </div>
+//               </div>
+//               <div className={cx("item")}>
+//                 <i className="fas fa-graduation-cap"></i>
+//                 <div>
+//                   <label>Học vấn</label>
+//                   <span>{job?.education || "Trung học phổ thông (Cấp 3) trở lên"}</span>
+//                 </div>
+//               </div>
+//               <div className={cx("item")}>
+//                 <i className="fas fa-users"></i>
+//                 <div>
+//                   <label>Số lượng tuyển</label>
+//                   <span>{job?.quantity || "2 người"}</span>
+//                 </div>
+//               </div>
+//               <div className={cx("item")}>
+//                 <i className="fas fa-clock"></i>
+//                 <div>
+//                   <label>Hình thức làm việc</label>
+//                   <span>{job?.working_time|| "Toàn thời gian"}</span>
+//                 </div>
+//               </div>
+//             </div>
+//           </div>
+
+//           <div className={cx("related-categories")}>
+//             <h3>Danh mục Nghề liên quan</h3>
+//             <div className={cx("category-list")}>
+//               <Link to="/jobs/kinh-doanh">Kinh doanh/Bán hàng</Link>
+//               <Link to="/jobs/ban-le">Bán lẻ/Bán sỉ</Link>
+//               <Link to="/jobs/ban-hang">Bán hàng/Dịch vụ khách hàng</Link>
+//               <Link to="/jobs/ban-le">Bán lẻ</Link>
+//             </div>
+//             {/* Kỹ năng cần có */}
+//             <div className={cx("required-skills")}>
+//               <h3>Kỹ năng cần có</h3>
+//               <div className={cx("category-list")}>
+//                 <Link to="/jobs/kinh-doanh">Kinh doanh/Bán hàng</Link>
+//               </div>
+//             </div>
+//             {/* Khu vực làm việc */}
+//             <div className={cx("work-location")}>
+//               <h3>Khu vực làm việc</h3>
+//               <div className={cx("category-list")}>
+//                 <Link to="/jobs/kinh-doanh">Kinh doanh/Bán hàng</Link>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+//       <div className={cx('social-buttons')}>
+//         <button 
+//           className={cx('social-btn', 'facebook')} 
+//           onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${window.location.href}`, '_blank')}
+//         >
+//           <i className="fab fa-facebook-f"></i>
+//         </button>
+//         <button 
+//           className={cx('social-btn', 'twitter')}
+//           onClick={() => window.open(`https://twitter.com/intent/tweet?url=${window.location.href}`, '_blank')}
+//         >
+//           <i className="fab fa-twitter"></i>
+//         </button>
+//         <button 
+//           className={cx('social-btn', 'linkedin')}
+//           onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${window.location.href}`, '_blank')}
+//         >
+//           <i className="fab fa-linkedin-in"></i>
+//         </button>
+//         <button 
+//           className={cx('social-btn', 'copy-link', { copied })}
+//           onClick={handleCopyLink}
+//           title={copied ? 'Đã sao chép' : 'Sao chép liên kết'}
+//         >
+//           <i className={copied ? "fas fa-check" : "fas fa-link"}></i>
+//         </button>
+//       </div>
+//       <PopularKeywords />
+//     </div>
+//   );
+// };
+
+// export default JobDetail;
 // JobDetail page
 import React, { useEffect, useState } from "react";
 import { authAPI, userApis } from "~/utils/api";

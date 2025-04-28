@@ -22,6 +22,7 @@
     "openai": "^4.73.1",
     "react-pdf": "^9.2.1",
     "sequelize": "^6.37.5",
+    "socket.io": "^4.8.1",
     "vnpay": "^1.6.0"
   }
 }

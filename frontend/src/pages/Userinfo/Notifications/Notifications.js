@@ -2,14 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import classNames from 'classnames/bind';
 import styles from './Notifications.module.scss';
+import { userApis, authAPI } from '~/utils/api';
+import socketService from '~/utils/socket';
+import { toast } from 'react-hot-toast';
+import { useNotification } from '~/context/NotificationContext';
 
 const cx = classNames.bind(styles);
-
-const sampleNotifications = [
-    { id: 1, title: 'Công việc mới phù hợp', content: 'Có 3 công việc mới phù hợp với hồ sơ của bạn.', date: '2024-06-01', read: false },
-    { id: 2, title: 'Cập nhật hồ sơ', content: 'Hồ sơ của bạn đã được duyệt.', date: '2024-05-30', read: true },
-    { id: 3, title: 'Tin nhắn mới', content: 'Bạn có 1 tin nhắn mới từ nhà tuyển dụng.', date: '2024-05-28', read: false },
-];
 
 const defaultSettings = {
     jobAlerts: true,
@@ -18,11 +16,141 @@ const defaultSettings = {
 };
 
 const Notifications = () => {
-    const [notifications, setNotifications] = useState(sampleNotifications);
+    const [notifications, setNotifications] = useState([]);
     const [settings, setSettings] = useState(defaultSettings);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [currentUser, setCurrentUser] = useState(null);
+    const { updateUnreadCount } = useNotification();
 
-    const handleToggle = (key) => {
-        setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
+    useEffect(() => {
+        fetchNotifications();
+        fetchCurrentUser();
+
+        return () => {
+            socketService.disconnect();
+        };
+    }, [page]);
+
+    const fetchNotifications = async () => {
+        try {
+            setLoading(true);
+            const response = await authAPI().get(userApis.getUserNotifications, {
+                params: { page, limit: 10 }
+            });
+            
+            if (response.data.success) {
+                const { rows, count, currentPage, totalPages } = response.data.data;
+                setNotifications(prev => page === 1 ? rows : [...prev, ...rows]);
+                setHasMore(currentPage < totalPages);
+            } else {
+                setError(response.data.message || 'Không thể tải thông báo');
+            }
+        } catch (err) {
+            setError(err.response?.data?.message || 'Không thể tải thông báo. Vui lòng thử lại sau.');
+            console.error('Error fetching notifications:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchCurrentUser = async () => {
+        try {
+            const response = await authAPI().get(userApis.getCurrentUser);
+            setCurrentUser(response.data.user);
+            
+            const token = localStorage.getItem('token');
+            socketService.connect(token);
+            socketService.joinUserRoom(response.data.user.id);
+            
+            socketService.onNewNotification((newNotification) => {
+                setNotifications(prev => {
+                    const exists = prev.some(noti => noti.id === newNotification.id);
+                    if (!exists) {
+                        return [newNotification, ...prev];
+                    }
+                    return prev;
+                });
+                toast.success('Bạn có thông báo mới!');
+            });
+        } catch (error) {
+            console.error('Error fetching current user:', error);
+        }
+    };
+
+    const handleToggle = async (key) => {
+        try {
+            // TODO: Implement API call to update notification settings
+            setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
+        } catch (err) {
+            console.error('Error updating notification settings:', err);
+        }
+    };
+
+    const handleLoadMore = () => {
+        if (!loading && hasMore) {
+            setPage(prev => prev + 1);
+        }
+    };
+
+    const markAsRead = async (notificationId) => {
+        try {
+            const response = await authAPI().patch(userApis.markNotificationAsRead(notificationId));
+            if (response.data.success) {
+                setNotifications(prev =>
+                    prev.map(notification =>
+                        notification.id === notificationId
+                            ? { ...notification, is_read: true }
+                            : notification
+                    )
+                );
+                // Cập nhật số lượng thông báo chưa đọc
+                const unreadCount = notifications.filter(n => !n.is_read).length - 1;
+                updateUnreadCount(unreadCount);
+            }
+        } catch (error) {
+            console.error('Error marking notification as read:', error);
+        }
+    };
+
+    const markAllAsRead = async () => {
+        try {
+            const response = await authAPI().patch(userApis.markAllNotificationsAsRead);
+            if (response.data.success) {
+                setNotifications(prev =>
+                    prev.map(notification => ({ ...notification, is_read: true }))
+                );
+                updateUnreadCount(0);
+            }
+        } catch (error) {
+            console.error('Error marking all notifications as read:', error);
+        }
+    };
+
+    const deleteNotification = async (notificationId) => {
+        try {
+            const response = await authAPI().delete(userApis.deleteNotification(notificationId));
+            
+            if (response.data.success) {
+                setNotifications(prev => prev.filter(noti => noti.id !== notificationId));
+            }
+        } catch (err) {
+            console.error('Error deleting notification:', err);
+        }
+    };
+
+    const deleteAllRead = async () => {
+        try {
+            const response = await authAPI().delete(userApis.deleteAllReadNotifications);
+            
+            if (response.data.success) {
+                setNotifications(prev => prev.filter(noti => !noti.is_read));
+            }
+        } catch (err) {
+            console.error('Error deleting all read notifications:', err);
+        }
     };
 
     return (
@@ -60,19 +188,66 @@ const Notifications = () => {
             </div>
 
             <div className={cx('notifications-section')}>
-                <h2 className={cx('section-title')}>Danh sách thông báo</h2>
-                {notifications.length > 0 ? (
-                    <div className={cx('notifications-list')}>
-                        {notifications.map((noti) => (
-                            <div key={noti.id} className={cx('notification-card', { read: noti.read })}>
-                                <div className={cx('notification-header')}>
-                                    <h3 className={cx('notification-title')}>{noti.title}</h3>
-                                    <span className={cx('notification-date')}>{noti.date}</span>
-                                </div>
-                                <div className={cx('notification-content')}>{noti.content}</div>
-                            </div>
-                        ))}
+                <div className={cx('section-header')}>
+                    <h2 className={cx('section-title')}>Danh sách thông báo</h2>
+                    <div className={cx('action-buttons')}>
+                        <button 
+                            className={cx('mark-all-read')}
+                            onClick={markAllAsRead}
+                            disabled={notifications.every(noti => noti.is_read)}
+                        >
+                            Đánh dấu tất cả đã đọc
+                        </button>
+                        <button 
+                            className={cx('delete-read')}
+                            onClick={deleteAllRead}
+                            disabled={notifications.every(noti => !noti.is_read)}
+                        >
+                            Xóa tất cả đã đọc
+                        </button>
                     </div>
+                </div>
+                {error ? (
+                    <div className={cx('error-message')}>{error}</div>
+                ) : notifications.length > 0 ? (
+                    <>
+                        <div className={cx('notifications-list')}>
+                            {notifications.map((noti) => (
+                                <div 
+                                    key={noti.id} 
+                                    className={cx('notification-card', { read: noti.is_read })}
+                                >
+                                    <div 
+                                        className={cx('notification-content')}
+                                        onClick={() => !noti.is_read && markAsRead(noti.id)}
+                                    >
+                                        <div className={cx('notification-header')}>
+                                            <h3 className={cx('notification-title')}>{noti.title}</h3>
+                                            <span className={cx('notification-date')}>
+                                                {new Date(noti.created_at).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                        <div className={cx('notification-body')}>{noti.content}</div>
+                                    </div>
+                                    <button 
+                                        className={cx('delete-button')}
+                                        onClick={() => deleteNotification(noti.id)}
+                                    >
+                                        <i className="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                        {hasMore && (
+                            <button 
+                                className={cx('load-more')}
+                                onClick={handleLoadMore}
+                                disabled={loading}
+                            >
+                                {loading ? 'Đang tải...' : 'Tải thêm'}
+                            </button>
+                        )}
+                    </>
                 ) : (
                     <div className={cx('no-notifications')}>
                         <p>Bạn chưa có thông báo nào</p>

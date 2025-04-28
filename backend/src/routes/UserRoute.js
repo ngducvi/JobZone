@@ -114,4 +114,10 @@ router.post(
   userController.createCandidateCvWithCvId.bind(userController)
 );
 router.get("/reviews/:user_id", userController.getAllReviewsByUserId.bind(userController));
+router.get('/notifications', userController.getUserNotifications.bind(userController));
+router.get('/notifications/unread/count', userController.getUnreadNotificationsCount.bind(userController));
+router.patch('/notifications/:notificationId/read', userController.markNotificationAsRead.bind(userController));
+router.patch('/notifications/read-all', userController.markAllNotificationsAsRead.bind(userController));
+router.delete('/notifications/:notificationId', userController.deleteNotification.bind(userController));
+router.delete('/notifications/read/all', userController.deleteAllReadNotifications.bind(userController));
 module.exports = router;
