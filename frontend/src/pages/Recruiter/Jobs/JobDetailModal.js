@@ -16,8 +16,8 @@ const JobDetailModal = ({ isOpen, onClose, jobDetails }) => {
         
         <div className={cx('job-details')}>
           <div className={cx('job-title-section')}>
-            <h3 className={cx('job-title')}>{jobDetails.title}</h3>
-            <span className={cx('job-status', jobDetails.status === 'Đang tuyển' ? 'active' : 'inactive')}>
+            <h3 className={cx('job-title')}>{jobDetails?.title}</h3>
+            <span className={cx('job-status', jobDetails?.status === 'Đang tuyển' ? 'active' : 'inactive')}>
               {jobDetails.status}
             </span>
           </div>
@@ -25,11 +25,11 @@ const JobDetailModal = ({ isOpen, onClose, jobDetails }) => {
           <div className={cx('info-grid')}>
             <div className={cx('info-item')}>
               <div className={cx('info-label')}>Mức lương</div>
-              <div className={cx('info-value')}>{jobDetails.salary}</div>
+              <div className={cx('info-value')}>{jobDetails?.salary}</div>
             </div>
             <div className={cx('info-item')}>
               <div className={cx('info-label')}>Địa điểm</div>
-              <div className={cx('info-value')}>{jobDetails.location}</div>
+              <div className={cx('info-value')}>{jobDetails?.location}</div>
             </div>
             <div className={cx('info-item')}>
               <div className={cx('info-label')}>Kinh nghiệm</div>
