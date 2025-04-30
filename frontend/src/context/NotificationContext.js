@@ -10,6 +10,10 @@ export const NotificationProvider = ({ children }) => {
     const [socket, setSocket] = useState(null);
     const [user, setUser] = useState(null);
     const [error, setError] = useState(null);
+    const [notificationSettings, setNotificationSettings] = useState({
+        is_notification: true,
+        is_message: true
+    });
 
     const fetchCurrentUser = async () => {
         try {
@@ -48,7 +52,31 @@ export const NotificationProvider = ({ children }) => {
         }
     };
 
+    const fetchNotificationSettings = async () => {
+        try {
+            const response = await authAPI().get(userApis.getCandidateNotification);
+            if (response.data.success) {
+                setNotificationSettings({
+                    is_notification: response.data.data.is_notification,
+                    is_message: response.data.data.is_message
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching notification settings:', error);
+        }
+    };
+
     const showNotificationToast = (notification) => {
+        // Check if it's a system notification and if system notifications are disabled
+        if (notification.type === 'system' && !notificationSettings.is_notification) {
+            return;
+        }
+        
+        // Check if it's a message notification and if message notifications are disabled
+        if (notification.type === 'message' && !notificationSettings.is_message) {
+            return;
+        }
+
         const toastId = `notification-${Date.now()}`;
         
         toast.custom(
@@ -118,6 +146,9 @@ export const NotificationProvider = ({ children }) => {
                 return;
             }
 
+            // Fetch notification settings before setting up socket
+            await fetchNotificationSettings();
+
             // Connect socket and join user room
             socketService.connect(token);
             socketService.joinUserRoom(currentUser.id);
@@ -160,7 +191,9 @@ export const NotificationProvider = ({ children }) => {
             socket, 
             user, 
             error,
-            showNotificationToast 
+            showNotificationToast,
+            notificationSettings,
+            setNotificationSettings
         }}>
             {children}
         </NotificationContext.Provider>

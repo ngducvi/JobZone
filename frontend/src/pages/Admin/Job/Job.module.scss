@@ -296,6 +296,12 @@
         color: #ff4d4f;
         border: 1px solid rgba(255, 77, 79, 0.2);
       }
+
+      &.expired {
+        background: rgba(156, 39, 176, 0.1);
+        color: #9c27b0;
+        border: 1px solid rgba(156, 39, 176, 0.2);
+      }
     }
 
     .actions {
@@ -615,24 +621,41 @@
     cursor: pointer;
     transition: all 0.2s;
 
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
     &.active {
       background: #dcfce7;
       color: #00b14f;
-      &:hover { background: #bbf7d0; }
+      &:hover:not(:disabled) { background: #bbf7d0; }
     }
 
     &.pending {
       background: #fef3c7;
       color: #ffab00;
-      &:hover { background: #fde68a; }
+      &:hover:not(:disabled) { background: #fde68a; }
     }
 
     &.closed {
       background: #fee2e2;
       color: #ff4d4f;
-      &:hover { background: #fecaca; }
+      &:hover:not(:disabled) { background: #fecaca; }
     }
   }
+}
+
+.expired-notice {
+  margin: 16px 0;
+  padding: 12px;
+  background: rgba(156, 39, 176, 0.1);
+  border: 1px solid rgba(156, 39, 176, 0.2);
+  color: #9c27b0;
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: center;
 }
 
 .close-btn {

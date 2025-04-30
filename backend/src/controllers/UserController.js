@@ -1409,13 +1409,18 @@ class UserController {
     return res.json({ reviews });
   }
 
-  // get all jobs
+  // get all jobs với lọc deadline  
   async getAllJobs(req, res) {
     const { page = 1, limit = 12 } = req.query;
     const offset = (page - 1) * limit;
     const jobs = await Job.findAndCountAll({
       limit,
       offset,
+      where: {
+        deadline: {
+          [Op.gte]: new Date()
+        }
+      }
     });
     // lấy danh sách company_id từ jobs
     const companyIds = jobs.rows.map((job) => job.company_id);
@@ -2333,7 +2338,12 @@ class UserController {
         education,
       } = req.query;
 
-      let whereClause = {};
+      let whereClause = {
+        // Only show jobs that haven't expired
+        deadline: {
+          [Op.gte]: new Date()
+        }
+      };
 
       // Filter by category
       if (category_id && category_id !== "all") {
@@ -3204,6 +3214,38 @@ class UserController {
       });
     }
   }
+  // get candidate is_notification,is_message notification
+  async getCandidateNotification(req, res) {
+    try {
+      const userId = req.user.id;
+      const candidate = await Candidate.findOne({
+        where: {
+          user_id: userId
+        }
+      });
+      if (!candidate) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy thông tin ứng viên'
+        });
+      }
+      const is_notification = candidate.is_notification;
+      const is_message = candidate.is_message;
+      return res.status(200).json({
+        success: true,
+        data: {
+          is_notification,
+          is_message
+        }
+      });
+    } catch (error) {
+      console.error('Error in getCandidateNotification:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Lỗi khi lấy thông tin thông báo'
+      });
+    }
+  }
 
   async markNotificationAsRead(req, res) {
     try {
@@ -3398,6 +3440,42 @@ class UserController {
       return res.status(500).json({
         message: error.message,
         code: -1
+      });
+    }
+  }
+
+  async updateCandidateNotification(req, res) {
+    try {
+      const userId = req.user.id;
+      const { is_notification, is_message } = req.body;
+
+      const candidate = await Candidate.findOne({
+        where: {
+          user_id: userId
+        }
+      });
+
+      if (!candidate) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy thông tin ứng viên'
+        });
+      }
+
+      await candidate.update({
+        is_notification,
+        is_message
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: 'Cập nhật cài đặt thông báo thành công'
+      });
+    } catch (error) {
+      console.error('Error in updateCandidateNotification:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Lỗi khi cập nhật cài đặt thông báo'
       });
     }
   }

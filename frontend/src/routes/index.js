@@ -72,6 +72,12 @@ import SettingEmail from '~/pages/Userinfo/SettingEmail/SettingEmail';
 import NotificationsManager from '~/pages/Recruiter/NotificationsManager/NotificationsManager';
 import EditCV from '~/pages/Resume/EditCV/EditCV';
 import CreateSeoBlog from '~/pages/CreateSeoBlog/CreateSeoBlog';
+import CreateEmail from '~/pages/Tools/AiTools/CreateEmail/CreateEmail';
+import InterviewPrep from '~/pages/Tools/AiTools/InterviewPrep/InterviewPrep';
+import CareerCounseling from '~/pages/Tools/AiTools/CareerCounseling/CareerCounseling';
+import AITools from '~/pages/Tools/AiTools';
+import PersonalBrand from '~/pages/Tools/AiTools/PersonalBrand/PersonalBrand';
+import AiChat from '~/pages/Tools/AiTools/AiChat/AiChat';
 const publicRoutes = [
     { path: '/', component: Dashboard },
     { path: '/user/verify-email', component: VerifyEmailSuccess, layout: null },
@@ -139,8 +145,14 @@ const publicRoutes = [
     { path: '/tools', component: Tools },
     { path: '/tools/salary-calculator', component: SalaryCalculator },
     { path: '/tools/compound-interest-calculator', component: CompoundInterestCalculator },
+    { path: '/tools/create-email', component: CreateEmail },
+    { path: '/tools/interview-prep', component: InterviewPrep },
+    { path: '/tools/career-counseling', component: CareerCounseling },
     { path: '/tools/saving-calculator', component: SavingCalculator },
     { path: '/tools/test-disc', component: TestDisc },
+    { path: '/tools/ai', component: AITools },
+    { path: '/tools/ai-chat', component: AiChat },
+    { path: '/tools/personal-brand', component: PersonalBrand },
     { path: '/test-template', component: TestTemplate, layout: null },
     { path: '/career-handbook/detail/:id', component: CareerHandbookDetail},
     { path: '/career-handbook/:post_id', component: CareerHandbookDetail},

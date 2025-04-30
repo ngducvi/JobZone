@@ -121,6 +121,14 @@ Candidate.init({
         type: DataTypes.BOOLEAN,
         allowNull: true,
     },
+    is_notification: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+    },
+    is_message: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+    },
     industry:{
         type: DataTypes.STRING,
         allowNull: true,

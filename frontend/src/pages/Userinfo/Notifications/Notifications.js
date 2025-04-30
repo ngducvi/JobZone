@@ -6,46 +6,74 @@ import { userApis, authAPI } from '~/utils/api';
 import socketService from '~/utils/socket';
 import { toast } from 'react-hot-toast';
 import { useNotification } from '~/context/NotificationContext';
-import { FaBell, FaEnvelope, FaCommentAlt, FaCheck, FaTrash } from 'react-icons/fa';
+import { FaBell, FaEnvelope, FaCommentAlt, FaCheck, FaTrash, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 const cx = classNames.bind(styles);
 
 const defaultSettings = {
-    jobAlerts: true,
-    messages: true,
-    promotions: false,
+    is_notification: true,
+    is_message: true,
 };
+
+const ITEMS_PER_PAGE = 4;
 
 const Notifications = () => {
     const [notifications, setNotifications] = useState([]);
-    const [settings, setSettings] = useState(defaultSettings);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [page, setPage] = useState(1);
+    const [currentPage, setCurrentPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [currentUser, setCurrentUser] = useState(null);
-    const { updateUnreadCount } = useNotification();
+    const { updateUnreadCount, notificationSettings, setNotificationSettings } = useNotification();
+
+    // Tính toán tổng số trang
+    const totalPages = Math.ceil(notifications.length / ITEMS_PER_PAGE);
+
+    // Lấy notifications cho trang hiện tại
+    const getCurrentPageNotifications = () => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const endIndex = startIndex + ITEMS_PER_PAGE;
+        return notifications.slice(startIndex, endIndex);
+    };
+
+    // Tạo mảng số trang để hiển thị
+    const getPageNumbers = () => {
+        const pageNumbers = [];
+        const maxVisiblePages = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+        if (endPage - startPage + 1 < maxVisiblePages) {
+            startPage = Math.max(1, endPage - maxVisiblePages + 1);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            pageNumbers.push(i);
+        }
+
+        return pageNumbers;
+    };
 
     useEffect(() => {
         fetchNotifications();
         fetchCurrentUser();
+        fetchNotificationSettings();
 
         return () => {
             socketService.disconnect();
         };
-    }, [page]);
+    }, []);
 
     const fetchNotifications = async () => {
         try {
             setLoading(true);
-            const response = await authAPI().get(userApis.getUserNotifications, {
-                params: { page, limit: 10 }
-            });
+            const response = await authAPI().get(userApis.getUserNotifications);
+            const candidateResponse = await authAPI().get(userApis.getCandidateNotification);
+            console.log("candidateResponse",candidateResponse.data.data);
             
             if (response.data.success) {
-                const { rows, count, currentPage, totalPages } = response.data.data;
-                setNotifications(prev => page === 1 ? rows : [...prev, ...rows]);
-                setHasMore(currentPage < totalPages);
+                setNotifications(response.data.data.rows);
+                setHasMore(response.data.data.currentPage < response.data.data.totalPages);
             } else {
                 setError(response.data.message || 'Không thể tải thông báo');
             }
@@ -81,18 +109,43 @@ const Notifications = () => {
         }
     };
 
+    const fetchNotificationSettings = async () => {
+        try {
+            const response = await authAPI().get(userApis.getCandidateNotification);
+            if (response.data.success) {
+                setNotificationSettings({
+                    is_notification: response.data.data.is_notification,
+                    is_message: response.data.data.is_message
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching notification settings:', error);
+        }
+    };
+
     const handleToggle = async (key) => {
         try {
-            // TODO: Implement API call to update notification settings
-            setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
+            const newSettings = { ...notificationSettings, [key]: !notificationSettings[key] };
+            const response = await authAPI().patch(userApis.updateCandidateNotification, {
+                is_notification: newSettings.is_notification,
+                is_message: newSettings.is_message
+            });
+            
+            if (response.data.success) {
+                setNotificationSettings(newSettings);
+                toast.success('Cập nhật cài đặt thông báo thành công');
+            } else {
+                toast.error('Cập nhật cài đặt thông báo thất bại');
+            }
         } catch (err) {
             console.error('Error updating notification settings:', err);
+            toast.error('Có lỗi xảy ra khi cập nhật cài đặt thông báo');
         }
     };
 
     const handleLoadMore = () => {
         if (!loading && hasMore) {
-            setPage(prev => prev + 1);
+            setCurrentPage(prev => prev + 1);
         }
     };
 
@@ -172,13 +225,13 @@ const Notifications = () => {
                             <div className={cx('setting-item')}>
                                 <span>
                                     <FaEnvelope className={cx('icon')} />
-                                    Thông báo việc làm
+                                    Thông báo hệ thống
                                 </span>
                                 <label className={cx('switch')}>
                                     <input 
                                         type="checkbox" 
-                                        checked={settings.jobAlerts} 
-                                        onChange={() => handleToggle('jobAlerts')} 
+                                        checked={notificationSettings.is_notification} 
+                                        onChange={() => handleToggle('is_notification')} 
                                     />
                                     <span className={cx('slider')}></span>
                                 </label>
@@ -191,8 +244,8 @@ const Notifications = () => {
                                 <label className={cx('switch')}>
                                     <input 
                                         type="checkbox" 
-                                        checked={settings.messages} 
-                                        onChange={() => handleToggle('messages')} 
+                                        checked={notificationSettings.is_message} 
+                                        onChange={() => handleToggle('is_message')} 
                                     />
                                     <span className={cx('slider')}></span>
                                 </label>
@@ -231,7 +284,7 @@ const Notifications = () => {
                         ) : notifications.length > 0 ? (
                             <>
                                 <div className={cx('notifications-list')}>
-                                    {notifications.map((noti) => (
+                                    {getCurrentPageNotifications().map((noti) => (
                                         <div 
                                             key={noti.id} 
                                             className={cx('notification-card', { read: noti.is_read })}
@@ -258,14 +311,37 @@ const Notifications = () => {
                                         </div>
                                     ))}
                                 </div>
-                                {hasMore && (
-                                    <button 
-                                        className={cx('load-more')}
-                                        onClick={handleLoadMore}
-                                        disabled={loading}
-                                    >
-                                        {loading ? 'Đang tải...' : 'Tải thêm thông báo'}
-                                    </button>
+
+                                {totalPages > 1 && (
+                                    <div className={cx('pagination')}>
+                                        <button
+                                            className={cx('page-btn', 'nav')}
+                                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                            disabled={currentPage === 1}
+                                        >
+                                            <FaChevronLeft className={cx('icon')} />
+                                            Trước
+                                        </button>
+
+                                        {getPageNumbers().map(pageNum => (
+                                            <button
+                                                key={pageNum}
+                                                className={cx('page-btn', { active: currentPage === pageNum })}
+                                                onClick={() => setCurrentPage(pageNum)}
+                                            >
+                                                {pageNum}
+                                            </button>
+                                        ))}
+
+                                        <button
+                                            className={cx('page-btn', 'nav')}
+                                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                            disabled={currentPage === totalPages}
+                                        >
+                                            Sau
+                                            <FaChevronRight className={cx('icon')} />
+                                        </button>
+                                    </div>
                                 )}
                             </>
                         ) : (

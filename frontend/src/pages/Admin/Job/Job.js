@@ -15,7 +15,8 @@ function Job() {
   const [pageStates, setPageStates] = useState({
     Active: { page: 1, total: 1 },
     Pending: { page: 1, total: 1 },
-    Closed: { page: 1, total: 1 }
+    Closed: { page: 1, total: 1 },
+    Expired: { page: 1, total: 1 }
   });
 
   const [jobData, setJobData] = useState([]);
@@ -24,7 +25,8 @@ function Job() {
   const [counts, setCounts] = useState({
     active: 0,
     pending: 0,
-    closed: 0
+    closed: 0,
+    expired: 0
   });
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -51,15 +53,36 @@ function Job() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const result = await authAPI().get(adminApis.getAllJobs, {
-        params: { 
-          page: pageStates[activeTab].page,
-          status: activeTab
-        },
-      });
-      setJobData(result.data.jobs);
-      console.log(result.data.jobs);
+      let endpoint = adminApis.getAllJobs;
+      let params = {
+        page: pageStates[activeTab].page
+      };
 
+      if (activeTab === 'Expired') {
+        // Khi ở tab Expired, chỉ lấy các job đã hết hạn
+        params = {
+          ...params,
+          isExpired: true
+        };
+      } else {
+        // Với các tab khác, lấy theo status và chỉ lấy các job chưa hết hạn
+        params = {
+          ...params,
+          status: activeTab,
+          isExpired: false
+        };
+      }
+
+      const result = await authAPI().get(endpoint, { params });
+      
+      let processedJobs = result.data.jobs;
+      
+      // Nếu đang ở tab Expired, lọc thêm một lần nữa để đảm bảo
+      if (activeTab === 'Expired') {
+        processedJobs = processedJobs.filter(job => new Date(job.deadline) < new Date());
+      }
+
+      setJobData(processedJobs);
       
       // Update total pages for current tab
       setPageStates(prev => ({
@@ -74,7 +97,8 @@ function Job() {
       const newCounts = {
         active: result.data.counts?.active || 0,
         pending: result.data.counts?.pending || 0,
-        closed: result.data.counts?.closed || 0
+        closed: result.data.counts?.closed || 0,
+        expired: result.data.counts?.expired || 0
       };
       setCounts(newCounts);
       
@@ -231,6 +255,18 @@ function Job() {
   // Thêm hàm xử lý cập nhật status
   const handleUpdateStatus = async (jobId, newStatus) => {
     try {
+      const job = jobData.find(j => j.job_id === jobId);
+      if (!job) return;
+
+      // Kiểm tra nếu job đã hết hạn và đang cố gắng set status thành Active hoặc Pending
+      if (isExpired(job.deadline) && (newStatus === 'Active' || newStatus === 'Pending')) {
+        toast.error('❌ Không thể kích hoạt tin đã hết hạn. Vui lòng cập nhật deadline!', {
+          position: "top-right",
+          autoClose: 3000
+        });
+        return;
+      }
+
       await authAPI().patch(adminApis.updateStatusJob(jobId), {
         status: newStatus
       });
@@ -241,7 +277,7 @@ function Job() {
       switch(newStatus) {
         case 'Active':
           message = 'Đã kích hoạt tin tuyển dụng';
-          icon = '��';
+          icon = '✅';
           break;
         case 'Pending':
           message = 'Đã chuyển về trạng thái chờ duyệt';
@@ -249,7 +285,7 @@ function Job() {
           break;
         case 'Closed':
           message = 'Đã đóng tin tuyển dụng';
-          icon = '��';
+          icon = '🔒';
           break;
         default:
           message = 'Cập nhật trạng thái thành công';
@@ -271,6 +307,11 @@ function Job() {
         autoClose: 3000
       });
     }
+  };
+
+  // Add this after the other utility functions
+  const isExpired = (deadline) => {
+    return new Date(deadline) < new Date();
   };
 
   return (
@@ -316,6 +357,14 @@ function Job() {
             >
               <FaBan className={cx("tab-icon")} />
               Đã đóng
+            </button>
+            <button 
+              className={cx("tab-btn", { active: activeTab === 'Expired' })}
+              onClick={() => handleTabChange('Expired')}
+              data-count={counts.expired}
+            >
+              <FaCalendarAlt className={cx("tab-icon")} />
+              Hết hạn
             </button>
           </div>
 
@@ -418,16 +467,17 @@ function Job() {
                     </td>
                     <td>
                       <div 
-                        className={cx('status', job.status?.toLowerCase())}
+                        className={cx('status', job.status?.toLowerCase(), { expired: isExpired(job.deadline) })}
                         onClick={() => {
                           setSelectedJob(job);
                           setShowStatusModal(true);
                         }}
                         style={{ cursor: 'pointer' }}
                       >
-                        {job.status === 'Active' && 'Đang hoạt động'}
-                        {job.status === 'Pending' && 'Chờ duyệt'}
+                        {job.status === 'Active' && !isExpired(job.deadline) && 'Đang hoạt động'}
+                        {job.status === 'Pending' && !isExpired(job.deadline) && 'Chờ duyệt'}
                         {job.status === 'Closed' && 'Đã đóng'}
+                        {isExpired(job.deadline) && 'Hết hạn'}
                       </div>
                     </td>
                     <td className={cx("actions")}>
@@ -625,12 +675,14 @@ function Job() {
               <button 
                 className={cx('status-btn', 'active')}
                 onClick={() => handleUpdateStatus(selectedJob.job_id, 'Active')}
+                disabled={isExpired(selectedJob.deadline)}
               >
                 <FaCheckCircle /> Hoạt động
               </button>
               <button 
                 className={cx('status-btn', 'pending')}
                 onClick={() => handleUpdateStatus(selectedJob.job_id, 'Pending')}
+                disabled={isExpired(selectedJob.deadline)}
               >
                 <FaClock /> Chờ duyệt
               </button>
@@ -641,6 +693,12 @@ function Job() {
                 <FaLock /> Đã đóng
               </button>
             </div>
+
+            {isExpired(selectedJob.deadline) && (
+              <p className={cx('expired-notice')}>
+                Tin tuyển dụng đã hết hạn. Vui lòng cập nhật deadline để kích hoạt lại.
+              </p>
+            )}
 
             <button className={cx('close-btn')} onClick={() => {
               setShowStatusModal(false);

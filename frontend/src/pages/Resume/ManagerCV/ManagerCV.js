@@ -7,6 +7,7 @@ import { authAPI, userApis } from "~/utils/api";
 import Suitablejob from "~/components/Suitablejob/Suitablejob";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import images from "~/assets/images/index";
 const cx = classNames.bind(styles);
 
 const ManagerCV = () => {
@@ -300,8 +301,8 @@ const ManagerCV = () => {
                     <div className={cx("cv-preview")}>
                       <div className={cx("cv-image")}>
                         <img
-                          src={cv.cv_thumbnail || "/images/cv-preview.png"}
-                          alt="CV Preview"
+                          src={images.coverletter}
+                          // alt="CV Preview"
                         />
                       </div>
                       <div className={cx("cv-actions")}>
@@ -394,7 +395,7 @@ const ManagerCV = () => {
                     <div className={cx("cv-preview")}>
                       <div className={cx("cv-image")}>
                         <img
-                          src={`${process.env.REACT_APP_API_URL}/uploads/candidate_cv/${cv.cv_url}`}
+                          src={images.coverletter}
                           alt="CV Preview"
                         />
                       </div>

@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import classNames from "classnames/bind";
 import styles from "./CreateCV.module.scss";
 import { authAPI, userApis } from "~/utils/api";
-import { FaEye, FaDownload, FaSearch, FaFilter, FaTimes } from "react-icons/fa";
+import { FaEye, FaDownload, FaSearch, FaFilter, FaTimes, FaPalette, FaLanguage, FaSortAmountDown } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import images from "~/assets/images/index";
 
 const cx = classNames.bind(styles);
 
@@ -21,7 +22,7 @@ const CreateCV = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [selectedColor, setSelectedColor] = useState('#013a74');
-  const [bgColor, setBgColor] = useState('rgba(240, 247, 255, 0.5)'); // Màu nền mặc định
+  const [bgColor, setBgColor] = useState('rgba(240, 247, 255, 0.5)');
   const [cvLanguage, setCvLanguage] = useState("Tiếng Việt");
   const [cvPosition, setCvPosition] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -44,9 +45,7 @@ const CreateCV = () => {
         const token = localStorage.getItem("token");
         if (!token) return;
         const response = await authAPI().get(userApis.getAllCvTemplates);
-        console.log(response.data.cvTemplates);
         const responseFields = await authAPI().get(userApis.getAllTemplateFieldsByTemplateId(response.data.cvTemplates[0].template_id));
-        console.log(responseFields.data.templateFields);
 
         setTemplates(response.data.cvTemplates);
         setTotalPages(response.data.totalPages);
@@ -92,12 +91,11 @@ const CreateCV = () => {
   };
 
   const handleUseTemplate = (template) => {
-    // Chuyển hướng đến trang UseTemplates với template được chọn
-    navigate(`/user/use-templates`, { 
-      state: { 
+    navigate(`/user/use-templates`, {
+      state: {
         template,
         selectedColor,
-        bgColor 
+        bgColor
       }
     });
   };
@@ -105,57 +103,79 @@ const CreateCV = () => {
   const PreviewSidebar = () => {
     return (
       <div className={cx("preview-sidebar")}>
-        <div className={cx("sidebar-section")}>
-          <h3>Mẫu CV Trang trọng</h3>
+        <div className={cx("sidebar-header")}>
+          <h3>Tùy chỉnh CV</h3>
+          <button className={cx("close-btn")} onClick={() => setShowPreview(false)}>
+            <FaTimes />
+          </button>
         </div>
 
-        <div className={cx("sidebar-section")}>
-          <label>Ngôn ngữ</label>
-          <select 
-            value={cvLanguage}
-            onChange={(e) => setCvLanguage(e.target.value)}
-            className={cx("select-input")}
-          >
-            <option value="Tiếng Việt">Tiếng Việt</option>
-            <option value="English">English</option>
-          </select>
-        </div>
+        <div className={cx("sidebar-content")}>
+          <div className={cx("sidebar-section")}>
+            <label>
+              <FaLanguage className={cx("icon")} />
+              Ngôn ngữ
+            </label>
+            <select
+              value={cvLanguage}
+              onChange={(e) => setCvLanguage(e.target.value)}
+              className={cx("select-input")}
+            >
+              <option value="Tiếng Việt">Tiếng Việt</option>
+              <option value="English">English</option>
+            </select>
+          </div>
 
-        <div className={cx("sidebar-section")}>
-          <label>Vị trí ứng tuyển</label>
-          <select 
-            value={cvPosition}
-            onChange={(e) => setCvPosition(e.target.value)}
-            className={cx("select-input")}
-          >
-            <option value="">Chọn vị trí</option>
-            <option value="dev">Developer</option>
-            <option value="design">Designer</option>
-            {/* Thêm các option khác */}
-          </select>
-        </div>
+          <div className={cx("sidebar-section")}>
+            <label>
+              <FaSortAmountDown className={cx("icon")} />
+              Vị trí ứng tuyển
+            </label>
+            <select
+              value={cvPosition}
+              onChange={(e) => setCvPosition(e.target.value)}
+              className={cx("select-input")}
+            >
+              <option value="">Chọn vị trí</option>
+              <option value="dev">Developer</option>
+              <option value="design">Designer</option>
+              <option value="marketing">Marketing</option>
+              <option value="sales">Sales</option>
+            </select>
+          </div>
 
-        <div className={cx("sidebar-section")}>
-          <label>Màu sắc</label>
-          <div className={cx("color-picker")}>
-            {colors.map(color => (
-              <button
-                key={color}
-                className={cx("color-btn", { active: selectedColor === color })}
-                style={{ backgroundColor: color }}
-                onClick={() => handleColorChange(color)}
-              >
-                {selectedColor === color && <span>✓</span>}
-              </button>
-            ))}
+          <div className={cx("sidebar-section")}>
+            <label>
+              <FaPalette className={cx("icon")} />
+              Màu sắc
+            </label>
+            <div className={cx("color-picker")}>
+              {colors.map(color => (
+                <button
+                  key={color}
+                  className={cx("color-btn", { active: selectedColor === color })}
+                  style={{ backgroundColor: color }}
+                  onClick={() => handleColorChange(color)}
+                >
+                  {selectedColor === color && <span>✓</span>}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
         <div className={cx("sidebar-actions")}>
-          <button className={cx("action-btn", "primary")}>
+          <button 
+            className={cx("action-btn", "primary")}
+            onClick={() => handleUseTemplate(selectedTemplate)}
+          >
+            <FaDownload className={cx("icon")} />
             Dùng mẫu này
           </button>
-          <button className={cx("action-btn", "secondary")} >
+          <button 
+            className={cx("action-btn", "secondary")}
+            onClick={() => setShowPreview(false)}
+          >
             Đóng lại
           </button>
         </div>
@@ -174,7 +194,7 @@ const CreateCV = () => {
             userApis.getAllTemplateFieldsByTemplateId(template.template_id)
           );
           setTemplateFields(response.data.templateFields);
-          
+
           // Khởi tạo formData với placeholder values
           const initialData = {};
           response.data.templateFields.forEach(field => {
@@ -197,7 +217,7 @@ const CreateCV = () => {
 
     const renderTemplate = () => {
       let html = template.template_html;
-      
+
       // Thay thế các placeholder bằng giá trị thực
       Object.keys(formData).forEach(key => {
         const placeholder = `{{${key}}}`;
@@ -213,7 +233,7 @@ const CreateCV = () => {
       const customCSS = template.template_css
         .replace(/\$primary-color/g, selectedColor)
         .replace(/\$background-color/g, bgColor);
-      
+
       return (
         <style>
           {`
@@ -268,9 +288,9 @@ const CreateCV = () => {
           <div className={cx("preview-content")}>
             <div className={cx("preview-main")}>
               <TemplateStyle />
-              <div 
-                className={cx("cv-preview")} 
-                dangerouslySetInnerHTML={{ __html: renderTemplate() }} 
+              <div
+                className={cx("cv-preview")}
+                dangerouslySetInnerHTML={{ __html: renderTemplate() }}
               />
             </div>
             <PreviewSidebar />
@@ -283,79 +303,73 @@ const CreateCV = () => {
   return (
     <div className={cx("wrapper")}>
       <div className={cx("header")}>
-        <h1>Danh sách mẫu CV xin việc chuẩn 2023</h1>
-        <p>
-          Các mẫu CV được thiết kế chuẩn theo từng ngành nghề.
-          <br />
-          Phù hợp với cả sinh viên và người đi làm.
-        </p>
-
-        <div className={cx("search-bar")}>
-          <FaSearch className={cx("search-icon")} />
-          <input
-            type="text"
-            placeholder="Tìm kiếm mẫu CV..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <button
-            className={cx("filter-toggle", { active: showFilters })}
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <FaFilter /> Bộ lọc
-          </button>
+        <div className={cx("header-content")}>
+          <h1>Mẫu CV Chuyên Nghiệp</h1>
+          <p>Tạo CV ấn tượng với hơn 100+ mẫu thiết kế chuyên nghiệp</p>
+          
+          <div className={cx("search-container")}>
+            <div className={cx("search-bar")}>
+              <FaSearch className={cx("search-icon")} />
+              <input
+                type="text"
+                placeholder="Tìm kiếm mẫu CV..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <button
+              className={cx("filter-btn", { active: showFilters })}
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <FaFilter className={cx("icon")} />
+              Bộ lọc
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className={cx("content-wrapper")}>
-        <div className={cx("tabs-container")}>
-          <div className={cx("tabs")}>
-            <button
-              className={cx("tab", { active: activeTab === "style" })}
-              onClick={() => setActiveTab("style")}
-            >
-              Mẫu CV theo style
-            </button>
-            <button
-              className={cx("tab", { active: activeTab === "position" })}
-              onClick={() => setActiveTab("position")}
-            >
-              Mẫu CV theo vị trí ứng tuyển
-            </button>
-          </div>
-
-          <div className={cx("filters", { show: showFilters })}>
+      <div className={cx("content")}>
+        <div className={cx("filters", { show: showFilters })}>
+          <div className={cx("filter-group")}>
+            <label>
+              <FaLanguage className={cx("icon")} />
+              Ngôn ngữ
+            </label>
             <select
-              className={cx("filter-select")}
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
+              className={cx("filter-select")}
             >
               <option value="Tiếng Việt">Tiếng Việt</option>
               <option value="English">English</option>
             </select>
+          </div>
 
+          <div className={cx("filter-group")}>
+            <label>
+              <FaSortAmountDown className={cx("icon")} />
+              Sắp xếp
+            </label>
             <select
-              className={cx("filter-select")}
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
+              className={cx("filter-select")}
             >
-              <option value="all">Tất cả thiết kế</option>
-              <option value="newest">Mới cập nhật</option>
-              <option value="popular">Được dùng nhiều nhất</option>
+              <option value="all">Tất cả</option>
+              <option value="newest">Mới nhất</option>
+              <option value="popular">Phổ biến</option>
             </select>
           </div>
         </div>
 
         <div className={cx("templates-grid")}>
           {loading ? (
-            Array(6)
-              .fill(0)
-              .map((_, index) => (
-                <div key={index} className={cx("template-card", "skeleton")} />
-              ))
+            Array(6).fill(0).map((_, index) => (
+              <div key={index} className={cx("template-card", "skeleton")} />
+            ))
           ) : filteredTemplates.length === 0 ? (
             <div className={cx("no-results")}>
-              <img src="/images/no-results.svg" alt="No results" />
+              <img src={images.noResults} alt="No results" />
               <h3>Không tìm thấy mẫu CV phù hợp</h3>
               <p>Vui lòng thử tìm kiếm với từ khóa khác</p>
             </div>
@@ -368,24 +382,23 @@ const CreateCV = () => {
                 onMouseLeave={() => setHoveredCard(null)}
               >
                 <div className={cx("template-image")}>
-                  <img
-                    src={`${process.env.REACT_APP_API_URL}/uploads/templates/${template.template_thumbnail}`}
-                    alt={template.template_name}
-                  />
+                  <img src={images.coverletter} alt={template.template_name} />
                   {hoveredCard === template.template_id && (
                     <div className={cx("template-overlay")}>
                       <div className={cx("overlay-buttons")}>
-                        <button 
+                        <button
                           className={cx("preview-btn")}
                           onClick={() => handlePreview(template)}
                         >
-                          <FaEye /> Xem trước
+                          <FaEye className={cx("icon")} />
+                          Xem trước
                         </button>
-                        <button 
+                        <button
                           className={cx("use-template-btn")}
                           onClick={() => handleUseTemplate(template)}
                         >
-                          <FaDownload /> Sử dụng mẫu này
+                          <FaDownload className={cx("icon")} />
+                          Sử dụng
                         </button>
                       </div>
                     </div>
@@ -393,26 +406,24 @@ const CreateCV = () => {
                 </div>
                 <div className={cx("template-info")}>
                   <div className={cx("template-header")}>
-                    <div className={cx("template-type-container")}>
+                    <div className={cx("template-types")}>
                       {template.type_id.slice(0, 2).map((type, index) => (
                         <span key={type} className={cx("template-type")}>
                           {getTemplateTypeName(type)}
                         </span>
                       ))}
                       {template.type_id.length > 2 && (
-                        <span className={cx("template-type", "more-types")}>
+                        <span className={cx("template-type", "more")}>
                           +{template.type_id.length - 2}
                         </span>
                       )}
                     </div>
                     <span className={cx("template-downloads")}>
-                      <FaDownload /> 1.2k
+                      <FaDownload className={cx("icon")} />
+                      {template.downloads || 0}
                     </span>
                   </div>
-                  <h3 className={cx("template-name")}>
-                    {template.template_name}
-                  </h3>
-
+                  <h3 className={cx("template-name")}>{template.template_name}</h3>
                   <p className={cx("template-description")}>
                     {template.template_description}
                   </p>
@@ -424,7 +435,7 @@ const CreateCV = () => {
       </div>
 
       {showPreview && (
-        <PreviewModal 
+        <PreviewModal
           template={selectedTemplate}
           onClose={() => setShowPreview(false)}
         />

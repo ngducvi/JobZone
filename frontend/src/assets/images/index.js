@@ -15,6 +15,7 @@ const images = {
     cv_template_1: require('~/assets/images/mautemplate.png'),
     company_info: require('~/assets/images/fpt_logo.png'),
     default_cv: require('~/assets/images/defaulcv.png'),
+    coverletter: require('~/assets/images/coverletter.png'),
 };
 
 export default images;

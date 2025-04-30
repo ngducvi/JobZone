@@ -164,7 +164,9 @@ export const userApis = {
     updateCV: (cv_id) => `/user/update-cv/${cv_id}`,
     getAllReviewsByUserId: '/user/reviews',
     editReviewByUserId: '/user/reviews/edit',
-    deleteReviewByReviewId: (review_id) => `/user/reviews/${review_id}`
+    deleteReviewByReviewId: (review_id) => `/user/reviews/${review_id}`,
+    getCandidateNotification: '/user/candidate-notification',
+    updateCandidateNotification: '/user/candidate-notification',
 };
 
 

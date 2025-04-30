@@ -123,6 +123,8 @@ router.post(
   userController.createCandidateCvWithCvId.bind(userController)
 );
 router.get('/notifications', userController.getUserNotifications.bind(userController));
+router.get('/candidate-notification', userController.getCandidateNotification.bind(userController));
+router.patch('/candidate-notification', userController.updateCandidateNotification.bind(userController));
 router.get('/notifications/unread/count', userController.getUnreadNotificationsCount.bind(userController));
 router.patch('/notifications/:notificationId/read', userController.markNotificationAsRead.bind(userController));
 router.patch('/notifications/read-all', userController.markAllNotificationsAsRead.bind(userController));
