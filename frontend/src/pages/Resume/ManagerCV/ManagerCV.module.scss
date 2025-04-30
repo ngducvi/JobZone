@@ -135,42 +135,134 @@
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       }
 
+      &.is-template {
+        border: 2px solid #00b14f;
+        box-shadow: 0 8px 24px rgba(0, 177, 79, 0.15);
+        
+        &::before {
+          content: 'CV Mặc định';
+          position: absolute;
+          top: 12px;
+          right: 12px;
+          background: #00b14f;
+          color: white;
+          padding: 6px 12px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: 500;
+          z-index: 2;
+          box-shadow: 0 2px 8px rgba(0, 177, 79, 0.2);
+        }
+
+        .cv-preview {
+          &::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border: 2px solid #00b14f;
+            border-radius: 8px 8px 0 0;
+            pointer-events: none;
+          }
+
+          .cv-image {
+            &::before {
+              content: '';
+              position: absolute;
+              inset: 0;
+              background: linear-gradient(135deg, rgba(0, 177, 79, 0.1), transparent);
+              z-index: 1;
+              border-radius: 4px;
+            }
+          }
+        }
+
+        .cv-info {
+          background: #f0faf4;
+
+          h3 {
+            color: #00b14f;
+          }
+
+          .cv-meta {
+            .template-badge {
+              display: inline-flex;
+              align-items: center;
+              gap: 4px;
+              padding: 4px 8px;
+              background: #e6f7ed;
+              color: #00b14f;
+              border-radius: 12px;
+              font-size: 12px;
+              font-weight: 500;
+
+              &::before {
+                content: '✓';
+                font-size: 10px;
+              }
+            }
+          }
+        }
+
+        .cv-actions {
+          .action-btn {
+            &.template-btn {
+              &.active {
+                background: #00b14f;
+                color: white;
+                border-color: #00b14f;
+
+                &:hover {
+                  background: darken(#00b14f, 5%);
+                }
+              }
+            }
+          }
+        }
+      }
+
       .cv-preview {
         position: relative;
         background: #f8f9fa;
         padding: 20px;
         height: 300px;
+        border-radius: 8px 8px 0 0;
+        transition: all 0.3s ease;
         
         .cv-image {
-          aspect-ratio: 210/297;
+          position: relative;
           height: 100%;
           background: white;
           border: 1px solid #eee;
           border-radius: 4px;
           overflow: hidden;
+          transition: all 0.3s ease;
 
           img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
+            padding: 10px;
+            transition: transform 0.3s ease;
           }
         }
 
         .cv-actions {
           position: absolute;
           inset: 0;
-          background: rgba(0, 0, 0, 0.5);
+          background: rgba(0, 0, 0, 0.7);
+          backdrop-filter: blur(4px);
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 12px;
           opacity: 0;
-          transition: 0.2s;
+          transition: all 0.3s ease;
+          z-index: 2;
 
           .action-btn {
             padding: 8px 16px;
-            border-radius: 4px;
-            border: 1px solid white;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.8);
             color: white;
             background: transparent;
             font-size: 14px;
@@ -178,30 +270,64 @@
             align-items: center;
             gap: 6px;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(4px);
+            pointer-events: auto;
 
             &:hover {
               background: white;
+              color: #013a74;
+              transform: translateY(-2px);
+            }
+
+            &.template-btn {
+              border-color: #00b14f;
               color: #00b14f;
+
+              &:hover {
+                background: #00b14f;
+                color: white;
+              }
+
+              &.active {
+                background: #ff4d4f;
+                color: white;
+                border-color: #ff4d4f;
+
+                &:hover {
+                  background: darken(#ff4d4f, 5%);
+                  border-color: darken(#ff4d4f, 5%);
+                }
+              }
             }
           }
         }
 
-        &:hover .cv-actions {
-          opacity: 1;
+        &:hover {
+          .cv-actions {
+            opacity: 1;
+          }
+
+          .cv-image {
+            img {
+              transform: scale(1.05);
+            }
+          }
         }
       }
 
       .cv-info {
         padding: 16px;
         background: white;
-        height: 80px;
+        border-radius: 0 0 8px 8px;
+        transition: all 0.3s ease;
 
         h3 {
-          font-size: 15px;
-          font-weight: 500;
+          font-size: 16px;
+          font-weight: 600;
           margin-bottom: 8px;
-          color: #333;
+          color: #2d3748;
+          transition: color 0.3s ease;
         }
 
         .cv-meta {
@@ -211,6 +337,14 @@
           font-size: 13px;
           color: #666;
 
+          .template-badge {
+            display: none;
+            
+            &.show {
+              display: inline-flex;
+            }
+          }
+
           .cv-stats {
             display: flex;
             gap: 12px;
@@ -219,49 +353,20 @@
               display: flex;
               align-items: center;
               gap: 4px;
+              color: #666;
+              transition: color 0.3s ease;
+
+              &:hover {
+                color: #013a74;
+              }
             }
           }
         }
       }
 
-      &.empty {
-        height: 180px;
-        border: 2px dashed #ddd;
-        background: #fff;
-        padding: 40px;
-
-        .empty-content {
-          text-align: center;
-          color: #666;
-
-          .upload-icon {
-            font-size: 32px;
-            color: #999;
-            margin-bottom: 16px;
-          }
-
-          p {
-            margin-bottom: 20px;
-          }
-
-          .upload-btn {
-            padding: 10px 24px;
-            background: #00b14f;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin: 0 auto;
-            cursor: pointer;
-            transition: 0.2s;
-
-            &:hover {
-              background: darken(#00b14f, 5%);
-            }
-          }
-        }
+      &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
       }
     }
 
@@ -383,10 +488,10 @@
               object-fit: contain;
               padding: 10px;
               transition: transform 0.3s ease;
+            }
           }
-        }
 
-        .cv-actions {
+          .cv-actions {
             position: absolute;
             inset: 0;
             background: rgba(0, 0, 0, 0.7);
@@ -397,8 +502,9 @@
             gap: 12px;
             opacity: 0;
             transition: all 0.3s ease;
+            z-index: 2;
 
-          .action-btn {
+            .action-btn {
               padding: 8px 16px;
               border-radius: 8px;
               border: 1px solid rgba(255, 255, 255, 0.8);
@@ -411,6 +517,7 @@
               cursor: pointer;
               transition: all 0.3s ease;
               backdrop-filter: blur(4px);
+              pointer-events: auto;
 
               &:hover {
                 background: white;
@@ -424,16 +531,37 @@
 
                 &:hover {
                   background: #00b14f;
-                color: white;
+                  color: white;
+                }
+
+                &.active {
+                  background: #ff4d4f;
+                  color: white;
+                  border-color: #ff4d4f;
+
+                  &:hover {
+                    background: darken(#ff4d4f, 5%);
+                    border-color: darken(#ff4d4f, 5%);
+                  }
+                }
+              }
+
+              &.delete-btn {
+                border-color: #ff4d4f;
+                color: #ff4d4f;
+
+                &:hover {
+                  background: #ff4d4f;
+                  color: white;
+                }
               }
             }
           }
-        }
 
           &:hover {
             .cv-actions {
               opacity: 1;
-      }
+            }
 
             .cv-image {
               img {
@@ -468,7 +596,7 @@
               display: none;
               
               &.show {
-          display: inline-flex;
+                display: inline-flex;
               }
             }
 
@@ -478,16 +606,16 @@
 
               span {
                 display: flex;
-          align-items: center;
+                align-items: center;
                 gap: 4px;
                 color: #666;
                 transition: color 0.3s ease;
 
-          &:hover {
+                &:hover {
                   color: #013a74;
                 }
               }
-          }
+            }
           }
         }
 
@@ -679,7 +807,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
-          font-weight: 500;
+            font-weight: 500;
             color: #2d3748;
 
             i {

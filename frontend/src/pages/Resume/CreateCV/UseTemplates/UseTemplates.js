@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './UseTemplates.module.scss';
 import { authAPI, userApis } from '~/utils/api';
-import { FaUndo, FaRedo, FaSave, FaDownload } from 'react-icons/fa';
+import { FaUndo, FaRedo, FaSave, FaDownload, FaSpinner } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import TemplateList from './TemplateList';
 import CVGuide from './CVGuide';
@@ -27,6 +27,7 @@ const UseTemplates = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalContent, setModalContent] = useState(null);
   const [activeSidebarItem, setActiveSidebarItem] = useState('template');
+  const [isSaving, setIsSaving] = useState(false);
 
   const colors = [
     '#013a74', // Blue
@@ -137,21 +138,36 @@ const UseTemplates = () => {
   };
 
   const handleSave = async () => {
+    if (isSaving) return;
+    
+    setIsSaving(true);
     try {
-      // Gọi API để lưu formData
-      await authAPI().post(userApis.saveCV, {
-        templateId: template.template_id,
-        formData: formData
+      // Tạo object chứa các field values
+      const fieldValues = templateFields.map(field => ({
+        field_id: field.field_id,
+        field_value: formData[field.field_name] || ''
+      }));
+
+      // Gọi API để tạo CV mới với field values
+      const response = await authAPI().post(userApis.createNewCV, {
+        template_id: template.template_id,
+        name: formData.fullName || 'CV mới',
+        fieldValues: fieldValues
       });
-      
-      // Cập nhật lastSavedState
-      setLastSavedState(formData);
-      
-      // Hiển thị thông báo thành công
-      toast.success('Đã lưu CV thành công!');
+
+      if (response.data.code === 1) {
+        setLastSavedState(formData);
+        toast.success('Đã lưu CV thành công!');
+        
+        navigate(`/user/manager-cv`);
+      } else {
+        toast.error('Có lỗi xảy ra khi lưu CV!');
+      }
     } catch (error) {
       console.error('Error saving CV:', error);
       toast.error('Có lỗi xảy ra khi lưu CV!');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -273,11 +289,23 @@ const UseTemplates = () => {
         <div className={cx('toolbar-right')}>
           <button 
             className={cx('save-btn', {
-              'has-changes': JSON.stringify(formData) !== JSON.stringify(lastSavedState)
+              'has-changes': JSON.stringify(formData) !== JSON.stringify(lastSavedState),
+              'saving': isSaving
             })}
             onClick={handleSave}
+            disabled={isSaving}
           >
-            <FaSave /> Lưu lại
+            {isSaving ? (
+              <>
+                <FaSpinner className={cx('spinner')} />
+                Đang lưu...
+              </>
+            ) : (
+              <>
+                <FaSave />
+                Lưu lại
+              </>
+            )}
           </button>
           <button className={cx('download-btn')}>
             <FaDownload /> Tải về

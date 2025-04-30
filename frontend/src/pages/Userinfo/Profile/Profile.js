@@ -4,17 +4,18 @@ import styles from "./Profile.module.scss";
 import userServices from "~/services/userServices.js";
 import UserContext from "~/context/UserContext";
 import { authAPI, userApis } from "~/utils/api";
+import { FaUser, FaEnvelope, FaPhone, FaSave } from "react-icons/fa";
 
 const cx = classNames.bind(styles);
 
 const Profile = () => {
-  const {  setUser } = useContext(UserContext); // Get user info and update function from Context
+  const { setUser } = useContext(UserContext);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
   });
-
+  const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -29,6 +30,7 @@ const Profile = () => {
   useEffect(() => {
     const getUserData = async () => {
       try {
+        setIsLoading(true);
         const userData = await userServices.getCurrentUser();
         setFormData({
           name: userData.user.name,
@@ -37,6 +39,9 @@ const Profile = () => {
         });
       } catch (error) {
         console.error("Error fetching user data:", error);
+        setErrorMessage("Không thể tải thông tin người dùng. Vui lòng thử lại.");
+      } finally {
+        setIsLoading(false);
       }
     };
     getUserData();
@@ -46,30 +51,37 @@ const Profile = () => {
     e.preventDefault();
     setSuccessMessage("");
     setErrorMessage("");
+    setIsLoading(true);
 
     try {
-      const updatedUser = await userServices.updateCurrentUser(formData); // Call API to update user info
-      setUser(updatedUser.user); // Update user info in Context
+      const updatedUser = await userServices.updateCurrentUser(formData);
+      setUser(updatedUser.user);
       setSuccessMessage("Thông tin cá nhân đã được cập nhật thành công.");
     } catch (error) {
       setErrorMessage(
         error.response?.data?.message || "Đã xảy ra lỗi, vui lòng thử lại."
       );
+    } finally {
+      setIsLoading(false);
     }
   };
-  // get user id từ token
+
   const { user } = useContext(UserContext);
   const [candidateProfile, setCandidateProfile] = useState(null);
+
   useEffect(() => {
     const fetchCandidateProfile = async () => {
+      if (user && user.id) {
+        try {
       const response = await authAPI().get(userApis.getCandidateProfile(user.id));
       setCandidateProfile(response.data.candidate);
-      console.log(response.data.candidate);
+        } catch (error) {
+          console.error("Error fetching candidate profile:", error);
+        }
+      }
     };
     fetchCandidateProfile();
-  }, []);
-
-
+  }, [user]);
 
   return (
     <div className={cx("profile-container")}>
@@ -78,7 +90,10 @@ const Profile = () => {
         <div className={cx("form-title")}>Cập nhật thông tin</div>
         <form className={cx("form")} onSubmit={handleSubmit}>
           <div className={cx("form-group")}>
-            <label htmlFor="name">Họ và tên</label>
+            <label htmlFor="name">
+              <FaUser className={cx("input-icon")} />
+              Họ và tên
+            </label>
             <input
               type="text"
               id="name"
@@ -87,10 +102,14 @@ const Profile = () => {
               onChange={handleChange}
               placeholder="Nhập họ và tên"
               required
+              disabled={isLoading}
             />
           </div>
           <div className={cx("form-group")}>
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">
+              <FaEnvelope className={cx("input-icon")} />
+              Email
+            </label>
             <input
               type="email"
               id="email"
@@ -99,10 +118,14 @@ const Profile = () => {
               onChange={handleChange}
               placeholder="Nhập email"
               required
+              disabled={isLoading}
             />
           </div>
           <div className={cx("form-group")}>
-            <label htmlFor="phone">Số điện thoại</label>
+            <label htmlFor="phone">
+              <FaPhone className={cx("input-icon")} />
+              Số điện thoại
+            </label>
             <input
               type="number"
               id="phone"
@@ -111,11 +134,17 @@ const Profile = () => {
               onChange={handleChange}
               placeholder="Nhập số điện thoại"
               required
+              disabled={isLoading}
             />
           </div>
           <div className={cx("btn-container")}>
-            <button type="submit" className={cx("btn")}>
-              Lưu
+            <button 
+              type="submit" 
+              className={cx("btn")}
+              disabled={isLoading}
+            >
+              <FaSave className={cx("btn-icon")} />
+              {isLoading ? "Đang lưu..." : "Lưu thay đổi"}
             </button>
           </div>
           {successMessage && (

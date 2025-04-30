@@ -137,6 +137,8 @@ export const userApis = {
     withdrawApplication: '/user/withdraw-application',
     editProfilePictureWithCandidateId: (candidate_id) => `/user/candidate/edit-profile-picture/${candidate_id}`,
     createReviewCompany: '/user/company/review',
+    updateReviewCompany: (review_id) => `/user/company/review/${review_id}`,
+    deleteReviewCompany: (review_id) => `/user/company/review/${review_id}`,
     getAllReviewsByCompanyId: (company_id) => `/user/reviews/${company_id}`,
 
     getCareerHandbookByPostId: (post_id) => `/user/career-handbook/post/${post_id}`,
@@ -146,13 +148,23 @@ export const userApis = {
     getJobsByWorkingLocationRemote: '/user/jobs/working-location-remote',
     createCandidateCvWithCvId: '/user/create-candidate-cv-with-cv-id',
     toggleCvTemplate: (cv_id) => `/user/toggle-cv-template/${cv_id}`,
-    getAllReviewsByUserId: (user_id) => `/user/reviews/${user_id}`,
+    cancelCvTemplate: (cv_id) => `/user/cancel-cv-template/${cv_id}`,
+    toggleUserCvTemplate: (cv_id) => `/user/toggle-user-cv-template/${cv_id}`,
+    cancelUserCvTemplate: (cv_id) => `/user/cancel-user-cv-template/${cv_id}`,
+    deleteCandidateCv: (cv_id) => `/user/candidate-cv/${cv_id}`,
+   
+
     getUserNotifications: '/user/notifications',
     getUnreadNotificationsCount: '/user/notifications/unread/count',
     markNotificationAsRead: (notificationId) => `/user/notifications/${notificationId}/read`,
     markAllNotificationsAsRead: '/user/notifications/read-all',
     deleteNotification: (notificationId) => `/user/notifications/${notificationId}`,
     deleteAllReadNotifications: '/user/notifications/read/all',
+    createNewCV: '/user/create-cv',
+    updateCV: (cv_id) => `/user/update-cv/${cv_id}`,
+    getAllReviewsByUserId: '/user/reviews',
+    editReviewByUserId: '/user/reviews/edit',
+    deleteReviewByReviewId: (review_id) => `/user/reviews/${review_id}`
 };
 
 

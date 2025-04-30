@@ -104,20 +104,31 @@ router.put('/candidate/edit-profile-picture/:candidate_id', upload.single('profi
 router.get('/candidate/profile-picture/:candidate_id', userController.getProfilePictureByCandidateId.bind(userController));
 router.put('/candidate/edit-profile-picture-cloudinary/:candidate_id', upload.single('profile_picture'), userController.updateProfilePictureByCandidateIdCloudinary.bind(userController));
 router.post('/company/review', userController.createReviewCompany.bind(userController));
+router.put('/company/review/:review_id', userController.updateReviewCompany.bind(userController));
+router.delete('/company/review/:review_id', userController.deleteReviewCompany.bind(userController));
 router.post('/candidate-cv/cv-id', userController.createCandidateCvWithCvId.bind(userController));
 router.post('/create-cv', userController.createNewCV.bind(userController));
-router.put('/update-cv/:cv_id', userController.updateCVFields.bind(userController));
 router.put('/toggle-cv-template/:cv_id', userController.toggleCvTemplate.bind(userController));
+router.put('/cancel-cv-template/:cv_id', userController.cancelCvTemplate.bind(userController));
+router.put('/toggle-user-cv-template/:cv_id', userController.toggleUserCvTemplate.bind(userController));
+router.put('/cancel-user-cv-template/:cv_id', userController.cancelUserCvTemplate.bind(userController));
+router.post('/create-cv', userController.createNewCV.bind(userController));
+// Thêm route update CV
+router.put('/update-cv/:cv_id', userController.updateCV.bind(userController));
+
+router.delete('/candidate-cv/:cv_id', userController.deleteCandidateCv.bind(userController));
 router.post(
   "/create-candidate-cv-with-cv-id",
   upload.single('cv_file'),
   userController.createCandidateCvWithCvId.bind(userController)
 );
-router.get("/reviews/:user_id", userController.getAllReviewsByUserId.bind(userController));
 router.get('/notifications', userController.getUserNotifications.bind(userController));
 router.get('/notifications/unread/count', userController.getUnreadNotificationsCount.bind(userController));
 router.patch('/notifications/:notificationId/read', userController.markNotificationAsRead.bind(userController));
 router.patch('/notifications/read-all', userController.markAllNotificationsAsRead.bind(userController));
 router.delete('/notifications/:notificationId', userController.deleteNotification.bind(userController));
 router.delete('/notifications/read/all', userController.deleteAllReadNotifications.bind(userController));
+router.get('/reviews', userController.getAllReviewsByUserId.bind(userController));
+router.put('/reviews/edit', userController.editReviewByUserId.bind(userController));
+router.delete('/reviews/:review_id', userController.deleteReviewByReviewId.bind(userController));
 module.exports = router;

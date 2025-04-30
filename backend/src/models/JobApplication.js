@@ -32,7 +32,8 @@ JobApplication.init({
         allowNull: true,
     },
     status: {
-        type: DataTypes.ENUM('Đang xét duyệt', 'Đã phỏng vấn', 'Đã nhận', 'Đã từ chối'),
+        // ENUM('Đang xét duyệt', 'Chờ phỏng vấn', 'Đã phỏng vấn', 'Đạt phỏng vấn', 'Đã nhận', 'Đã từ chối', 'Hết hạn','Đã rút đơn')
+        type: DataTypes.ENUM('Đang xét duyệt', 'Chờ phỏng vấn', 'Đã phỏng vấn', 'Đạt phỏng vấn', 'Đã nhận', 'Đã từ chối', 'Hết hạn','Đã rút đơn'),
         allowNull: false,
         defaultValue: 'Đang xét duyệt',
     },

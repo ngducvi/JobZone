@@ -36,6 +36,7 @@ const ManagerCV = () => {
     ])
       .then(([userCvResponse, candidateCvResponse, currentUserResponse, candidateProfileResponse]) => {
         setUserCv(userCvResponse.data.userCv);
+        console.log("userCv", userCvResponse.data.userCv);
         setCandidateCv(candidateCvResponse.data.candidateCv);
         setCurrentUser(currentUserResponse.data.user);
         setUserId(currentUserResponse.data.user.id);
@@ -134,12 +135,42 @@ const ManagerCV = () => {
 
   const handleToggleTemplate = async (cv) => {
     try {
-      const response = await authAPI().put(`${userApis.toggleCvTemplate(cv.cv_id)}`);
+      let response;
+      if (cv.is_template) {
+        // If it's already a template, cancel it
+        response = await authAPI().put(`${userApis.cancelCvTemplate(cv.cv_id)}`);
+      } else {
+        // If it's not a template, set it as template
+        response = await authAPI().put(`${userApis.toggleCvTemplate(cv.cv_id)}`);
+      }
 
       if (response.data.code === 1) {
         // Refresh the CV list
         const candidateCvResponse = await authAPI().get(userApis.getAllCandidateCvByUserId);
         setCandidateCv(candidateCvResponse.data.candidateCv);
+        toast.success(cv.is_template ? 'Đã hủy mặc định' : 'Đã cài làm mặc định');
+      }
+    } catch (error) {
+      console.error('Error toggling template status:', error);
+      toast.error('Có lỗi xảy ra. Vui lòng thử lại!');
+    }
+  };
+
+  const handleToggleUserCvTemplate = async (cv) => {
+    try {
+      let response;
+      if (cv.is_template) {
+        // If it's already a template, cancel it
+        response = await authAPI().put(`${userApis.cancelUserCvTemplate(cv.cv_id)}`);
+      } else {
+        // If it's not a template, set it as template
+        response = await authAPI().put(`${userApis.toggleUserCvTemplate(cv.cv_id)}`);
+      }
+
+      if (response.data.code === 1) {
+        // Refresh the CV list
+        const userCvResponse = await authAPI().get(userApis.getAllUserCvByUserId);
+        setUserCv(userCvResponse.data.userCv);
         toast.success(cv.is_template ? 'Đã hủy mặc định' : 'Đã cài làm mặc định');
       }
     } catch (error) {
@@ -208,6 +239,23 @@ const ManagerCV = () => {
     console.log("Clicking candidate with ID:", candidateId);
     navigate(`/recruiter/candidate-detail/${candidateId}`);
   };
+
+  const handleDeleteCV = async (cv) => {
+    try {
+      const response = await authAPI().delete(`${userApis.deleteCandidateCv(cv.cv_id)}`);
+
+      if (response.data.code === 1) {
+        // Refresh the CV list
+        const candidateCvResponse = await authAPI().get(userApis.getAllCandidateCvByUserId);
+        setCandidateCv(candidateCvResponse.data.candidateCv);
+        toast.success('Đã xóa CV thành công');
+      }
+    } catch (error) {
+      console.error('Error deleting CV:', error);
+      toast.error('Có lỗi xảy ra khi xóa CV');
+    }
+  };
+
   return (
     <div className={cx("wrapper")}>
       <div className={cx("header-section")}>
@@ -248,7 +296,7 @@ const ManagerCV = () => {
                 <div className={cx("loading")}>Loading...</div>
               ) : userCv.length > 0 ? (
                 userCv.map((cv) => (
-                  <div key={cv.cv_id} className={cx("cv-item")}>
+                  <div key={cv.cv_id} className={cx("cv-item", { "is-template": cv.is_template })}>
                     <div className={cx("cv-preview")}>
                       <div className={cx("cv-image")}>
                         <img
@@ -273,15 +321,31 @@ const ManagerCV = () => {
                         <button
                           className={cx("action-btn")}
                           onClick={() =>
-                            navigate("/user/use-templates", {
+                            navigate("/user/edit-cv", {
                               state: {
-                                template: cv.template,
-                                formData: cv.formData,
+                                cv_id: cv.cv_id,
+                                template_id: cv.template_id,
                               },
                             })
                           }
                         >
-                          <FaEdit /> Chỉnh sử
+                          <FaEdit /> Chỉnh sửa
+                        </button>
+                        <button
+                          className={cx("action-btn", "template-btn", {
+                            "active": cv.is_template
+                          })}
+                          onClick={() => handleToggleUserCvTemplate(cv)}
+                        >
+                          {cv.is_template ? (
+                            <>
+                              <FaCheck /> Hủy mặc định
+                            </>
+                          ) : (
+                            <>
+                              <FaCheck /> Cài làm mặc định
+                            </>
+                          )}
                         </button>
                       </div>
                     </div>
@@ -293,12 +357,15 @@ const ManagerCV = () => {
                           Cập nhật lần cuối:{" "}
                           {new Date(cv.updated_at).toLocaleString()}
                         </span>
+                        <div className={cx("template-badge", { "show": cv.is_template })}>
+                          {cv.is_template ? "Template" : "Nháp"}
+                        </div>
                         <div className={cx("cv-stats")}>
                           <span>
-                            <FaEye /> 2 lượt xem
+                            <FaEye /> {cv.views || 0} lượt xem
                           </span>
                           <span>
-                            <FaDownload /> 0 lượt tải
+                            <FaDownload /> {cv.downloads || 0} lượt tải
                           </span>
                         </div>
                       </div>
@@ -335,7 +402,11 @@ const ManagerCV = () => {
                         <button
                           className={cx("action-btn")}
                           onClick={() => {
-                            window.open(cv.cv_link, "_blank");
+                            if (cv.cv_link) {
+                              window.open(cv.cv_link, "_blank");
+                            } else {
+                              toast.error('Không thể xem CV này');
+                            }
                           }}
                         >
                           <FaEye /> Xem
@@ -361,6 +432,12 @@ const ManagerCV = () => {
                               <FaCheck /> Cài làm mặc định
                             </>
                           )}
+                        </button>
+                        <button
+                          className={cx("action-btn", "delete-btn")}
+                          onClick={() => handleDeleteCV(cv)}
+                        >
+                          <FaTrash /> Xóa
                         </button>
                       </div>
                     </div>

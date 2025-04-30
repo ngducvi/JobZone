@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI, recruiterApis, userApis } from '~/utils/api';
 import socketService from '~/utils/socket';
+import { toast } from 'react-hot-toast';
 
 const NotificationContext = createContext();
 
@@ -20,7 +21,8 @@ export const NotificationProvider = ({ children }) => {
 
             // Check if user is recruiter
             try {
-                const response = await authAPI().get(recruiterApis.getCurrentUser);
+                const response = await authAPI().get(userApis.getCurrentUser);
+                console.log("response",response.data);
                 if (response.data.code === 1) {
                     setUser(response.data.user);
                     return response.data.user;
@@ -46,6 +48,62 @@ export const NotificationProvider = ({ children }) => {
         }
     };
 
+    const showNotificationToast = (notification) => {
+        const toastId = `notification-${Date.now()}`;
+        
+        toast.custom(
+            (t) => (
+                <div
+                    className={`${t.visible ? 'animate-enter' : 'animate-leave'} 
+                    max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto 
+                    flex flex-col ring-1 ring-black ring-opacity-5`}
+                    style={{
+                        padding: '16px',
+                        borderLeft: '4px solid #02a346',
+                        marginBottom: '16px'
+                    }}
+                >
+                    <div className="flex items-start">
+                        <div className="flex-1">
+                            <h3 style={{ 
+                                fontSize: '16px', 
+                                fontWeight: '600',
+                                color: '#013a74',
+                                marginBottom: '8px'
+                            }}>
+                                {notification.title || 'Thông báo mới'}
+                            </h3>
+                            <p style={{ 
+                                fontSize: '14px',
+                                color: '#333',
+                                lineHeight: '1.5'
+                            }}>
+                                {notification.content}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => toast.dismiss(toastId)}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                padding: '4px',
+                                cursor: 'pointer',
+                                color: '#666'
+                            }}
+                        >
+                            <i className="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            ),
+            {
+                id: toastId,
+                duration: 5000,
+                position: 'top-right'
+            }
+        );
+    };
+
     const setupSocketConnection = async () => {
         try {
             const currentUser = await fetchCurrentUser();
@@ -67,6 +125,7 @@ export const NotificationProvider = ({ children }) => {
             // Set up new notification listener
             socketService.onNewNotification((newNotification) => {
                 setUnreadCount(prev => prev + 1);
+                showNotificationToast(newNotification);
             });
 
             // Get socket instance after connection is established
@@ -95,7 +154,14 @@ export const NotificationProvider = ({ children }) => {
     };
 
     return (
-        <NotificationContext.Provider value={{ unreadCount, updateUnreadCount, socket, user, error }}>
+        <NotificationContext.Provider value={{ 
+            unreadCount, 
+            updateUnreadCount, 
+            socket, 
+            user, 
+            error,
+            showNotificationToast 
+        }}>
             {children}
         </NotificationContext.Provider>
     );

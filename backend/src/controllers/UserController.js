@@ -75,6 +75,9 @@ class UserController {
     this.generateUserCvId = () => {
       return "user-cv-" + Math.random().toString(36).substr(2, 9);
     };
+    this.generateValueId = () => {
+      return "val-" + Math.random().toString(36).substr(2, 9);
+    };
   }
   async getCurrentUser(req, res) {
     try {
@@ -968,7 +971,7 @@ class UserController {
   // tạo cv mới 
   async createNewCV(req, res) {
     try {
-      const { template_id, name } = req.body;
+      const { template_id, name, fieldValues } = req.body;
       const user_id = req.user.id;
 
       // 1. Tạo CV mới trong bảng user_cvs
@@ -976,24 +979,31 @@ class UserController {
         cv_id: this.generateUserCvId(),
         user_id,
         template_id,
-        name,
+        cv_name: name,
+        cv_content: {},
+        cv_html: '',
+        status: 'draft',
         created_at: new Date(),
         updated_at: new Date(),
-        status: 'published'
+        is_template: false
       });
 
       // 2. Lấy tất cả template fields của template đã chọn
       const templateFields = await TemplateFields.findAll({
         where: { template_id },
-        order: [['order', 'ASC']]
+        order: [['field_order', 'ASC']]
       });
 
-      // 3. Tạo các cv_field_values trống cho mỗi template field
+      // 3. Tạo các cv_field_values với giá trị từ fieldValues
       const fieldValuePromises = templateFields.map(field => {
+        // Tìm giá trị tương ứng trong fieldValues
+        const fieldValue = fieldValues.find(fv => fv.field_id === field.field_id);
+
         return CvFieldValues.create({
-          cv_id: newCV.id,
-          field_id: field.id,
-          value: '' // Giá trị mặc định trống
+          value_id: this.generateValueId(),
+          cv_id: newCV.cv_id,
+          field_id: field.field_id,
+          field_value: fieldValue ? fieldValue.field_value : field.field_placeholder || ''
         });
       });
 
@@ -1020,6 +1030,11 @@ class UserController {
       });
     }
   }
+  // update cv
+
+
+
+
   // get recommended jobs by user
   async getAllSuitableJobsByUser(req, res) {
     const { page = 1, limit = 10 } = req.query;
@@ -1316,18 +1331,55 @@ class UserController {
       return res.status(500).send({ message: error.message, code: -1 });
     }
   }
+  // Chỉnh sửa đánh giá công ty
+  async updateReviewCompany(req, res) {
+    try {
+      const { rating, comment } = req.body;
+      const { review_id } = req.params;
+
+      const review = await Reviews.findByPk(review_id);
+      if (!review) {
+        return res.status(404).send({ message: "Đánh giá không tồn tại", code: -1 });
+      }
+
+      review.rating = rating;
+      review.comment = comment;
+      await review.save();
+
+      return res.json({ review });
+    } catch (error) {
+      return res.status(500).send({ message: error.message, code: -1 });
+    }
+  }
+  // xóa đánh giá công ty
+  async deleteReviewCompany(req, res) {
+    try {
+      const { review_id } = req.params;
+
+      const review = await Reviews.findByPk(review_id);
+      if (!review) {
+        return res.status(404).send({ message: "Đánh giá không tồn tại", code: -1 });
+      }
+
+      await review.destroy();
+      return res.json({ message: "Đánh giá công ty đã được xóa" });
+    } catch (error) {
+      console.error('Error deleting review:', error);
+      return res.status(500).send({ message: error.message, code: -1 });
+    }
+  }
   // create candidate cv with cv_id
   async createCandidateCvWithCvId(req, res) {
     try {
       const { user_id, cv_name } = req.body;
-      
+
       if (!req.file) {
         return res.status(400).send({ message: "No file uploaded", code: -1 });
       }
 
       // Upload PDF to Cloudinary
       const uploadResult = await fileService.uploadPDF(req.file.buffer);
-      
+
       const candidateCv = await CandidateCv.create({
         cv_id: this.generateCandidateCvId(),
         user_id,
@@ -1476,7 +1528,7 @@ class UserController {
     const { page = 1, limit = 12 } = req.query;
     const offset = (page - 1) * limit;
     const jobs = await Job.findAndCountAll({
-      where: { salary: { [Op.or]: ['Trên 50 triệu','30 - 50 triệu','25 - 30 triệu','20 - 25 triệu'] } },
+      where: { salary: { [Op.or]: ['Trên 50 triệu', '30 - 50 triệu', '25 - 30 triệu', '20 - 25 triệu'] } },
       limit,
       offset,
     });
@@ -1506,7 +1558,7 @@ class UserController {
       }
     });
   }
-  
+
 
   async getJobsByWorkingLocationRemote(req, res) {
     const { page = 1, limit = 12 } = req.query;
@@ -2671,6 +2723,9 @@ class UserController {
           message: "Bạn đã ứng tuyển cho công việc này.",
           code: 1,
           applied: true,
+          status: application.status,
+          application_id: application.application_id,
+          updated_at: application.updated_at
         });
       } else {
         return res.status(200).json({
@@ -2707,10 +2762,11 @@ class UserController {
         });
       }
 
-      await application.destroy();
+      // Cập nhật trạng thái thành "đã rút đơn"
+      await application.update({ status: 'Đã rút đơn', updated_at: new Date() });
 
       return res.status(200).json({
-        message: "Đơn ứng tuyển đã được hủy thành công",
+        message: "Đơn ứng tuyển đã được chuyển sang trạng thái đã rút đơn",
         code: 1,
       });
     } catch (error) {
@@ -2740,69 +2796,8 @@ class UserController {
     }
   }
 
-  // Hàm cập nhật giá trị cho các trường trong CV
-  async updateCVFields(req, res) {
-    try {
-      const { cv_id } = req.params;
-      const { field_values } = req.body; // Mảng các {field_id, value}
 
-      // Kiểm tra quyền sở hữu CV
-      const cv = await UserCv.findOne({
-        where: {
-          id: cv_id,
-          user_id: req.user.id
-        }
-      });
 
-      if (!cv) {
-        return res.status(404).json({
-          message: 'Không tìm thấy CV hoặc bạn không có quyền chỉnh sửa',
-          code: -1
-        });
-      }
-
-      // Cập nhật từng field value
-      const updatePromises = field_values.map(({ field_id, value }) => {
-        return CvFieldValues.update(
-          { value },
-          {
-            where: {
-              cv_id,
-              field_id
-            }
-          }
-        );
-      });
-
-      await Promise.all(updatePromises);
-
-      // Cập nhật thời gian chỉnh sửa CV
-      await cv.update({
-        updated_at: new Date()
-      });
-
-      // Lấy tất cả giá trị mới của CV để trả về
-      const updatedValues = await CvFieldValues.findAll({
-        where: { cv_id }
-      });
-
-      return res.status(200).json({
-        message: 'Cập nhật CV thành công',
-        code: 1,
-        data: {
-          cv,
-          field_values: updatedValues
-        }
-      });
-
-    } catch (error) {
-      console.error('Error updating CV fields:', error);
-      return res.status(500).json({
-        message: error.message,
-        code: -1
-      });
-    }
-  }
   // get all top company với plan là pro
   async getAllTopCompanyPro(req, res) {
     try {
@@ -2822,10 +2817,11 @@ class UserController {
       });
     }
   }
+
   // get all reviews by user_id
   async getAllReviewsByUserId(req, res) {
-    const user_id = req.params.user_id;
     try {
+      const user_id = req.user.id;
       const reviews = await Reviews.findAll({
         where: { user_id: user_id }
       });
@@ -2838,6 +2834,71 @@ class UserController {
       res.status(500).json({
         message: error.message,
         code: -1,
+      });
+    }
+  }
+
+  async editReviewByUserId(req, res) {
+    try {
+      const user_id = req.user.id;
+      const { review_id, rating, comment } = req.body;
+
+      const review = await Reviews.findOne({
+        where: {
+          review_id: review_id,
+          user_id: user_id
+        }
+      });
+
+      if (!review) {
+        return res.status(404).json({
+          message: "Không tìm thấy đánh giá",
+          code: -1
+        });
+      }
+
+      await review.update({
+        rating: rating,
+        comment: comment
+      });
+
+      res.status(200).json({
+        message: "Cập nhật đánh giá thành công",
+        code: 1
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
+
+  async deleteReviewByReviewId(req, res) {
+    const { review_id } = req.params;
+    const user_id = req.user.id;
+    try {
+      const review = await Reviews.findOne({
+        where: {
+          review_id: review_id,
+          user_id: user_id
+        }
+      });
+      if (!review) {
+        return res.status(404).json({
+          message: "Không tìm thấy đánh giá",
+          code: -1
+        });
+      }
+      await review.destroy();
+      res.status(200).json({
+        message: "Đã xóa đánh giá thành công",
+        code: 1
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: error.message,
+        code: -1
       });
     }
   }
@@ -2953,12 +3014,175 @@ class UserController {
       });
     }
   }
+  // hủy mặc định cv
+  async cancelCvTemplate(req, res) {
+    try {
+      const { cv_id } = req.params;
+      const user_id = req.user.id;
+
+      const cv = await CandidateCv.findOne({
+        where: {
+          cv_id: cv_id,
+          user_id: user_id
+        }
+      });
+
+      if (!cv) {
+        return res.status(404).json({
+          code: 0,
+          message: "CV not found"
+        });
+      }
+
+      await cv.update({
+        is_template: false
+      });
+
+      return res.status(200).json({
+        code: 1,
+        message: "CV template cancelled successfully"
+      });
+    } catch (error) {
+      console.error("Error cancelling CV template:", error);
+      return res.status(500).json({
+        code: 0,
+        message: "Internal server error"
+      });
+    }
+  }
+  // cài mặc định cv đã tạo UserCv
+  async toggleUserCvTemplate(req, res) {
+    try {
+      const { cv_id } = req.params;
+      const user_id = req.user.id;
+
+      // First, update all CVs of the user to not be templates
+      await UserCv.update(
+        { is_template: false },
+        {
+          where: {
+            user_id: user_id
+          }
+        }
+      );
+
+      // Then, update the specific CV's template status
+      const cv = await UserCv.findOne({
+        where: {
+          cv_id: cv_id,
+          user_id: user_id
+        }
+      });
+
+      if (!cv) {
+        return res.status(404).json({
+          code: 0,
+          message: "CV not found"
+        });
+      }
+
+      await cv.update({
+        is_template: !cv.is_template
+      });
+
+      return res.status(200).json({
+        code: 1,
+        message: cv.is_template ? "Đã cài làm mặc định" : "Đã hủy mặc định",
+        cv: cv
+      });
+    } catch (error) {
+      console.error("Error in toggleUserCvTemplate:", error);
+      return res.status(500).json({
+        code: 0,
+        message: "Internal server error"
+      });
+    }
+  }
+
+  async cancelUserCvTemplate(req, res) {
+    try {
+      const { cv_id } = req.params;
+      const user_id = req.user.id;
+
+      const cv = await UserCv.findOne({
+        where: {
+          cv_id: cv_id,
+          user_id: user_id
+        }
+      });
+
+      if (!cv) {
+        return res.status(404).json({
+          code: 0,
+          message: "CV not found"
+        });
+      }
+
+      await cv.update({
+        is_template: false
+      });
+
+      return res.status(200).json({
+        code: 1,
+        message: "Đã hủy mặc định CV",
+        cv: cv
+      });
+    } catch (error) {
+      console.error("Error in cancelUserCvTemplate:", error);
+      return res.status(500).json({
+        code: 0,
+        message: "Internal server error"
+      });
+    }
+  }
+
+  async deleteCandidateCv(req, res) {
+    try {
+      const { cv_id } = req.params;
+      const user_id = req.user.id;
+
+      const cv = await CandidateCv.findOne({
+        where: {
+          cv_id: cv_id,
+          user_id: user_id
+        }
+      });
+
+      if (!cv) {
+        return res.status(404).json({
+          code: 0,
+          message: "CV not found"
+        });
+      }
+
+      // Delete the CV file from storage if needed
+      if (cv.cv_url) {
+        const filePath = path.join(__dirname, '../../uploads/candidate_cv', cv.cv_url);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      }
+
+      await cv.destroy();
+
+      return res.status(200).json({
+        code: 1,
+        message: "CV deleted successfully"
+      });
+    } catch (error) {
+      console.error("Error deleting CV:", error);
+      return res.status(500).json({
+        code: 0,
+        message: "Internal server error"
+      });
+    }
+  }
 
   async getUserNotifications(req, res) {
     try {
       const userId = req.user.id;
       const { page = 1, limit = 10 } = req.query;
-      
+
       if (!userId) {
         return res.status(400).json({
           success: false,
@@ -2967,7 +3191,7 @@ class UserController {
       }
 
       const notifications = await NotificationController.getUserNotifications(userId, parseInt(page), parseInt(limit));
-      
+
       return res.status(200).json({
         success: true,
         data: notifications
@@ -3091,7 +3315,7 @@ class UserController {
     try {
       const userId = req.user.id;
       const count = await NotificationController.countUnreadNotifications(userId);
-      
+
       return res.status(200).json({
         success: true,
         count: count
@@ -3101,6 +3325,79 @@ class UserController {
       return res.status(500).json({
         success: false,
         message: error.message || 'Lỗi khi lấy số thông báo chưa đọc'
+      });
+    }
+  }
+
+  async updateCV(req, res) {
+    try {
+      const { cv_id } = req.params;
+      const { name, fieldValues } = req.body;
+      const user_id = req.user.id;
+
+      // 1. Kiểm tra CV có tồn tại và thuộc về user không
+      const existingCV = await UserCv.findOne({
+        where: {
+          cv_id,
+          user_id
+        }
+      });
+
+      if (!existingCV) {
+        return res.status(404).json({
+          message: 'CV không tồn tại hoặc không có quyền chỉnh sửa',
+          code: -1
+        });
+      }
+
+      // 2. Cập nhật thông tin cơ bản của CV
+      await existingCV.update({
+        cv_name: name,
+        updated_at: new Date()
+      });
+
+      // 3. Cập nhật các field values
+      if (fieldValues && Array.isArray(fieldValues)) {
+        const updatePromises = fieldValues.map(async field => {
+          const { field_id, field_value } = field;
+
+          // Tìm và cập nhật field value
+          await CvFieldValues.update(
+            { field_value },
+            {
+              where: {
+                cv_id,
+                field_id
+              }
+            }
+          );
+        });
+
+        await Promise.all(updatePromises);
+      }
+
+      // 4. Lấy thông tin CV đã cập nhật để trả về
+      const updatedCV = await UserCv.findByPk(cv_id);
+      const template = await CvTemplates.findByPk(updatedCV.template_id);
+      const updatedFieldValues = await CvFieldValues.findAll({
+        where: { cv_id }
+      });
+
+      return res.status(200).json({
+        message: 'Cập nhật CV thành công',
+        code: 1,
+        data: {
+          cv: updatedCV,
+          template: template,
+          fieldValues: updatedFieldValues
+        }
+      });
+
+    } catch (error) {
+      console.error('Error updating CV:', error);
+      return res.status(500).json({
+        message: error.message,
+        code: -1
       });
     }
   }

@@ -70,7 +70,7 @@ import ManagerReview from '~/pages/Userinfo/ManagerReview/ManagetReview';
 import Notifications from '~/pages/Userinfo/Notifications/Notifications';
 import SettingEmail from '~/pages/Userinfo/SettingEmail/SettingEmail';
 import NotificationsManager from '~/pages/Recruiter/NotificationsManager/NotificationsManager';
-
+import EditCV from '~/pages/Resume/EditCV/EditCV';
 import CreateSeoBlog from '~/pages/CreateSeoBlog/CreateSeoBlog';
 const publicRoutes = [
     { path: '/', component: Dashboard },
@@ -104,6 +104,7 @@ const publicRoutes = [
     { path: '/user/jobs-viewed', component: ViewdJob },
     { path: '/user/create-cv', component: CreateCV },
     { path: '/user/manager-cv', component: ManagerCV },
+    { path: '/user/edit-cv', component: EditCV },
     { path: '/user/cv-library', component: CvLibrary },
     { path: '/user/see-cv', component: SeeCv, layout: null },
     { path: '/user/job-zone-profile', component: JobZoneProfile },
