@@ -1,0 +1,63 @@
+.wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  flex: 1;
+  display: flex;
+
+  &.mobile {
+    margin-top: 56px; // Giảm margin trên mobile
+  }
+}
+
+.content {
+  flex: 1;
+  margin-left: 280px; // Chiều rộng mặc định của sidebar
+  padding: 14px;
+  transition: all 0.3s ease;
+  min-height: calc(100vh - 60px);
+  background: #f9fafb;
+
+  &.sidebar-collapsed {
+    margin-left: 80px;
+  }
+
+  &.mobile {
+    margin-left: 0;
+    padding: 16px;
+    min-height: calc(100vh - 56px);
+  }
+}
+
+// Media queries
+@media (max-width: 1024px) {
+  .content {
+    margin-left: 80px;
+    padding: 20px;
+
+    &.sidebar-collapsed {
+      margin-left: 0;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    position: relative;
+  }
+
+  .content {
+    margin-left: 0;
+    padding: 16px;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .content {
+    padding: 12px;
+  }
+}

@@ -27,6 +27,12 @@ RecruiterCompanies.init({
             key: 'company_id',
         },
     },
+    status: {
+        type: DataTypes.ENUM('pending','active','rejected'),
+        allowNull: false,
+        defaultValue: 'pending',
+    },
+    
 }, {
     sequelize,
     modelName: 'RecruiterCompanies',

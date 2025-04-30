@@ -48,7 +48,7 @@ function Home() {
   const [walletData, setWalletData] = useState({}); // New state for wallet data
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-
+  const [countJobs, setCountJobs] = useState(0);
   // Fetching the count data and payments
   useEffect(() => {
     const fetchData = async () => {
@@ -60,6 +60,7 @@ function Home() {
           walletsResponse,
           resultResponse,
           paymentDataResponse,
+          jobsResponse,
         ] = await Promise.all([
           authAPI().get(adminApis.getCountUsers),
           authAPI().get(adminApis.getCountModels),
@@ -67,6 +68,7 @@ function Home() {
           authAPI().get(adminApis.getAllWallets),
           authAPI().get(adminApis.getAllUsers),
           authAPI().get(adminApis.getAllPayments),
+          authAPI().get(adminApis.getCountJobs),
         ]);
 
         // Set counts
@@ -74,7 +76,10 @@ function Home() {
           users: usersResponse.data.count,
           models: modelsResponse.data.count,
           payments: paymentsResponse.data.count,
+          jobs: jobsResponse.data.count,
         });
+
+        setCountJobs(jobsResponse.data.count);
 
         // Wallet data processing
         const wallets = walletsResponse.data.wallets;
@@ -189,7 +194,7 @@ function Home() {
       <div className="row">
         {/* Card for Users */}
         <motion.div
-          className="col-lg-3 col-md-6 col-sm-12 mt-4"
+          className={cx('col-lg-3', 'col-md-6', 'col-sm-12', 'mb-4')}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
@@ -213,7 +218,7 @@ function Home() {
 
         {/* Card for Models */}
         <motion.div
-          className="col-lg-3 col-md-6 col-sm-12 mt-4"
+          className={cx('col-lg-3', 'col-md-6', 'col-sm-12', 'mb-4')}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
@@ -234,10 +239,34 @@ function Home() {
             </Link>
           </div>
         </motion.div>
-       
+
+        {/* Card for Jobs */}
+        <motion.div
+          className={cx('col-lg-3', 'col-md-6', 'col-sm-12', 'mb-4')}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <div className={cx("card", "bg-warning")}>
+            <div className={cx("card-body")}>
+              <div>
+                <h3 className={cx("quantity")}>{count.jobs}</h3>
+                <h4 className={cx("title")}>Công việc</h4>
+              </div>
+              <span className={cx("icon-wrapper")}>
+                <i className="fa-solid fa-briefcase"></i>
+              </span>
+            </div>
+            <Link to={config.routes.job} className={cx("more-info")}>
+              <span>Xem thêm </span>
+              <NextArrowIcon />
+            </Link>
+          </div>
+        </motion.div>
+
         {/* Card for Payments */}
         <motion.div
-          className="col-lg-3 col-md-6 col-sm-12 mt-4"
+          className={cx('col-lg-3', 'col-md-6', 'col-sm-12', 'mb-4')}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
@@ -259,28 +288,33 @@ function Home() {
           </div>
         </motion.div>
       </div>
+     
+
 
       {/* Chart Section */}
-      <div className="mt-5">
-        <h3>{currentYear} Tổng quan</h3>
-        <div className={cx("row", "chart-container")}>
-          {/* dùng col */}
-          <div className={cx("col-8", "chart-left")}>
-            <h3>{currentYear} Tổng quan thanh toán</h3>
-            {chartData.labels && chartData.datasets ? (
-              <Bar data={chartData} options={{ responsive: true }} />
-            ) : (
-              <p>Loading chart data...</p>
-            )}
-          </div>
-          <div className={cx("col-4", "chart-right")}>
-            <h3>Payment Status Overview</h3>
-            {walletData.labels && walletData.datasets ? (
-              <Pie data={walletData} options={{ responsive: true }} />
-            ) : (
-              <p>Loading wallet data...</p>
-            )}
-          </div>
+      <div className={cx('chart-container', 'row')}>
+        <div className={cx('chart-section', 'col-lg-8', 'col-md-12', 'mb-4')}>
+          <h3>{currentYear} Tổng quan thanh toán</h3>
+          {chartData.labels && chartData.datasets ? (
+            <Bar data={chartData} options={{ 
+              responsive: true,
+              maintainAspectRatio: false
+            }} />
+          ) : (
+            <p>Loading chart data...</p>
+          )}
+        </div>
+        
+        <div className={cx('chart-section', 'col-lg-4', 'col-md-12')}>
+          <h3>Payment Status Overview</h3>
+          {walletData.labels && walletData.datasets ? (
+            <Pie data={walletData} options={{ 
+              responsive: true,
+              maintainAspectRatio: false
+            }} />
+          ) : (
+            <p>Loading wallet data...</p>
+          )}
         </div>
       </div>
     </div>

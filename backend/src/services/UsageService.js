@@ -1,5 +1,5 @@
 const { logger } = require("sequelize/lib/utils/logger");
-
+const Bot = require("../models/Bot"); 
 class UsageService {
   constructor() {
     this.languages = [
@@ -286,11 +286,26 @@ class UsageService {
   async getVoices() {
     return this.voices;
   }
+  async getVoices() {
+    return this.voices;
+  }
   async getModelsNLP() {
-    return this.modelsNLP;
+    const models = await Bot.findAll({
+      attributes: ['name', 'id'],
+      where: {
+        feature: 'text'
+      }
+    });
+    return models;
   }
   async getModelsVoice() {
-    return this.modelsVoice;
+    const models = await Bot.findAll({
+      attributes: ['name', 'id'],
+      where: {
+        feature: 'audio'
+      }
+    });
+    return models;
   }
   async getAllCategories() {
     return this.categories;

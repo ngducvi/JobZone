@@ -1,0 +1,156 @@
+.wrapper {
+    min-height: 100vh;
+    background: #f8fafc;
+    padding: 40px 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.title {
+    text-align: center;
+    font-size: 32px;
+    color: #1e293b;
+    margin-bottom: 32px;
+}
+
+.language-selector {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 40px;
+
+    .lang-btn {
+        padding: 8px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: #e2e8f0;
+        color: #64748b;
+
+        &:hover {
+            background: #cbd5e1;
+        }
+
+        &.active {
+            background: #02a346;
+            color: white;
+        }
+    }
+}
+
+.templates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+.template-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+    transition: all 0.3s ease;
+    border: 1px solid #e2e8f0;
+
+    &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+
+        .view-btn {
+            background: #02a346;
+            color: white;
+        }
+    }
+}
+
+.level-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    &.senior {
+        background: rgba(2, 163, 70, 0.1);
+        color: #02a346;
+    }
+
+    &.mid-level {
+        background: rgba(234, 179, 8, 0.1);
+        color: #ca8a04;
+    }
+
+    &.junior {
+        background: rgba(59, 130, 246, 0.1);
+        color: #2563eb;
+    }
+}
+
+.template-icon {
+    width: 64px;
+    height: 64px;
+    background: #f1f5f9;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    color: #013a74;
+    font-size: 24px;
+}
+
+.template-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+
+.template-category {
+    font-size: 14px;
+    color: #64748b;
+    margin-bottom: 20px;
+}
+
+.view-btn {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+    color: #64748b;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+        background: #02a346;
+        color: white;
+        border-color: #02a346;
+    }
+}
+
+@media (max-width: 768px) {
+    .title {
+        font-size: 24px;
+    }
+
+    .language-selector {
+        flex-wrap: wrap;
+    }
+
+    .templates-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    }
+}

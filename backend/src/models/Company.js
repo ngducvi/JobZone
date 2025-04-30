@@ -62,6 +62,11 @@ Company.init({
         type: DataTypes.STRING,
         allowNull: true,
     },
+    plan: {
+        type: DataTypes.ENUM('Basic', 'Pro', 'ProMax'),
+        allowNull: false,
+        defaultValue: 'Basic'
+    },
 }, {
     sequelize,
     modelName: 'Company',

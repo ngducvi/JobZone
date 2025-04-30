@@ -1,5 +1,6 @@
 const { Model, DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const Supplier = require('./Supplier');
 
 class Bot extends Model {}
 
@@ -28,9 +29,18 @@ Bot.init({
         type: DataTypes.FLOAT,
         allowNull: true,
     },
-    space_id: {
+    supplier_id:{
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true,
+        references: {
+            model: Supplier,
+            key: 'id',
+        },
+    },
+    feature:{
+        type: DataTypes.ENUM('text', 'image', 'audio', 'video','embedding'),
+        allowNull: true,
+        defaultValue: 'text',
     },
     updated_at: {
         type: DataTypes.DATE,

@@ -1,0 +1,458 @@
+.wrapper {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+.calculator-container {
+  background: linear-gradient(145deg, #ffffff, #f3f4f6);
+  padding: 40px;
+  border-radius: 30px;
+  box-shadow: 20px 20px 60px #d1d5db,
+             -20px -20px 60px #ffffff;
+}
+
+.calculator-header {
+  text-align: center;
+  margin-bottom: 50px;
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 4px;
+    background: linear-gradient(90deg, #013a74, #02a346);
+    border-radius: 2px;
+  }
+
+  .header-icon {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 25px;
+    background: linear-gradient(135deg, #013a74, #02a346);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: float 3s ease-in-out infinite;
+    box-shadow: 0 10px 20px rgba(1, 58, 116, 0.2);
+
+    i {
+      font-size: 40px;
+      color: white;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    }
+  }
+
+  h1 {
+    font-size: 32px;
+    font-weight: 800;
+    background: linear-gradient(90deg, #013a74, #02a346);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 12px;
+  }
+
+  p {
+    color: #6b7280;
+    font-size: 18px;
+  }
+}
+
+.calculator-form {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.form-steps {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+.step {
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, #013a74, #02a346);
+  }
+
+  &:hover {
+    border-color: #e5e7eb;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #013a74;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    &::before {
+      content: '';
+      width: 30px;
+      height: 30px;
+      background: linear-gradient(135deg, #013a74, #02a346);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 16px;
+      box-shadow: 0 4px 8px rgba(1, 58, 116, 0.2);
+    }
+  }
+}
+
+.input-group {
+  margin-bottom: 20px;
+  position: relative;
+
+  label {
+    display: block;
+    font-size: 14px;
+    color: #374151;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+
+  input, select {
+    width: 100%;
+    height: 48px;
+    padding: 0 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 16px;
+    color: #374151;
+    background: white;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+
+    &:focus {
+      outline: none;
+      border-color: #013a74;
+      box-shadow: 0 0 0 4px rgba(1, 58, 116, 0.1);
+      transform: translateY(-2px);
+    }
+
+    &:hover {
+      border-color: #013a74;
+    }
+  }
+}
+
+.calculate-button {
+  width: 100%;
+  height: 56px;
+  background: linear-gradient(135deg, #013a74, #02a346);
+  color: white;
+  border: none;
+  border-radius: 16px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 40px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    transition: 0.5s;
+  }
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(1, 58, 116, 0.3);
+
+    &::before {
+      left: 100%;
+    }
+  }
+
+  i {
+    font-size: 20px;
+  }
+}
+
+.results-section {
+  margin-top: 50px;
+  animation: slideUp 0.5s ease-out;
+}
+
+.results-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+.summary-card {
+  background: white;
+  padding: 24px;
+  border-radius: 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+  border: 2px solid #e5e7eb;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+  }
+
+  &.total {
+    background: linear-gradient(135deg, #013a74, #02a346);
+    color: white;
+    border: none;
+
+    h4 {
+      color: rgba(255, 255, 255, 0.9);
+    }
+  }
+
+  h4 {
+    font-size: 16px;
+    color: #374151;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  span {
+    font-size: 24px;
+    font-weight: 700;
+    color: inherit;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.results-table {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+
+  h3 {
+    font-size: 16px;
+    padding: 16px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th, td {
+      padding: 12px 16px;
+      text-align: right;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 14px;
+    }
+
+    th {
+      background: #f9fafb;
+      font-weight: 600;
+      color: #374151;
+      text-align: center;
+
+      &:first-child {
+        text-align: left;
+      }
+    }
+
+    td {
+      color: #6b7280;
+
+      &:first-child {
+        text-align: left;
+        font-weight: 500;
+        color: #374151;
+      }
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+      font-weight: 600;
+      color: #013a74;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .calculator-container {
+    padding: 24px;
+  }
+
+  .form-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .results-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .calculator-header {
+    h1 {
+      font-size: 24px;
+    }
+
+    p {
+      font-size: 16px;
+    }
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.charts-section {
+  margin-top: 50px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 30px;
+  animation: fadeIn 0.5s ease-out;
+
+  @media (max-width: 992px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-container {
+    width: 800px;
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  border: 2px solid #e5e7eb;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    transform: translateY(-5px);
+  }
+
+  &:first-child {
+    grid-column: 1 / -1;
+  }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #013a74;
+    margin-bottom: 20px;
+    text-align: center;
+    position: relative;
+    padding-bottom: 12px;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, #013a74, #02a346);
+      border-radius: 2px;
+    }
+  }
+}
+
+.pie-chart-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  padding: 20px;
+}
+
+.pie-chart {
+  width: 200px;
+  height: 200px;
+  position: relative;
+  
+  .pie {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+  }
+}
+
+.pie-legend {
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: #374151;
+
+    .color-box {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+
+      &.interest {
+        background: #013a74;
+      }
+
+      &.principal {
+        background: #02a346;
+      }
+    }
+  }
+}

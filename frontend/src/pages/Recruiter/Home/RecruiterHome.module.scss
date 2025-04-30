@@ -1,0 +1,841 @@
+// Variables
+$primary-color: #013a74;
+$secondary-color: #02a346;
+$text-primary: #1e293b;
+$text-secondary: #64748b;
+$border-color: #e2e8f0;
+$bg-light: #f8fafc;
+$bg-white: #ffffff;
+$shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+$shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+$border-radius-sm: 8px;
+$border-radius-md: 12px;
+$border-radius-lg: 16px;
+$transition: all 0.3s ease;
+
+// Mixins
+@mixin flex($direction: row, $align: center, $justify: flex-start, $gap: 0) {
+  display: flex;
+  flex-direction: $direction;
+  align-items: $align;
+  justify-content: $justify;
+  gap: $gap;
+}
+
+@mixin card {
+  background: $bg-white;
+  border-radius: $border-radius-md;
+  box-shadow: $shadow-sm;
+  border: 1px solid $border-color;
+  transition: $transition;
+}
+
+@mixin hover-effect {
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-md;
+  }
+}
+
+@mixin gradient-bg {
+  background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+}
+
+// Main Styles
+.wrapper {
+  padding: 24px;
+  background: $bg-light;
+  min-height: 100vh;
+  color: $text-primary;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.user-info {
+  @include card;
+  border-radius: $border-radius-lg;
+  padding: 0;
+  overflow: hidden;
+}
+
+.user-header {
+  @include flex(row, flex-start, flex-start, 24px);
+  padding: 28px 32px;
+  background: linear-gradient(to right, rgba($primary-color, 0.03), rgba($secondary-color, 0.03));
+  border-bottom: 1px solid $border-color;
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 32px;
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(to right, $primary-color, $secondary-color);
+    border-radius: 3px 3px 0 0;
+  }
+
+  img {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid $bg-white;
+    box-shadow: $shadow-sm;
+  }
+}
+
+.user-details {
+  flex: 1;
+
+  h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: $primary-color;
+    margin-bottom: 8px;
+  }
+
+  .user-id {
+    color: $text-secondary;
+    margin-bottom: 14px;
+    font-size: 14px;
+    background: rgba($primary-color, 0.05);
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  .user-contact {
+    @include flex(row, center, flex-start, 24px);
+    color: $text-secondary;
+
+    span {
+      @include flex(row, center, flex-start, 8px);
+      font-size: 14px;
+      
+      i {
+        color: $primary-color;
+        font-size: 16px;
+      }
+    }
+  }
+}
+
+.membership-info {
+  min-width: 280px;
+  padding: 16px 24px;
+  background: $bg-white;
+  border-radius: $border-radius-md;
+  border: 1px solid $border-color;
+  box-shadow: $shadow-sm;
+
+  .membership-level {
+    margin-bottom: 16px;
+    text-align: center;
+
+    span {
+      font-weight: 600;
+      font-size: 16px;
+      @include flex(row, center, center, 8px);
+      margin-bottom: 4px;
+    }
+
+    .level {
+      font-size: 12px;
+      color: $text-secondary;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  .membership-points {
+    .point-row {
+      @include flex(row, center, space-between, 0);
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: $text-secondary;
+    }
+
+    .point-values {
+      @include flex(row, center, space-between, 0);
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 3px;
+      overflow: hidden;
+
+      .progress {
+        height: 100%;
+        background: linear-gradient(90deg, $primary-color 0%, $secondary-color 100%);
+        transition: width 0.5s ease;
+        border-radius: 3px;
+      }
+    }
+  }
+}
+
+.stats-section {
+  padding: 32px;
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
+
+  .stat-card {
+    @include card;
+    padding: 24px;
+    @include flex(row, center, flex-start, 16px);
+    @include hover-effect;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 6px;
+      height: 100%;
+      background: linear-gradient(to bottom, $primary-color, $secondary-color);
+    }
+
+    i {
+      font-size: 28px;
+      color: $primary-color;
+      background: rgba($primary-color, 0.1);
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      @include flex(row, center, center, 0);
+    }
+
+    .stat-info {
+      .stat-value {
+        display: block;
+        font-size: 28px;
+        font-weight: 700;
+        color: $text-primary;
+        margin-bottom: 4px;
+      }
+
+      .stat-label {
+        color: $text-secondary;
+        font-size: 14px;
+      }
+    }
+  }
+}
+
+.toppy-ai-section {
+  padding: 0 32px 32px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+
+  .ai-card, .service-card {
+    @include card;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 100px;
+      height: 100px;
+      background: radial-gradient(circle, rgba($secondary-color, 0.1) 0%, rgba($primary-color, 0) 70%);
+      border-radius: 0 0 0 100%;
+      z-index: 0;
+    }
+
+    h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: $primary-color;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 1;
+      
+      &::after {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 3px;
+        background: $secondary-color;
+        margin-top: 8px;
+        border-radius: 2px;
+      }
+    }
+
+    p {
+      color: $text-secondary;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 1;
+    }
+  }
+
+  .ai-btn {
+    @include gradient-bg;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: $border-radius-sm;
+    @include flex(row, center, center, 8px);
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: $transition;
+    font-weight: 500;
+    width: 100%;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba($primary-color, 0.3);
+    }
+
+    i {
+      font-size: 16px;
+    }
+  }
+
+  .view-all-btn, .manage-btn {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid $border-color;
+    border-radius: $border-radius-sm;
+    background: $bg-white;
+    color: $primary-color;
+    font-weight: 500;
+    cursor: pointer;
+    transition: $transition;
+    font-size: 13px;
+
+    &:hover {
+      background: rgba($primary-color, 0.05);
+      border-color: $primary-color;
+    }
+  }
+}
+
+.company-info {
+  margin: 0 32px 32px;
+  @include card;
+  border-radius: $border-radius-lg;
+  overflow: hidden;
+
+  .company-header {
+    @include flex(row, center, flex-start, 24px);
+    padding: 24px;
+    background: linear-gradient(to right, rgba($primary-color, 0.02), rgba($secondary-color, 0.05));
+    border-bottom: 1px solid $border-color;
+
+    .company-logo {
+      width: 80px;
+      height: 80px;
+      border-radius: $border-radius-sm;
+      overflow: hidden;
+      border: 1px solid $border-color;
+      background: $bg-white;
+      @include flex(row, center, center, 0);
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+
+    .company-main-info {
+      flex: 1;
+
+      h3 {
+        font-size: 20px;
+        font-weight: 600;
+        color: $primary-color;
+        margin-bottom: 10px;
+      }
+
+      .company-meta {
+        @include flex(row, center, flex-start, 24px);
+
+        span {
+          @include flex(row, center, flex-start, 8px);
+          color: $text-secondary;
+          font-size: 14px;
+
+          i {
+            color: $primary-color;
+            font-size: 16px;
+          }
+        }
+      }
+    }
+
+    .view-company-btn {
+      background: rgba($primary-color, 0.05);
+      color: $primary-color;
+      border: 1px solid rgba($primary-color, 0.2);
+      padding: 10px 16px;
+      border-radius: $border-radius-sm;
+      cursor: pointer;
+      @include flex(row, center, center, 8px);
+      transition: $transition;
+      font-size: 14px;
+      font-weight: 500;
+
+      &:hover {
+        background: rgba($primary-color, 0.1);
+      }
+    }
+  }
+
+  .company-details {
+    padding: 24px;
+
+    .detail-section {
+      margin-bottom: 24px;
+
+      h4 {
+        font-size: 16px;
+        font-weight: 600;
+        color: $primary-color;
+        margin-bottom: 12px;
+        
+        &::after {
+          content: '';
+          display: block;
+          width: 30px;
+          height: 2px;
+          background: $secondary-color;
+          margin-top: 8px;
+          border-radius: 1px;
+        }
+      }
+
+      p {
+        color: $text-secondary;
+        line-height: 1.6;
+        font-size: 14px;
+      }
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+
+      .detail-item {
+        @include flex(row, flex-start, flex-start, 12px);
+
+        i {
+          color: $primary-color;
+          font-size: 18px;
+          background: rgba($primary-color, 0.1);
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          @include flex(row, center, center, 0);
+        }
+
+        div {
+          flex: 1;
+
+          label {
+            display: block;
+            color: $text-secondary;
+            font-size: 13px;
+            margin-bottom: 4px;
+            font-weight: 500;
+          }
+
+          p, a {
+            color: $text-primary;
+            text-decoration: none;
+            font-size: 14px;
+
+            &:hover {
+              color: $primary-color;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.recent-job-applications {
+  margin: 0 32px 32px;
+
+  h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: $primary-color;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid $border-color;
+    
+    &::after {
+      content: '';
+      display: block;
+      width: 40px;
+      height: 3px;
+      background: $secondary-color;
+      margin-top: 12px;
+      border-radius: 2px;
+    }
+  }
+
+  .job-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+
+  .applicant-card {
+    @include card;
+    padding: 20px;
+    @include hover-effect;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 16px;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(to bottom, $primary-color, $secondary-color);
+    }
+
+    img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid $bg-white;
+      box-shadow: $shadow-sm;
+    }
+
+    h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: $primary-color;
+      margin-bottom: 4px;
+      border: none;
+      padding: 0;
+      
+      &::after {
+        display: none;
+      }
+    }
+
+    p {
+      color: $text-secondary;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .tags {
+      @include flex(row, center, flex-start, 6px);
+      margin-top: 8px;
+
+      span {
+        background: rgba($primary-color, 0.1);
+        color: $primary-color;
+        border-radius: 4px;
+        padding: 3px 8px;
+        font-size: 11px;
+        font-weight: 500;
+      }
+    }
+
+    .applicant-actions {
+      @include flex(row, center, flex-end, 8px);
+
+      .action-btn {
+        background: $bg-light;
+        border: 1px solid $border-color;
+        border-radius: 4px;
+        width: 32px;
+        height: 32px;
+        @include flex(row, center, center, 0);
+        cursor: pointer;
+        transition: $transition;
+
+        &:hover {
+          background: rgba($primary-color, 0.1);
+          border-color: $primary-color;
+          
+          svg {
+            color: $primary-color;
+          }
+        }
+
+        svg {
+          color: $text-secondary;
+          font-size: 14px;
+        }
+        
+        &:nth-child(1) svg { color: $primary-color; }
+        &:nth-child(2) svg { color: $secondary-color; }
+        &:nth-child(3) svg { color: #f59e0b; }
+        &:nth-child(4) svg { color: #ef4444; }
+      }
+    }
+  }
+}
+
+.license-warning {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 1000;
+  width: 400px;
+  animation: slideIn 0.5s ease-out;
+  
+  .warning-content {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    
+    i {
+      font-size: 24px;
+      color: #f59e0b;
+      flex-shrink: 0;
+      margin-top: 2px;
+      animation: pulse 2s infinite;
+    }
+    
+    .warning-text {
+      flex: 1;
+      
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 4px;
+      }
+      
+      p {
+        font-size: 14px;
+        color: #64748b;
+        line-height: 1.5;
+      }
+    }
+    
+    .update-btn {
+      padding: 8px 16px;
+      background: linear-gradient(135deg, #013a74 0%, #0252a2 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+      
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(1, 58, 116, 0.2);
+      }
+      
+      &:active {
+        transform: translateY(0);
+      }
+    }
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// Responsive styles
+@media (max-width: 1200px) {
+  .stats-section .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 992px) {
+  .user-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+    
+    &::after {
+      left: 50%;
+      transform: translateX(-50%);
+    }
+  }
+  
+  .user-details {
+    text-align: center;
+    
+    .user-contact {
+      justify-content: center;
+    }
+  }
+  
+  .membership-info {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  
+  .toppy-ai-section {
+    grid-template-columns: 1fr;
+  }
+  
+  .company-info .company-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    
+    .company-main-info .company-meta {
+      justify-content: center;
+    }
+  }
+  
+  .company-info .company-details .detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .wrapper {
+    padding: 16px;
+  }
+  
+  .stats-section {
+    padding: 24px;
+    
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  .toppy-ai-section,
+  .company-info,
+  .recent-job-applications {
+    margin: 0 24px 24px;
+  }
+  
+  .recent-job-applications .job-list {
+    grid-template-columns: 1fr;
+  }
+  
+  .license-warning {
+    top: 16px;
+    right: 16px;
+    left: 16px;
+    width: auto;
+    
+    .warning-content {
+      padding: 16px;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      
+      i {
+        margin: 0 0 12px;
+      }
+      
+      .warning-text {
+        margin-bottom: 12px;
+        
+        h3 {
+          font-size: 15px;
+        }
+        
+        p {
+          font-size: 13px;
+        }
+      }
+      
+      .update-btn {
+        width: 100%;
+      }
+    }
+  }
+}
+
+@media (max-width: 576px) {
+  .user-header {
+    padding: 20px;
+  }
+  
+  .stats-section,
+  .toppy-ai-section,
+  .company-info,
+  .recent-job-applications {
+    padding: 16px;
+    margin: 0 16px 16px;
+  }
+  
+  .company-info .company-header {
+    padding: 16px;
+  }
+  
+  .applicant-card {
+    grid-template-columns: 1fr;
+    text-align: center;
+    
+    img {
+      margin: 0 auto;
+    }
+    
+    .tags {
+      justify-content: center;
+    }
+    
+    .applicant-actions {
+      justify-content: center;
+      margin-top: 12px;
+    }
+  }
+}
+

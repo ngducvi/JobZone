@@ -16,7 +16,7 @@ function ModelAI({ selectedModel , setSelectedModel}) {
 
         // Thiết lập giá trị mặc định cho selectedModel nếu chưa được thiết lập
         if (!selectedModel && modelsResult.models.length > 0) {
-          setSelectedModel(modelsResult.models[0]);
+          setSelectedModel(modelsResult.models[0].id);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -32,12 +32,12 @@ function ModelAI({ selectedModel , setSelectedModel}) {
       <select
         id="promptSelect"
         className={cx('select')}
-        value={selectedModel}
+        value={selectedModel.id}
         onChange={(e) => setSelectedModel(e.target.value)}
       >
         {models.map((model, id) => (
-          <option key={id} value={model}>
-            {model === 'gpt-4o-mini' ? 'GPT-4o Mini' : 'GPT-4o'}
+          <option key={id} value={model.id}>
+            {model.name}
           </option>
         ))}
       </select>

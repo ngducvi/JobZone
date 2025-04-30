@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useEffect, useState, useContext, useRef } from "react";
 import classNames from "classnames/bind";
 import styles from "./Userinfo.module.scss";
 import { Link } from "react-router-dom";
-
+import UserContext from "~/context/UserContext";
 const cx = classNames.bind(styles);
 
 const menuItems = [
@@ -15,7 +15,7 @@ const menuItems = [
     color: "#4f46e5"
   },
   {
-    to: "/user/resume",
+    to: "/user/manager-cv",
     icon: "fa-regular fa-file-lines",
     title: "Hồ sơ & CV",
     description: "Quản lý CV và thông tin nghề nghiệp",
@@ -23,7 +23,7 @@ const menuItems = [
     color: "#0891b2"
   },
   {
-    to: "/user/applications",
+    to: "/user/jobs-applying",
     icon: "fa-solid fa-briefcase",
     title: "Việc làm đã ứng tuyển",
     description: "Xem và quản lý các công việc đã ứng tuyển",
@@ -31,7 +31,7 @@ const menuItems = [
     color: "#059669"
   },
   {
-    to: "/user/saved-jobs",
+    to: "/user/save-job",
     icon: "fa-regular fa-bookmark",
     title: "Việc làm đã lưu",
     description: "Xem danh sách việc làm đã lưu",
@@ -39,7 +39,7 @@ const menuItems = [
     color: "#7c3aed"
   },
   {
-    to: "/user/reviews",
+    to: "/tai-khoan/manager-review",
     icon: "fa-regular fa-star",
     title: "Đánh giá của tôi",
     description: "Quản lý đánh giá và nhận xét về công ty",
@@ -55,7 +55,7 @@ const menuItems = [
     color: "#ef4444"
   },
   {
-    to: "/user/notifications",
+    to: "/tai-khoan/notifications",
     icon: "fa-regular fa-bell",
     title: "Thông báo",
     description: "Tùy chỉnh cài đặt thông báo",
@@ -73,6 +73,21 @@ const menuItems = [
 ];
 
 function Userinfo() {
+  const { user } = useContext(UserContext);
+  
+  // Lọc menuItems dựa trên role
+  const filteredMenuItems = menuItems.filter(item => {
+    if (user?.role === 'recruiter') {
+      // Ẩn các mục không dành cho recruiter
+      return ![
+        '/user/manager-cv',
+        '/user/applications', 
+        '/user/saved-jobs'
+      ].includes(item.to);
+    }
+    return true; // Hiện tất cả cho user thường
+  });
+
   return (
     <div className={cx("wrapper")}>
       <div className={cx("container")}>
@@ -84,7 +99,7 @@ function Userinfo() {
         </div>
 
         <div className={cx("menu-grid")}>
-          {menuItems.map((item, index) => (
+          {filteredMenuItems.map((item, index) => (
             <Link to={item.to} key={index} className={cx("menu-item")}>
               <div 
                 className={cx("icon-wrapper")}

@@ -155,20 +155,42 @@
   max-width: 1200px;
 
   .category {
-    padding: 8px 16px;
+    padding: 12px 20px;
     background: white;
     border-radius: 20px;
     font-size: 14px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
     border: 1px solid #e5e7eb;
 
+    i {
+      font-size: 16px;
+      color: #013a74;
+      transition: all 0.3s ease;
+    }
+
     &:hover {
       border-color: #013a74;
       transform: translateY(-2px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    &.active {
+      background: #013a74;
+      color: white;
+      border-color: #013a74;
+
+      i {
+        color: white;
+      }
+
+      .count {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+      }
     }
 
     .count {
@@ -177,6 +199,7 @@
       border-radius: 12px;
       font-size: 12px;
       color: #6b7280;
+      transition: all 0.3s ease;
     }
   }
 }
@@ -299,106 +322,178 @@
 }
 
 .job-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 24px;
 }
 
 .job-card {
   background: white;
-  border-radius: 12px;
-  padding: 20px;
-  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
   transition: all 0.3s ease;
+  border: 1px solid #e5e7eb;
   cursor: pointer;
 
   &:hover {
-    transform: translateY(-2px);
+    transform: translateY(-4px);
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
-  }
 
-  .company-info {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 16px;
-
-    img {
-      width: 60px;
-      height: 60px;
-      border-radius: 8px;
-      object-fit: contain;
-      border: 1px solid #e5e7eb;
+    .card-overlay {
+      opacity: 1;
     }
 
-    .job-details {
-      flex: 1;
-
-      h3 {
-        font-size: 16px;
-        font-weight: 600;
-        color: #111827;
-        margin-bottom: 8px;
-      }
-
-      .location {
-        font-size: 14px;
-        color: #6b7280;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        margin-bottom: 12px;
-
-        i {
-          color: #02a346;
-          font-size: 14px;
-        }
-      }
-
-      .tags {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-
-        span {
-          padding: 4px 12px;
-          background: #f3f4f6;
-          border-radius: 16px;
-          font-size: 13px;
-          color: #374151;
-        }
-      }
+    .apply-btn {
+      transform: translateY(0);
+      opacity: 1;
     }
   }
+}
 
-  .job-meta {
-    display: flex;
-    justify-content: space-between;
-    padding-top: 16px;
-    border-top: 1px solid #e5e7eb;
+.card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(1, 58, 116, 0.02) 0%, rgba(1, 58, 116, 0.08) 100%);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.job-header {
+  padding: 20px;
+  border-bottom: 1px solid #e5e7eb;
+  position: relative;
+}
+
+.company-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.company-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+}
+
+.company-details {
+  flex: 1;
+}
+
+.job-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.company-name {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.job-content {
+  padding: 20px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f9fafb;
+
+  i {
+    font-size: 20px;
+    color: #013a74;
+  }
+
+  .label {
+    display: block;
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 2px;
+  }
+
+  .value {
     font-size: 14px;
+    color: #1f2937;
+    font-weight: 500;
+  }
+}
 
-    .salary {
-      color: #02a346;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+.tags-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
 
-      i {
-        font-size: 14px;
-      }
+  .tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: #f3f4f6;
+    font-size: 13px;
+    color: #374151;
+
+    i {
+      font-size: 12px;
+      color: #013a74;
     }
+  }
+}
 
-    .deadline {
-      color: #6b7280;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-
-      i {
-        font-size: 14px;
-      }
+.deadline-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  .deadline-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #dc2626;
+    font-size: 14px;
+    
+    i {
+      font-size: 16px;
     }
+  }
+}
+
+.apply-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #013a74, #02a346);
+  color: white;
+  font-weight: 500;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  transform: translateY(10px);
+  opacity: 0;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(1, 58, 116, 0.2);
   }
 }
 
@@ -564,4 +659,83 @@ select.form-control {
   .form-control {
     flex: 1;
   }
+}
+
+.save-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #374151;
+  position: relative;
+  overflow: hidden;
+
+  i {
+    font-size: 16px;
+    transition: all 0.3s ease;
+  }
+
+  .default-text {
+    transition: all 0.3s ease;
+  }
+
+  .hover-text {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: all 0.3s ease;
+    color: #dc2626;
+  }
+
+  // Nút chưa lưu
+  &:not(.saved) {
+    &:hover {
+      border-color: #013a74;
+      color: #013a74;
+
+      i {
+        color: #013a74;
+      }
+    }
+  }
+
+  // Nút đã lưu
+  &.saved {
+    background: #013a74;
+    color: white;
+    border-color: #013a74;
+    animation: saveAnimation 0.3s ease;
+
+    &:hover {
+      background: #fff;
+      border-color: #dc2626;
+      color: #dc2626;
+
+      i {
+        color: #dc2626;
+      }
+
+      .default-text {
+        opacity: 0;
+      }
+      
+      .hover-text {
+        opacity: 1;
+      }
+    }
+  }
+}
+
+@keyframes saveAnimation {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }

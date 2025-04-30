@@ -127,6 +127,16 @@
       gap: 8px;
       white-space: nowrap;
 
+      &.clear-search {
+        background: #f3f4f6;
+        color: #4b5563;
+        
+        &:hover {
+          background: #e5e7eb;
+          color: #1f2937;
+        }
+      }
+
       i {
         font-size: 18px;
         transition: transform 0.3s ease;
@@ -231,6 +241,10 @@
         height: 48px;
         font-size: 14px;
         justify-content: center;
+
+        &.clear-search {
+          height: 40px;
+        }
       }
     }
   }
@@ -673,8 +687,29 @@
     }
   }
 
+  .review-stats {
+    padding: 0 20px;
+    margin-bottom: 12px;
+    
+    .review-count {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: #666;
+
+      .icon {
+        color: #ffc107;
+      }
+
+      .review-total {
+        color: #999;
+      }
+    }
+  }
+
   h3 {
-    padding: 16px 20px;
+    padding: 16px 20px 8px 20px;
     font-size: 16px;
     font-weight: 600;
     color: #013a74;
@@ -790,6 +825,16 @@
       font-size: 13px;
       -webkit-line-clamp: 2;
       min-height: 70px;
+    }
+
+    .review-stats {
+      padding: 0 16px;
+      margin-bottom: 8px;
+      
+      .review-count {
+        font-size: 12px;
+        gap: 4px;
+      }
     }
   }
 }

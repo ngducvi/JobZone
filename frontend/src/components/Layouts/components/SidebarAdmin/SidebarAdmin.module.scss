@@ -79,6 +79,20 @@
       animation: scaleIn 0.2s ease-out;
     }
   }
+
+  @media (max-width: 768px) {
+    transform: translateX(-100%);
+    width: 280px;
+    max-width: 100%;
+    
+    &.mobile-open {
+      transform: translateX(0);
+    }
+
+    .toggle-btn {
+      display: none;
+    }
+  }
 }
 
 .header {
@@ -96,6 +110,7 @@
     text-decoration: none;
 
     .logo-title {
+      margin-top: 30px;
       font-size: 20px;
       font-weight: 700;
       background: linear-gradient(135deg, #013a74 0%, #02a346 100%);
@@ -125,6 +140,11 @@
     i {
       transition: transform 0.3s ease;
     }
+  }
+
+  @media (max-width: 768px) {
+    padding: 0 16px;
+    height: 60px;
   }
 }
 
@@ -209,6 +229,11 @@
         animation: slideIn 0.2s ease-out;
       }
     }
+
+    @media (max-width: 768px) {
+      padding: 12px;
+      font-size: 16px;
+    }
   }
 }
 
@@ -279,6 +304,14 @@
       }
     }
   }
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    
+    .user-info {
+      padding: 12px;
+    }
+  }
 }
 
 .submenu {
@@ -344,4 +377,83 @@
       background: #9ca3af;
     }
   }
+}
+
+.mobile-menu-toggle {
+  display: none;
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 1001;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  @media (max-width: 768px) {
+    display: flex;
+  }
+
+  i {
+    font-size: 20px;
+    color: #013a74;
+    transition: transform 0.3s ease;
+  }
+
+  &.active {
+    left: 280px;
+    background: transparent;
+    box-shadow: none;
+
+    i {
+      color: #ffffff;
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 998;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+
+  @media (max-width: 768px) {
+    display: block;
+  }
+
+  &.active {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.wrapper.mobile-open {
+  animation: slideInLeft 0.3s ease-out;
+}
+
+.mobile-overlay.active {
+  animation: fadeIn 0.3s ease-out;
 }

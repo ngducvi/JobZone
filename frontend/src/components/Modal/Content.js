@@ -12,15 +12,19 @@ import config from '~/config';
 import { toCamelCase } from '~/utils/toCamelCase';
 import ForgotPassword from './ForgotPassword';
 import Login from './Login';
+
 import Register from './Register';
 import ResetPassword from './ResetPassword';
 import { Link } from 'react-router-dom';
 // import api from '~/utils/api';
+import LoginRecruiter from './LoginRecruiter';
+import UserContext from '~/context/UserContext';
 
 const cx = classNames.bind(styles);
 
 function Content() {
     const { modalType, setModalType } = useContext(ModalTypeContext);
+    const { user } = useContext(UserContext);
     const [previousModalType, setPreviousModalType] = useState(null);
     const [resetPasswordSuccess, setResetPasswordSuccess] = useState(false);
     const handleClick = useCallback(
@@ -117,6 +121,7 @@ function Content() {
                     )}
 
                     {modalType === 'loginEmail' && <Login />}
+                    {modalType === 'LoginRecruiter' &&  <LoginRecruiter />}
                     {modalType === 'registerEmail' && <Register />}
                     {modalType === 'forgotPassword' && <ForgotPassword setModalType={setModalType} />}
                     {modalType === 'resetPassword' && (

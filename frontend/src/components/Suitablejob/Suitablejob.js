@@ -39,20 +39,51 @@ const Suitablejob = () => {
     fetchSuitableJobs();
   }, [activePage]);
 
-  const handleSaveJob = (jobId) => {
-    setSavedJobs(prev => {
-      const newSaved = new Set(prev);
-      if (newSaved.has(jobId)) {
-        newSaved.delete(jobId);
-      } else {
-        newSaved.add(jobId);
+  useEffect(() => {
+    const fetchSavedStatus = async () => {
+      try {
+        const response = await authAPI().get(userApis.getAllSavedJobsByUser);
+        const savedJobsSet = new Set(response.data.savedJobs.map(job => job.job_id));
+        setSavedJobs(savedJobsSet);
+      } catch (error) {
+        console.error("Error fetching saved jobs:", error);
       }
-      return newSaved;
-    });
+    };
+    fetchSavedStatus();
+  }, []);
+
+  const handleSaveJob = async (e, jobId) => {
+    e.stopPropagation();
+    if (!jobId) {
+      console.error('Invalid job ID');
+      return;
+    }
+
+    try {
+      if (savedJobs.has(jobId)) {
+        await authAPI().delete(userApis.unsaveJob(jobId));
+        setSavedJobs(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(jobId);
+          return newSet;
+        });
+      } else {
+        await authAPI().post(userApis.saveJob(jobId));
+        setSavedJobs(prev => new Set([...prev, jobId]));
+      }
+    } catch (error) {
+      console.error("Error toggling job save status:", error);
+    }
   };
 
-  const handleJobClick = (jobId) => {
-    navigate(`/jobs/${jobId}`);
+  const handleJobClick = async (jobId) => {
+    try {
+      await authAPI().post(userApis.addViewedJob(jobId));
+      navigate(`/jobs/${jobId}`);
+    } catch (error) {
+      console.error('Error adding to viewed jobs:', error);
+      navigate(`/jobs/${jobId}`);
+    }
   };
 
   return (
@@ -74,7 +105,11 @@ const Suitablejob = () => {
         <>
           <div className={cx("job-list")}>
             {jobs.map((job) => (
-              <div key={job.job_id} className={cx("job-item")}>
+              <div 
+                key={job.job_id} 
+                className={cx("job-item")}
+                onClick={() => handleJobClick(job.job_id)}
+              >
                 <div className={cx("company-logo")}>
                   <img src={job.Company?.logo || images.company_1} alt="" />
                 </div>
@@ -117,10 +152,10 @@ const Suitablejob = () => {
                   </button>
                   <button 
                     className={cx("save-btn", { saved: savedJobs.has(job.job_id) })}
-                    onClick={() => handleSaveJob(job.job_id)}
+                    onClick={(e) => handleSaveJob(e, job.job_id)}
                     title={savedJobs.has(job.job_id) ? "Bỏ lưu" : "Lưu tin"}
                   >
-                    <i className={savedJobs.has(job.job_id) ? "fas fa-heart" : "far fa-heart"}></i>
+                    <i className={`fa-${savedJobs.has(job.job_id) ? 'solid' : 'regular'} fa-heart`}></i>
                   </button>
                   <button className={cx("more-btn")} title="Xem thêm">
                     <i className="fas fa-ellipsis-h"></i>

@@ -2,16 +2,17 @@ import React, { useContext, useEffect, useState } from "react";
 import classNames from "classnames/bind";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import styles from "./Sidebar.module.scss";
-import { DashboardIcon } from "~/components/Icons";
 import Avatar from "~/components/Avatar";
 import images from "~/assets/images";
-import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import ModalTypeContext from "~/context/ModalTypeContext";
 import SidebarContext from "~/context/SidebarContext";
 import UserContext from "~/context/UserContext";
 import { authAPI, userApis } from "~/utils/api";
-import Modal from "~/components/Modal";
+import Modal from "~/components/Modal/Modal";
+import { FaBell } from "react-icons/fa";
+import socketService from "~/utils/socket";
+import { useNotification } from '~/context/NotificationContext';
 
 const cx = classNames.bind(styles);
 
@@ -59,7 +60,7 @@ const sidebarIcons = [
   {
     icon: <i className="fa-solid fa-briefcase"></i>,
     title: "Resume",
-    to: "/profile/cv",
+    to: "/user/manager-cv",
     subMenu: [
       {
         title: "Tạo CV",
@@ -71,35 +72,30 @@ const sidebarIcons = [
         to: "/user/up-cv",
         authRequired: false
       },
-      {
-        title: "Tạo Cover Letter",
-        to: "/jobs/cover-letter",
-        authRequired: false
-      },
+      // {
+      //   title: "Tạo Cover Letter",
+      //   to: "/jobs/cover-letter",
+      //   authRequired: false
+      // },
       {
         title: "Quản lý CV",
         to: "/user/manager-cv",
         authRequired: true
       },
-      {
-        title: "Quản lý Cover Letter",
-        to: "/jobs/manage-cover-letter",
-        authRequired: true
-      },
+      // {
+      //   title: "Quản lý Cover Letter",
+      //   to: "/jobs/manage-cover-letter",
+      //   authRequired: true
+      // },
       {
         title: "Dịch vụ tư vấn CV",
         to: "/jobs/cv-consulting",
         authRequired: false
       },
       {
-        title: "Hướng dẫn viết CV theo ngành nghề",
-        to: "/jobs/cv-guide",
-        authRequired: false
-      },
-      {
         title: "Thư viện CV theo ngành nghề",
         badge: "MỚI",
-        to: "/jobs/cv-templates",
+        to: "/user/cv-library",
         authRequired: false
       },
       {
@@ -107,6 +103,11 @@ const sidebarIcons = [
         to: "/user/job-zone-profile",
         authRequired: true
       },
+      // {
+      //   title: "Test Template",
+      //   to: "/test-template",
+      //   authRequired: false
+      // },
     ]
   },
   // career handbook
@@ -118,51 +119,85 @@ const sidebarIcons = [
       {
         icon: <i className="fa-solid fa-compass"></i>,
         title: "Định hướng nghề nghiệp",
-        to: "/career-handbook/orientation"
+        to: "/career-handbook/career-orientation"
       },
       {
         icon: <i className="fa-solid fa-magnifying-glass"></i>,
         title: "Bí kíp tìm việc",
-        to: "/career-handbook/job-tips"
+        to: "/career-handbook/job-hunting"
       },
       {
         icon: <i className="fa-solid fa-sack-dollar"></i>,
         title: "Chế độ lương thưởng",
-        to: "/career-handbook/salary"
+        to: "/career-handbook/compensation"
       },
       {
         icon: <i className="fa-solid fa-graduation-cap"></i>,
         title: "Kiến thức chuyên ngành",
-        to: "/career-handbook/knowledge"
+        to: "/career-handbook/industry-knowledge"
       },
       {
         icon: <i className="fa-solid fa-briefcase"></i>,
         title: "Hành trang nghề nghiệp",
-        to: "/career-handbook/career-tips"
+        to: "/career-handbook/career-preparation"
       },
       {
         icon: <i className="fa-solid fa-chart-line"></i>,
         title: "Thị trường và xu hướng tuyển dụng",
-        to: "/career-handbook/market-trends"
-      }
+        to: "/career-handbook/recruitment-trends"
+      },
     ]
   },
   {
-    icon: <i className="fa-solid fa-envelope"></i>,
-    title: "Contact",
-    to: "/contact",
-  }
+    icon: <i className="fa-solid fa-toolbox"></i>,
+    title: "Tools",
+    to: "/tools",
+    subMenu: [
+      {
+        // Tinh luong
+        icon: <i className="fa-solid fa-calculator"></i>,
+        title: "Tính lương",
+        to: "/tools/salary-calculator",
+      },
+      // Test DISC
+      {
+        icon: <i className="fa-solid fa-chart-simple"></i>,
+        title: "Test DISC",
+        to: "/tools/test-disc",
+      },
+      // Cong cu tinh lai kep
+      {
+        icon: <i className="fa-solid fa-calculator"></i>,
+        title: "Tính lãi kép",
+        to: "/tools/compound-interest-calculator",
+      },
+      // tinh tien tiet kiem
+      {
+        icon: <i className="fa-solid fa-calculator"></i>,
+        title: "Tính tiền tiết kiệm",
+        to: "/tools/saving-calculator",
+      },
+      {
+        // tool ai
+        icon: <i className="fa-solid fa-robot"></i>,
+        title: "Tool AI",
+        to: "/tools/ai",
+      }
+      
+    ]
+  },
 ];
 
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { modalType, setModalType } = useContext(ModalTypeContext);
-  const { isOpenSidebar, setIsOpenSidebar } = useContext(SidebarContext);
+  const { setIsOpenSidebar } = useContext(SidebarContext);
   const { user, setUser } = useContext(UserContext);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
+  const [candidate, setCandidate] = useState(null);
+  const { unreadCount, updateUnreadCount } = useNotification();
   const userSidebarIcons =
     user?.role === "admin"
       ? [
@@ -195,6 +230,7 @@ const Sidebar = () => {
       try {
         const response = await authAPI().get(userApis.getCurrentUser);
         setUser(response.data.user);
+        setCandidate(response.data.candidate);
       } catch (error) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
@@ -205,6 +241,43 @@ const Sidebar = () => {
       fetchUserData();
     }
   }, [token, setUser]);
+
+  useEffect(() => {
+    const setupSocket = async () => {
+      try {
+        const response = await authAPI().get(userApis.getCurrentUser);
+        const token = localStorage.getItem("token");
+        socketService.connect(token);
+        socketService.joinUserRoom(response.data.user.id);
+        
+        // Lắng nghe thông báo mới và cập nhật số lượng
+        socketService.onNewNotification(() => {
+          // Gọi API để lấy số lượng thông báo chưa đọc mới nhất
+          const fetchUnreadCount = async () => {
+            try {
+              const response = await authAPI().get(userApis.getUnreadNotificationsCount);
+              if (response.data.success) {
+                updateUnreadCount(response.data.count);
+              }
+            } catch (error) {
+              console.error('Error fetching unread notifications count:', error);
+            }
+          };
+          fetchUnreadCount();
+        });
+      } catch (error) {
+        console.error('Error setting up socket:', error);
+      }
+    };
+
+    if (token) {
+      setupSocket();
+    }
+
+    return () => {
+      socketService.disconnect();
+    };
+  }, [token, updateUnreadCount]);
 
   const handleLogout = () => {
     setIsDropdownOpen(false);
@@ -247,97 +320,110 @@ const Sidebar = () => {
           <div className={cx("nav-container", { active: isMobileMenuOpen })}>
             <ul className={cx("nav-list")}>
               {userSidebarIcons.map((item, index) => (
-                <li key={index}>
-                  <Link
-                    to={item.to}
-                    className={cx("nav-item", {
-                      active: item.to === location.pathname || 
-                             (item.subMenu && item.subMenu.some(sub => sub.to === location.pathname)),
-                    })}
-                  >
-                    {item.title}
-                  </Link>
-                  {item.subMenu && (
-                    <div className={cx("submenu")}>
-                      {item.subMenu
-                        .filter(subItem => !subItem.authRequired || token)
-                        .map((subItem, subIndex) => (
-                          <Link
-                            key={subIndex}
-                            to={subItem.to}
-                            className={cx("submenu-item", {
-                              active: subItem.to === location.pathname
-                            })}
-                          >
-                            <span>{subItem.title}</span>
-                            {subItem.badge && <span className={cx("submenu-badge")}>{subItem.badge}</span>}
-                          </Link>
-                        ))}
-                    </div>
-                  )}
-                </li>
+                (!item.authRequired || (item.authRequired && user?.role === 'user')) && (
+                  <li key={index}>
+                    <Link
+                      to={item.to}
+                      className={cx("nav-item", {
+                        active: item.to === location.pathname || 
+                               (item.subMenu && item.subMenu.some(sub => sub.to === location.pathname)),
+                      })}
+                    >
+                      {/* {item.icon} */}
+                      <span className={cx("item-title")}>{item.title}</span>
+                      {item.subMenu && (
+                        <div className={cx("submenu")}>
+                          {item.subMenu
+                            .filter(subItem => !subItem.authRequired || token)
+                            .map((subItem, subIndex) => (
+                              <Link
+                                key={subIndex}
+                                to={subItem.to}
+                                className={cx("submenu-item", {
+                                  active: subItem.to === location.pathname
+                                })}
+                              >
+                                <span>{subItem.title}</span>
+                                {subItem.badge && <span className={cx("submenu-badge")}>{subItem.badge}</span>}
+                                {subItem.icon && <span className={cx("submenu-icon")}>{subItem.icon}</span>}
+                              </Link>
+                            ))}
+                        </div>
+                      )}
+                    </Link>
+                  </li>
+                )
               ))}
             </ul>
 
             <div className={cx("user-section")}>
               {token ? (
-                <div className={cx("user-dropdown")}>
-                  <div className={cx("avatar-container")}>
-                    <Avatar src={images.avatar} fontsize={"5px"} alt={"Avatar"} />
-                    <div className={cx("dropdown-menu")}>
-                      <div className={cx("user-info")}>
-                        <span className={cx("user-name")}>{user?.name || "Vĩ Nguyễn Đức"}</span>
-                        <span className={cx("user-id")}>Mã ứng viên: #{user?.id || "9042870"}</span>
-                        <span className={cx("user-email")}>{user?.email || "ngducvicc@gmail.com"}</span>
+                <>
+                  <div className={cx("notification-icon")}>
+                    <Link to="/tai-khoan/notifications" className={cx("bell-icon")}>
+                      <FaBell />
+                      {unreadCount > 0 && <span className={cx("badge")}>{unreadCount}</span>}
+                    </Link>
+                  </div>
+                  <div className={cx("user-dropdown")}>
+                    <div className={cx("avatar-container")}>
+                      <Avatar src={candidate?.profile_picture || images.avatar} fontsize={"5px"} alt={"Avatar"} 
+                      />
+                      <div className={cx("dropdown-menu")}>
+                        <div className={cx("user-info")}>
+                          <span className={cx("user-name")}>{user?.name || "Vĩ Nguyễn Đức"}</span>
+                          <span className={cx("user-id")}>Mã ứng viên: #{user?.id || "9042870"}</span>
+                          <span className={cx("user-email")}>{user?.email || "ngducvicc@gmail.com"}</span>
+                        </div>
+                        
+                        <Link to="/user" className={cx("dropdown-item")}>
+                          <i className="fa-regular fa-user"></i>
+                          <span>Cài đặt thông tin cá nhân</span>
+                        </Link>
+                        
+                        <Link to="/vip" className={cx("dropdown-item")}>
+                          <i className="fa-solid fa-crown"></i>
+                          <span>Nâng cấp tài khoản VIP</span>
+                        </Link>
+                        
+                        {/* <Link to="/gifts" className={cx("dropdown-item")}>
+                          <i className="fa-solid fa-gift"></i>
+                          <span>Kích hoạt quà tặng</span>
+                        </Link> */}
+                        
+                        {/* <Link to="/cv" className={cx("dropdown-item")}>
+                          <i className="fa-regular fa-eye"></i>
+                          <span>Nhà tuyển dụng xem hồ sơ</span>
+                        </Link> */}
+                        
+                        {/* <Link to="/job-alert" className={cx("dropdown-item")}>
+                          <i className="fa-regular fa-bell"></i>
+                          <span>Cài đặt gợi ý việc làm</span>
+                        </Link> */}
+                        
+                        <Link to="/tai-khoan/notifications" className={cx("dropdown-item")}>
+                          <i className="fa-solid fa-bell"></i>
+                          <span>Cài đặt thông báo việc làm</span>
+                        </Link>
+                        
+                        <Link to="/tai-khoan/setting-email" className={cx("dropdown-item")}>
+                          <i className="fa-regular fa-envelope"></i>
+                          <span>Cài đặt nhận email</span>
+                        </Link>
+                        
+                        <Link to="/user" className={cx("dropdown-item")}>
+                          <i className="fa-solid fa-shield"></i>
+                          <span>Cài đặt bảo mật</span>
+                        </Link>
+                        
+                        <button className={cx("dropdown-item")} onClick={handleLogout}>
+                          <i className="fa-solid fa-arrow-right-from-bracket"></i>
+                          <span>Đăng xuất</span>
+                        </button>
                       </div>
-                      
-                      <Link to="/user" className={cx("dropdown-item")}>
-                        <i className="fa-regular fa-user"></i>
-                        <span>Cài đặt thông tin cá nhân</span>
-                      </Link>
-                      
-                      <Link to="/vip" className={cx("dropdown-item")}>
-                        <i className="fa-solid fa-crown"></i>
-                        <span>Nâng cấp tài khoản VIP</span>
-                      </Link>
-                      
-                      <Link to="/gifts" className={cx("dropdown-item")}>
-                        <i className="fa-solid fa-gift"></i>
-                        <span>Kích hoạt quà tặng</span>
-                      </Link>
-                      
-                      <Link to="/cv" className={cx("dropdown-item")}>
-                        <i className="fa-regular fa-eye"></i>
-                        <span>Nhà tuyển dụng xem hồ sơ</span>
-                      </Link>
-                      
-                      <Link to="/job-alert" className={cx("dropdown-item")}>
-                        <i className="fa-regular fa-bell"></i>
-                        <span>Cài đặt gợi ý việc làm</span>
-                      </Link>
-                      
-                      <Link to="/notifications" className={cx("dropdown-item")}>
-                        <i className="fa-solid fa-bell"></i>
-                        <span>Cài đặt thông báo việc làm</span>
-                      </Link>
-                      
-                      <Link to="/email-settings" className={cx("dropdown-item")}>
-                        <i className="fa-regular fa-envelope"></i>
-                        <span>Cài đặt nhận email</span>
-                      </Link>
-                      
-                      <Link to="/security" className={cx("dropdown-item")}>
-                        <i className="fa-solid fa-shield"></i>
-                        <span>Cài đặt bảo mật</span>
-                      </Link>
-                      
-                      <button className={cx("dropdown-item")} onClick={handleLogout}>
-                        <i className="fa-solid fa-arrow-right-from-bracket"></i>
-                        <span>Đăng xuất</span>
-                      </button>
                     </div>
                   </div>
-                </div>
+                </>
               ) : (
                 <div className={cx("auth-buttons")}>
                   <button

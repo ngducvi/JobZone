@@ -1,35 +1,274 @@
-// JobDetail page
 import React, { useEffect, useState } from "react";
 import { authAPI, userApis } from "~/utils/api";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import classNames from "classnames/bind";
 import styles from "./JobDetail.module.scss";
 import UserInfo from "~/components/UserInfo";
 import images from "~/assets/images";
 import PopularKeywords from '~/components/PopularKeywords/PopularKeywords';
+import useScrollTop from '~/hooks/useScrollTop';
+import { toast } from "react-toastify";
 const cx = classNames.bind(styles);
 
 const JobDetail = () => {
+  const navigate = useNavigate();
   const [job, setJob] = useState(null);
   const { id } = useParams();
+  console.log(id);
   const [copied, setCopied] = useState(false);
   const [company, setCompany] = useState(null);
+  const [savedStatus, setSavedStatus] = useState(false);
+  const [appliedStatus, setAppliedStatus] = useState(false);
+  const [applicationStatus, setApplicationStatus] = useState(null);
+  const [updatedAt, setUpdatedAt] = useState(null);
+  const [withdrawnStatus, setWithdrawnStatus] = useState(false);
+  
 
   useEffect(() => {
     const fetchData = async () => {
       const response = await authAPI().get(userApis.getJobDetailByJobId(id));
       setJob(response.data.job);
-      setCompany(response.data.company);
-      console.log(response.data);
+      setCompany(response.data);
     }
     fetchData();
   }, [id]);
 
+  useEffect(() => {
+    const checkSavedStatus = async () => {
+      try {
+        const savedResponse = await authAPI().get(userApis.getAllSavedJobsByUser);
+        const isJobSaved = savedResponse.data.savedJobs.some(
+          savedJob => savedJob.job_id === id
+        );
+        setSavedStatus(isJobSaved);
+      } catch (error) {
+        console.error("Error checking saved status:", error);
+      }
+    };
+    if (id) {
+      checkSavedStatus();
+    }
+  }, [id]);
+
+  useEffect(() => {
+    const checkAppliedStatus = async () => {
+      try {
+        const response = await authAPI().get(userApis.checkApplicationStatus(id));
+        setAppliedStatus(response.data.applied);
+        setApplicationStatus(response.data.status);
+        setUpdatedAt(response.data.updated_at);
+        console.log("updated_at",response.data);
+        setWithdrawnStatus(response.data.withdrawn);
+      } catch (error) {
+        console.error("Error checking application status:", error);
+      }
+    };
+
+    checkAppliedStatus();
+  }, [id]);
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }, []); 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const handleCompanyClick = (companyId) => {
+    navigate(`/company-detail/${companyId}`);
+  };
+
+  const handleSaveJob = async () => {
+    try {
+      if (savedStatus) {
+        await authAPI().delete(userApis.unsaveJob(id));
+        setSavedStatus(false);
+        toast.success("Đã hủy lưu công việc!", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+      } else {
+        await authAPI().post(userApis.saveJob(id));
+        setSavedStatus(true);
+        toast.success("Đã lưu công việc thành công!", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+      }
+      window.dispatchEvent(new Event('user-data-update'));
+    } catch (error) {
+      console.error("Error toggling save status:", error);
+      if (error.response?.data?.message === 'Bạn đã lưu công việc này rồi') {
+        setSavedStatus(true);
+      }
+    }
+  };
+
+  const getRemainingDays = () => {
+    if (!updatedAt) return 0;
+    
+    const updatedDate = new Date(updatedAt);
+    const now = new Date();
+    
+    // Reset time part to 00:00:00 to compare only dates
+    updatedDate.setHours(0, 0, 0, 0);
+    now.setHours(0, 0, 0, 0);
+    
+    const daysSinceUpdate = Math.floor((now - updatedDate) / (1000 * 60 * 60 * 24));
+    const requiredDays = applicationStatus === "Đã rút đơn" ? 7 : 30;
+    const remainingDays = requiredDays - daysSinceUpdate;
+    
+    console.log('Debug remaining days:', {
+      updatedAt,
+      updatedDate: updatedDate.toISOString(),
+      now: now.toISOString(),
+      daysSinceUpdate,
+      requiredDays,
+      remainingDays,
+      status: applicationStatus
+    });
+    
+    return remainingDays > 0 ? remainingDays : 0;
+  };
+
+  const canApplyAgain = () => {
+    if (!updatedAt) return false;
+    
+    const updatedDate = new Date(updatedAt);
+    const now = new Date();
+    
+    // Reset time part to 00:00:00 to compare only dates
+    updatedDate.setHours(0, 0, 0, 0);
+    now.setHours(0, 0, 0, 0);
+    
+    const daysSinceUpdate = Math.floor((now - updatedDate) / (1000 * 60 * 60 * 24));
+    const requiredDays = applicationStatus === "Đã rút đơn" ? 7 : 30;
+    
+    console.log('Debug can apply:', {
+      updatedAt,
+      updatedDate: updatedDate.toISOString(),
+      now: now.toISOString(),
+      daysSinceUpdate,
+      requiredDays,
+      status: applicationStatus
+    });
+    
+    return daysSinceUpdate >= requiredDays;
+  };
+
+  const handleApplyJob = async () => {
+    try {
+      // First check if we can apply again
+      if (applicationStatus === "Đã rút đơn" || applicationStatus === "Đã từ chối") {
+        if (!canApplyAgain()) {
+          toast.error("Bạn chưa thể ứng tuyển lại vào lúc này.", {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
+          return;
+        }
+      }
+
+      const response = await authAPI().post(userApis.applyJob, { 
+        job_id: id,
+        previous_status: applicationStatus // Gửi thêm trạng thái cũ
+      });
+
+      if (response.data.code === 1) {
+        toast.success("Nộp đơn thành công!", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+        // Update status to show the new application
+        setAppliedStatus(true);
+        setApplicationStatus("Đang xét duyệt");
+        setUpdatedAt(new Date());
+      } else {
+        // Hiển thị thông báo lỗi chi tiết từ backend
+        toast.error(response.data.message || "Có lỗi xảy ra khi nộp đơn.", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+      }
+    } catch (error) {
+      console.error("Error applying for job:", error);
+      // Hiển thị thông báo lỗi chi tiết từ backend
+      const errorMessage = error.response?.data?.message || "Có lỗi xảy ra khi nộp đơn.";
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    }
+  };
+
+  const handleWithdrawApplication = async () => {
+    try {
+      const response = await authAPI().post(userApis.withdrawApplication, { job_id: id });
+      if (response.data.code === 1) {
+        toast.success("Đơn ứng tuyển đã được hủy thành công!", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+        setAppliedStatus(false);
+        setApplicationStatus("Đã rút đơn");
+        setUpdatedAt(new Date());
+      } else {
+        toast.error(response.data.message || "Có lỗi xảy ra khi hủy đơn ứng tuyển.", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+      }
+    } catch (error) {
+      console.error("Error withdrawing application:", error);
+      toast.error(error.response?.data?.message || "Có lỗi xảy ra khi hủy đơn ứng tuyển.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    }
+  };
+
+  const isJobExpired = job?.deadline ? new Date(job.deadline).getTime() < new Date().getTime() : false;
 
   return (
     <div className={cx("wrapper")}>
@@ -39,31 +278,64 @@ const JobDetail = () => {
           <div className={cx("job-header")}>
             <div className={cx("company-info")}>
               <img
-                src={job?.Company?.logo || images.company_1}
+                src={company?.companyLogo || images.company_1}
                 alt=""
                 className={cx("company-logo")}
               />
               <div className={cx("info")}>
                 <h1 className={cx("job-title")}>{job?.title}</h1>
-                <Link
-                  to={`/company/${job?.Company?.id}`}
+                <button
                   className={cx("company-name")}
+                  onClick={() => handleCompanyClick(company?.company_id)}
                 >
-                  {job?.Company?.company_name}
-                </Link>
+                  <i className="fas fa-building"></i>
+                  {company?.companyName || "Công ty ABC"}
+                </button>
                 <div className={cx("deadline")}>
+                  <i className="far fa-clock"></i>
                   Hạn nộp hồ sơ: {job?.deadline || "Không thời hạn"}
                 </div>
               </div>
             </div>
             <div className={cx("action-buttons")}>
-              <button className={cx("apply-btn")}>
-                <i className="fas fa-paper-plane"></i>
-                Ứng tuyển ngay
-              </button>
-              <button className={cx("save-btn")}>
-                <i className="far fa-heart"></i>
-                Lưu tin
+              {isJobExpired ? (
+                <button className={cx("apply-btn", "expired-btn")} disabled>
+                  <i className="fas fa-lock"></i>
+                  Đã đóng
+                </button>
+              ) : (applicationStatus === "Đã rút đơn" || applicationStatus === "Đã từ chối") && !canApplyAgain() ? (
+                <button className={cx("apply-btn", "expired-btn")} disabled>
+                  <i className="fas fa-clock"></i>
+                  {`Có thể ứng tuyển lại sau ${getRemainingDays()} ngày`}
+                </button>
+              ) : (applicationStatus === "Đã rút đơn" || applicationStatus === "Đã từ chối") && canApplyAgain() ? (
+                <button className={cx("apply-btn", "primary-btn")} onClick={handleApplyJob}>
+                  <i className="fas fa-redo"></i>
+                  Ứng tuyển lại
+                </button>
+              ) : appliedStatus ? (
+                <div className={cx("applied-status")}>
+                  <button className={cx("apply-btn", "primary-btn")} disabled>
+                    <i className="fas fa-check"></i>
+                    Đã ứng tuyển
+                  </button>
+                  <button className={cx("withdraw-btn", "secondary-btn")} onClick={handleWithdrawApplication}>
+                    <i className="fas fa-times"></i>
+                    Rút đơn ứng tuyển
+                  </button>
+                </div>
+              ) : (
+                <button className={cx("apply-btn", "primary-btn")} onClick={handleApplyJob}>
+                  <i className="fas fa-paper-plane"></i>
+                  Ứng tuyển ngay
+                </button>
+              )}
+              <button 
+                className={cx("save-btn", "secondary-btn", { saved: savedStatus })}
+                onClick={handleSaveJob}
+              >
+                <i className={`fa${savedStatus ? 's' : 'r'} fa-bookmark`}></i>
+                {savedStatus ? 'Đã Lưu' : 'Lưu Tin'}
               </button>
             </div>
           </div>
@@ -71,21 +343,21 @@ const JobDetail = () => {
           <div className={cx("job-overview")}>
             <div className={cx("overview-item")}>
               <i className="fas fa-sack-dollar"></i>
-              <div>
+              <div className={cx("overview-content")}>
                 <label>Mức lương</label>
                 <span>{job?.salary || "Thỏa thuận"}</span>
               </div>
             </div>
             <div className={cx("overview-item")}>
               <i className="fas fa-map-marker-alt"></i>
-              <div>
+              <div className={cx("overview-content")}>
                 <label>Địa điểm</label>
                 <span>{job?.location}</span>
               </div>
             </div>
             <div className={cx("overview-item")}>
               <i className="fas fa-briefcase"></i>
-              <div>
+              <div className={cx("overview-content")}>
                 <label>Kinh nghiệm</label>
                 <span>{job?.experience || "Không yêu cầu"}</span>
               </div>
@@ -132,13 +404,44 @@ const JobDetail = () => {
             </div>
             {/* Button ứng tuyển và Lưu Tin  */}
             <div className={cx("action-buttons")}>
-              <button className={cx("apply-btn")}>
-                <i className="fas fa-paper-plane"></i>
-                Ứng tuyển ngay
-              </button>
-              <button className={cx("save-btn")}>
-                <i className="far fa-heart"></i>
-                Lưu tin
+              {isJobExpired ? (
+                <button className={cx("apply-btn", "expired-btn")} disabled>
+                  <i className="fas fa-lock"></i>
+                  Đã đóng
+                </button>
+              ) : (applicationStatus === "Đã rút đơn" || applicationStatus === "Đã từ chối") && !canApplyAgain() ? (
+                <button className={cx("apply-btn", "expired-btn")} disabled>
+                  <i className="fas fa-clock"></i>
+                  {`Có thể ứng tuyển lại sau ${getRemainingDays()} ngày`}
+                </button>
+              ) : (applicationStatus === "Đã rút đơn" || applicationStatus === "Đã từ chối") && canApplyAgain() ? (
+                <button className={cx("apply-btn", "primary-btn")} onClick={handleApplyJob}>
+                  <i className="fas fa-redo"></i>
+                  Ứng tuyển lại
+                </button>
+              ) : appliedStatus ? (
+                <div className={cx("applied-status")}>
+                  <button className={cx("apply-btn", "primary-btn")} disabled>
+                    <i className="fas fa-check"></i>
+                    Đã ứng tuyển
+                  </button>
+                  <button className={cx("withdraw-btn", "secondary-btn")} onClick={handleWithdrawApplication}>
+                    <i className="fas fa-times"></i>
+                    Rút đơn ứng tuyển
+                  </button>
+                </div>
+              ) : (
+                <button className={cx("apply-btn", "primary-btn")} onClick={handleApplyJob}>
+                  <i className="fas fa-paper-plane"></i>
+                  Ứng tuyển ngay
+                </button>
+              )}
+              <button 
+                className={cx("save-btn", "secondary-btn", { saved: savedStatus })}
+                onClick={handleSaveJob}
+              >
+                <i className={`fa${savedStatus ? 's' : 'r'} fa-bookmark`}></i>
+                {savedStatus ? 'Đã Lưu' : 'Lưu Tin'}
               </button>
             </div>
             <div className={cx("report-btn")}>
@@ -147,33 +450,130 @@ const JobDetail = () => {
               đúng hoặc có dấu hiệu lừa đảo, hãy phản ánh với chúng tôi.
             </div>
           </div>
+
+          <div className={cx("job-analysis")}>
+            <div className={cx("analysis-card")}>
+              <div className={cx("card-header")}>
+                <i className="fas fa-chart-line"></i>
+                <h3>Phân tích mức độ phù hợp</h3>
+                <span className={cx("match-rate")}>
+                  <i className="fas fa-star"></i>
+                  80% phù hợp
+                </span>
+              </div>
+
+              <div className={cx("analysis-content")}>
+                <div className={cx("analysis-item")}>
+                  <div className={cx("question")}>
+                    <i className="fas fa-check-circle"></i>
+                    <span>Bạn phù hợp bao nhiêu % với việc làm này?</span>
+                  </div>
+                  <div className={cx("progress-bar")}>
+                    <div 
+                      className={cx("progress")} 
+                      style={{ width: "80%" }}
+                    ></div>
+                  </div>
+                  <span className={cx("percentage")}>80%</span>
+                </div>
+
+                <div className={cx("analysis-item")}>
+                  <div className={cx("question")}>
+                    <i className="fas fa-exclamation-circle"></i>
+                    <span>Đâu là điểm ít phù hợp nhất trong CV của bạn?</span>
+                  </div>
+                  <div className={cx("weakness-points")}>
+                    <div className={cx("point")}>
+                      <i className="fas fa-times"></i>
+                      <span>Thiếu kinh nghiệm về Docker</span>
+                    </div>
+                    <div className={cx("point")}>
+                      <i className="fas fa-times"></i>
+                      <span>Chưa có chứng chỉ AWS</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={cx("analysis-item")}>
+                  <div className={cx("question")}>
+                    <i className="fas fa-lightbulb"></i>
+                    <span>Kỹ năng nào của bạn phù hợp, kỹ năng nào cần thiếu so với yêu cầu của NTD?</span>
+                  </div>
+                  <div className={cx("skills-analysis")}>
+                    <div className={cx("matching-skills")}>
+                      <h4>Kỹ năng phù hợp</h4>
+                      <div className={cx("skill-tags")}>
+                        <span className={cx("tag", "match")}>
+                          <i className="fas fa-check"></i>
+                          ReactJS
+                        </span>
+                        <span className={cx("tag", "match")}>
+                          <i className="fas fa-check"></i>
+                          JavaScript
+                        </span>
+                        <span className={cx("tag", "match")}>
+                          <i className="fas fa-check"></i>
+                          HTML/CSS
+                        </span>
+                      </div>
+                    </div>
+                    <div className={cx("missing-skills")}>
+                      <h4>Kỹ năng còn thiếu</h4>
+                      <div className={cx("skill-tags")}>
+                        <span className={cx("tag", "missing")}>
+                          <i className="fas fa-times"></i>
+                          Docker
+                        </span>
+                        <span className={cx("tag", "missing")}>
+                          <i className="fas fa-times"></i>
+                          AWS
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={cx("upgrade-cta")}>
+                  <button className={cx("upgrade-btn")}>
+                    <i className="fas fa-crown"></i>
+                    Xem ngay phân tích chi tiết
+                  </button>
+                  <span className={cx("price")}>
+                    <span className={cx("original")}>20.000 VND</span>
+                    <span className={cx("discount")}>10.000 VND</span>
+                    <span className={cx("discount-tag")}>-50%</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Right Column - Company Info */}
         <div className={cx("company-profile")}>
           <div className={cx("company-card")}>
-            <img src={company?.logo || images.company_1} alt="" />
-            <h3>{company?.company_name}</h3>
+            <img src={company?.companyLogo || images.company_1} alt="" />
+            <h3>{company?.companyName}</h3>
             <div className={cx("company-meta")}>
               <div>
                 <i className="fas fa-user-friends"></i>
-                <span>{company?.size || "100-499 nhân viên"}</span>
+                <span>{company?.companySize || "100-499 nhân viên"}</span>
               </div>
               <div>
                 <i className="fas fa-briefcase"></i>
-                <span>{company?.industry || "Bán lẻ - Hàng tiêu dùng - FMCG"} </span>
+                <span>{company?.companyIndustry || "Bán lẻ - Hàng tiêu dùng - FMCG"} </span>
               </div>
               <div>
                 <i className="fas fa-map-marker-alt"></i>
-                <span>{company?.address || "Hà Nội"}</span>
+                <span>{company?.companyAddress || "Hà Nội"}</span>
               </div>
             </div>
-            <Link
-              to={`/company/${job?.Company?.id}`}
+            <button
               className={cx("view-company")}
+              onClick={() => handleCompanyClick(company?.companyId)}
             >
               Xem trang công ty <i className="fas fa-arrow-right"></i>
-            </Link>
+            </button>
           </div>
 
           <div className={cx("job-overview-card")}>

@@ -12,198 +12,140 @@ import { NextPageIcon, PrevPageIcon } from "~/components/Icons";
 // import LogoUi from "./LogoUi";
 const cx = classNames.bind(styles);
 
-const features = [
-  {
-    title: "Web Job Zone",
-    description:
-      "Web Job Zone is a platform that helps you find the best jobs and careers.",
-  },
-];
-
-const UiLayout = () => {
+export function UiLayout() {
   const navigate = useNavigate();
-  const [activeFilter, setActiveFilter] = useState("month");
-  const [countConversations, setCountConversations] = useState(0);
-  const [recentConversations, setRecentConversations] = useState([]);
-  const [balance, setBalance] = useState();
-  const { user } = useContext(UserContext);
-  const [provinces, setProvinces] = useState([]);
-  const [districts, setDistricts] = useState([]);
-  const [selectedProvinces, setSelectedProvinces] = useState([]);
-  const [selectedDistricts, setSelectedDistricts] = useState([]);
-  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
-  const locationRef = useRef(null);
+  const [activeFilter, setActiveFilter] = useState("month")
+  const [provinces, setProvinces] = useState([])
+  const [districts, setDistricts] = useState([])
+  const [selectedProvinces, setSelectedProvinces] = useState([])
+  const [selectedDistricts, setSelectedDistricts] = useState([])
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false)
+  const [searchKeyword, setSearchKeyword] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("")
+  const locationRef = useRef(null)
 
-  const token = localStorage.getItem("token");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  // Fetch provinces on mount
   useEffect(() => {
     const fetchProvinces = async () => {
       try {
-        const response = await fetch("https://esgoo.net/api-tinhthanh/1/0.htm");
-        const data = await response.json();
+        const response = await fetch("https://esgoo.net/api-tinhthanh/1/0.htm")
+        const data = await response.json()
         if (Array.isArray(data.data)) {
-          setProvinces(data.data);
+          setProvinces(data.data)
         } else {
-          setProvinces([]);
+          setProvinces([])
         }
       } catch (error) {
-        setProvinces([]);
+        setProvinces([])
       }
-    };
-    fetchProvinces();
-  }, []);
+    }
+    fetchProvinces()
+  }, [])
 
+  // Fetch districts when provinces change
   useEffect(() => {
     const fetchDistricts = async () => {
       try {
         const districtsData = await Promise.all(
           selectedProvinces.map(async (provinceId) => {
-            const formattedId = provinceId.toString().padStart(2, "0");
-            const response = await fetch(
-              `https://esgoo.net/api-tinhthanh/2/${formattedId}.htm`
-            );
-            const data = await response.json();
+            const formattedId = provinceId.toString().padStart(2, "0")
+            const response = await fetch(`https://esgoo.net/api-tinhthanh/2/${formattedId}.htm`)
+            const data = await response.json()
             if (Array.isArray(data.data)) {
               return data.data.map((district) => ({
                 ...district,
                 provinceId: provinceId,
-              }));
+              }))
             }
-            return [];
-          })
-        );
-        setDistricts(districtsData.flat());
+            return []
+          }),
+        )
+        setDistricts(districtsData.flat())
       } catch (error) {
-        console.error("Error fetching districts:", error);
-        setDistricts([]);
+        console.error("Error fetching districts:", error)
+        setDistricts([])
       }
-    };
+    }
 
     if (selectedProvinces.length > 0) {
-      fetchDistricts();
+      fetchDistricts()
     } else {
-      setDistricts([]);
+      setDistricts([])
     }
-  }, [selectedProvinces]);
+  }, [selectedProvinces])
 
+  // Handle clicks outside location dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (locationRef.current && !locationRef.current.contains(event.target)) {
-        setShowLocationDropdown(false);
+        setShowLocationDropdown(false)
       }
-    };
+    }
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   const handleProvinceSelect = (provinceId) => {
     setSelectedProvinces((prev) => {
-      const isSelected = prev.includes(provinceId);
+      const isSelected = prev.includes(provinceId)
       if (isSelected) {
-        return prev.filter((id) => id !== provinceId);
+        return prev.filter((id) => id !== provinceId)
       } else {
-        return [...prev, provinceId];
+        return [...prev, provinceId]
       }
-    });
-  };
+    })
+  }
 
   const handleDistrictSelect = (districtId) => {
     setSelectedDistricts((prev) => {
-      const isSelected = prev.includes(districtId);
+      const isSelected = prev.includes(districtId)
       if (isSelected) {
-        return prev.filter((id) => id !== districtId);
+        return prev.filter((id) => id !== districtId)
       } else {
-        return [...prev, districtId];
+        return [...prev, districtId]
       }
-    });
-  };
+    })
+  }
 
   const handleSelectAllDistricts = (provinceId) => {
-    const provinceDistricts = districts
-      .filter((d) => d.provinceId === provinceId)
-      .map((d) => d.id);
+    const provinceDistricts = districts.filter((d) => d.provinceId === provinceId).map((d) => d.id)
+
     setSelectedDistricts((prev) => {
-      const allSelected = provinceDistricts.every((id) => prev.includes(id));
+      const allSelected = provinceDistricts.every((id) => prev.includes(id))
       if (allSelected) {
-        return prev.filter((id) => !provinceDistricts.includes(id));
+        return prev.filter((id) => !provinceDistricts.includes(id))
       } else {
-        return [...new Set([...prev, ...provinceDistricts])];
+        return [...new Set([...prev, ...provinceDistricts])]
       }
-    });
-  };
+    })
+  }
 
   const getLocationDisplay = () => {
-    if (selectedProvinces.length === 0) return "Địa điểm";
-    const provinceNames = selectedProvinces
-      .map((id) => provinces.find((p) => p.id === id)?.name)
-      .filter(Boolean);
-    return provinceNames.join(", ");
-  };
-
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       const [conversationsResponse, balanceResponse, recentConversation] =
-  //         await Promise.all([
-  //           userServices.getCountConversations(),
-  //           userServices.getBalance(),
-  //           userServices.getRecentConversations(currentPage),
-  //         ]);
-  //       setCountConversations(conversationsResponse.count);
-  //       setBalance(balanceResponse);
-  //       setRecentConversations(recentConversation.conversations);
-  //       setTotalPages(recentConversation.totalPages);
-  //     } catch (error) {
-  //       console.error("Error fetching data:", error);
-  //     }
-  //   };
-
-  //   if (token) {
-  //     fetchData();
-  //   }
-  // }, [token, currentPage]);
-
-  const handleFilterChange = (filter) => {
-    setActiveFilter(filter);
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
+    if (selectedProvinces.length === 0) return "Địa điểm"
+    const provinceNames = selectedProvinces.map((id) => provinces.find((p) => p.id === id)?.name).filter(Boolean)
+    return provinceNames.join(", ")
+  }
 
   const renderDistrictsByProvince = (provinceId) => {
-    const province = provinces.find((p) => p.id === provinceId);
-    const provinceDistricts = districts.filter(
-      (d) => d.provinceId === provinceId
-    );
+    const province = provinces.find((p) => p.id === provinceId)
+    const provinceDistricts = districts.filter((d) => d.provinceId === provinceId)
 
-    if (!provinceDistricts.length) return null;
+    if (!provinceDistricts.length) return null
 
     return (
-      <div key={provinceId} className={cx("district-group")}>
-        <label className={cx("checkbox-item", "province-header")}>
+      <div key={provinceId} className={styles.districtGroup}>
+        <label className={cx(styles.checkboxItem, styles.provinceHeader)}>
           <input
             type="checkbox"
-            checked={provinceDistricts.every((d) =>
-              selectedDistricts.includes(d.id)
-            )}
+            checked={provinceDistricts.every((d) => selectedDistricts.includes(d.id))}
             onChange={() => handleSelectAllDistricts(provinceId)}
           />
           <span>{province?.name}</span>
         </label>
-        <div className={cx("district-items")}>
+        <div className={styles.districtItems}>
           {provinceDistricts.map((district) => (
-            <label key={district.id} className={cx("checkbox-item")}>
+            <label key={district.id} className={styles.checkboxItem}>
               <input
                 type="checkbox"
                 checked={selectedDistricts.includes(district.id)}
@@ -214,98 +156,90 @@ const UiLayout = () => {
           ))}
         </div>
       </div>
-    );
-  };
-  return (
-    <div className={cx("wrapper")}>
-      <div className={cx("grid-overlay")} />
+    )
+  }
 
-      <div className={cx("header-section")}>
-        <div className={cx("logo-container")}>
-          <img src={images.logo} alt="UI Layout Logo" />
+  const handleSearch = () => {
+    // Prepare search params
+    const searchParams = new URLSearchParams();
+    if (searchKeyword) searchParams.append('keyword', searchKeyword);
+    if (selectedProvinces.length) {
+      const provinceNames = selectedProvinces.map(id => 
+        provinces.find(p => p.id === id)?.name
+      ).filter(Boolean);
+      searchParams.append('location', provinceNames.join(', '));
+    }
+    if (selectedDistricts.length) {
+      const districtNames = selectedDistricts.map(id => 
+        districts.find(d => d.id === id)?.name
+      ).filter(Boolean);
+      if (districtNames.length) {
+        const currentLocation = searchParams.get('location') || '';
+        searchParams.set('location', `${currentLocation}, ${districtNames.join(', ')}`);
+      }
+    }
+    
+    // Navigate to search page with params
+    navigate(`/user/job-search?${searchParams.toString()}`);
+  };
+
+  return (
+    <div className={styles.wrapper}>
+      {/* Grid background overlay */}
+      <div className={styles.gridOverlay} />
+
+      {/* Header section with logo */}
+      <div className={styles.headerSection}>
+        <div className={styles.logoContainer}>
+          <img src={images.logo || "/placeholder.svg"} alt="Logo" />
         </div>
       </div>
 
-      <div className={cx("hero-section")}>
-        <div className={cx("hero-grid")} />
-        <Sparkles
-          density={1900}
-          direction="bottom"
-          color="#ffffff"
-          size={1}
-          speed={0.5}
-          className="absolute inset-0 h-full w-full"
-        />
+      {/* Animated hero section */}
+      <div className={styles.heroSection}>
+        <div className={styles.heroGrid} />
+        <Sparkles density={1900} direction="bottom" color="#ffffff" size={1} speed={0.5} className={styles.sparkles} />
       </div>
 
-      <p className={cx("description")}>
-        Tìm việc làm nhanh 24h, việc làm mới nhất trên toàn quốc.
-      </p>
+      {/* Description */}
+      <p className={styles.description}>Tìm việc làm nhanh 24h, việc làm mới nhất trên toàn quốc.</p>
 
-      <div className={cx("content-grid")}>
-        <div className={cx("search-form")}>
-          <div className={cx("search-group")}>
-            <i className="fa-solid fa-list"></i>
-            <select className={cx("category-select")}>
-              <option value="">Danh mục Nghề</option>
-              <option value="kinh-doanh">Kinh doanh/Bán hàng</option>
-              <option value="marketing">Marketing/PR/Quảng cáo</option>
-              <option value="cskh">
-                Chăm sóc khách hàng (Customer Service)
-              </option>
-              <option value="nhan-su">Nhân sự/Hành chính/Pháp chế</option>
-              <option value="tai-chinh">Tài chính/Ngân hàng/Bảo hiểm</option>
-              <option value="it">Công nghệ Thông tin</option>
-            </select>
-          </div>
+      {/* Search form */}
+      <div className={styles.searchContainer}>
+        <div className={styles.searchForm}>
 
-          <div className={cx("search-group")}>
-            <i className="fa-solid fa-magnifying-glass"></i>
-            <input
-              type="text"
-              placeholder="Vị trí tuyển dụng, tên công ty"
-              className={cx("search-input")}
+          {/* Search input */}
+          <div className={styles.searchGroup}>
+            <input 
+              type="text" 
+              placeholder="Vị trí tuyển dụng, tên công ty" 
+              className={styles.searchInput}
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
             />
           </div>
 
-          <div className={cx("location-group")} ref={locationRef}>
-            <div
-              className={cx("location-input")}
-              onClick={() => setShowLocationDropdown(true)}
-            >
-              <i className="fa-solid fa-location-dot"></i>
-              <span className={cx("location-text")}>
-                {getLocationDisplay()}
-              </span>
-              <i
-                className={cx("fa-solid fa-chevron-down", {
-                  active: showLocationDropdown,
-                })}
-              ></i>
+          {/* Location dropdown */}
+          <div className={styles.locationGroup} ref={locationRef}>
+            <div className={styles.locationInput} onClick={() => setShowLocationDropdown(true)}>
+              <i className="fa-solid fa-map-marker-alt"></i>
+              <span className={styles.locationText}>{getLocationDisplay()}</span>
+              <i className={cx(styles.chevronIcon, showLocationDropdown && styles.rotated)}></i>
             </div>
 
             {showLocationDropdown && (
               <>
-                <div
-                  className={cx("location-overlay")}
-                  onClick={() => setShowLocationDropdown(false)}
-                />
-                <div className={cx("location-dropdown")}>
-                  <div className={cx("provinces-list")}>
-                    <div className={cx("dropdown-header")}>
+                <div className={styles.locationOverlay} onClick={() => setShowLocationDropdown(false)} />
+                <div className={styles.locationDropdown}>
+                  {/* Provinces list */}
+                  <div className={styles.provincesList}>
+                    <div className={styles.dropdownHeader}>
                       <h4>Chọn Tỉnh/Thành phố</h4>
-                      <input
-                        type="text"
-                        placeholder="Tìm kiếm tỉnh thành..."
-                        className={cx("search-input")}
-                      />
+                      <input type="text" placeholder="Tìm kiếm tỉnh thành..." className={styles.searchInput} />
                     </div>
-                    <div className={cx("dropdown-content")}>
+                    <div className={styles.dropdownContent}>
                       {provinces.map((province) => (
-                        <label
-                          key={province.id}
-                          className={cx("checkbox-item")}
-                        >
+                        <label key={province.id} className={styles.checkboxItem}>
                           <input
                             type="checkbox"
                             checked={selectedProvinces.includes(province.id)}
@@ -317,19 +251,14 @@ const UiLayout = () => {
                     </div>
                   </div>
 
-                  <div className={cx("districts-list")}>
-                    <div className={cx("dropdown-header")}>
+                  {/* Districts list */}
+                  <div className={styles.districtsList}>
+                    <div className={styles.dropdownHeader}>
                       <h4>Chọn Quận/Huyện</h4>
-                      <input
-                        type="text"
-                        placeholder="Tìm kiếm quận huyện..."
-                        className={cx("search-input")}
-                      />
+                      <input type="text" placeholder="Tìm kiếm quận huyện..." className={styles.searchInput} />
                     </div>
-                    <div className={cx("dropdown-content")}>
-                      {selectedProvinces.map((provinceId) =>
-                        renderDistrictsByProvince(provinceId)
-                      )}
+                    <div className={styles.dropdownContent}>
+                      {selectedProvinces.map((provinceId) => renderDistrictsByProvince(provinceId))}
                     </div>
                   </div>
                 </div>
@@ -337,14 +266,15 @@ const UiLayout = () => {
             )}
           </div>
 
-          <button className={cx("search-button")}>
-            <i className="fa-solid fa-search"></i>
-            Tìm kiếm
+          {/* Search button */}
+          <button className={styles.searchButton} onClick={handleSearch}>
+            <i className="fa-solid fa-magnifying-glass"></i>
+            <span>Tìm kiếm</span>
           </button>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
 export default UiLayout;

@@ -11,53 +11,75 @@ function UserInfo() {
     const [appliedJobs, setAppliedJobs] = useState([]);
     const [savedJobs, setSavedJobs] = useState([]);
     const [viewedJobs, setViewedJobs] = useState([]);
+    const [candidate, setCandidate] = useState(null);
 
-    useEffect(() => {
-        // dùng promise.all để lấy dữ liệu
-        const fetchData = async () => {
-            const token = localStorage.getItem("token");
-            if (!token) return;
+    const fetchUserData = async () => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
 
-            const [userResponse, appliedJobsResponse, savedJobsResponse,viewdJobResponse] = await Promise.all([
+        try {
+            const [userResponse, appliedJobsResponse, savedJobsResponse, viewedJobsResponse] = await Promise.all([
                 authAPI().get(userApis.getCurrentUser),
                 authAPI().get(userApis.getAllAppliedJobsByUser),
                 authAPI().get(userApis.getAllSavedJobsByUser),
                 authAPI().get(userApis.getAllViewedJobsByUser),
             ]);
             setUser(userResponse.data.user);
+            console.log(userResponse.data.user);
+            setCandidate(userResponse.data.candidate);
+            console.log(userResponse.data.candidate);
             setAppliedJobs(appliedJobsResponse.data.appliedJobs);
             setSavedJobs(savedJobsResponse.data.savedJobs);
-            setViewedJobs(viewdJobResponse.data.viewedJobs);
+            setViewedJobs(viewedJobsResponse.data.viewedJobs);
+        } catch (error) {
+            console.error("Error fetching user data:", error);
         }
-        fetchData();
+    };
+
+    // Gọi API khi component mount
+    useEffect(() => {
+        fetchUserData();
     }, []);
 
-  return (
-    <div>
-      <div className={cx('user-info')}>
-          <div className={cx('user-card')}>
-            <img src={user?.avatar || images.avatar} alt="Avatar" className={cx('avatar')} />
-            <h3>{user?.name || "Vĩ Nguyễn Đức"}</h3>
-            <p className={cx('user-title')}>Frontend Developer</p>
-            <div className={cx('user-stats')}>
-              <div className={cx('stat-item')}>
-                <i className="fas fa-eye"></i>
-                <span>Đã xem: {viewedJobs.length}</span>
-              </div>
-              <div className={cx('stat-item')}>
-                <i className="fas fa-paper-plane"></i>
-                <span>Đã lưu: {savedJobs.length}</span>
-              </div>
-              <div className={cx('stat-item')}>
-                <i className="fas fa-bookmark"></i>
-                <span>Đã ứng tuyển: {appliedJobs.length}</span>
-              </div>
-              
+    // Thêm một useEffect để lắng nghe sự kiện cập nhật
+    useEffect(() => {
+        // Lắng nghe sự kiện cập nhật từ các components khác
+        const handleDataUpdate = () => {
+            fetchUserData();
+        };
+
+        window.addEventListener('user-data-update', handleDataUpdate);
+
+        return () => {
+            window.removeEventListener('user-data-update', handleDataUpdate);
+        };
+    }, []);
+
+    return (
+        <div>
+            <div className={cx('user-info')}>
+                <div className={cx('user-card')}>
+                    <img src={candidate?.profile_picture || images.avatar} alt="Avatar" className={cx('avatar')} />
+                    <h3>{user?.name || "Vĩ Nguyễn Đức"}</h3>
+                    <p className={cx('user-title')}>Frontend Developer</p>
+                    <div className={cx('user-stats')}>
+                        <div className={cx('stat-item')}>
+                            <i className="fas fa-eye"></i>
+                            <span>Đã xem: {viewedJobs.length}</span>
+                        </div>
+                        <div className={cx('stat-item')}>
+                            <i className="fas fa-paper-plane"></i>
+                            <span>Đã lưu: {savedJobs.length}</span>
+                        </div>
+                        <div className={cx('stat-item')}>
+                            <i className="fas fa-bookmark"></i>
+                            <span>Đã ứng tuyển: {appliedJobs.length}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-    </div>
-  )
+    );
 }
 
 export default UserInfo;

@@ -3,10 +3,12 @@ import classNames from 'classnames/bind';
 import styles from './JobIT.module.scss';
 import images from '~/assets/images';
 import { authAPI, userApis } from "~/utils/api";
+import { useNavigate } from 'react-router-dom';
 
 const cx = classNames.bind(styles);
 
 const JobIT = () => {
+  const navigate = useNavigate();
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [selectedSalary, setSelectedSalary] = useState('all');
   const [activePage, setActivePage] = useState(1);
@@ -16,6 +18,11 @@ const JobIT = () => {
   const [activeTab, setActiveTab] = useState("list"); // 'list' or 'top'
   const [selectedLevel, setSelectedLevel] = useState("all");
   const [filterType, setFilterType] = useState('newest'); // 'newest', 'urgent', 'salary'
+  const [categories, setCategories] = useState([]);
+  const [jobs, setJobs] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [filteredJobs, setFilteredJobs] = useState([]);
+  const [savedStatus, setSavedStatus] = useState({});
 
   // Filter buttons data
   const filterButtons = [
@@ -33,6 +40,44 @@ const JobIT = () => {
     },
   ];
 
+  // Danh sách ID của các categories liên quan đến IT
+  const IT_CATEGORY_IDS = [
+    '1f25e3ee-ce9e-11ef-9430-2cf05db24bc7', // Software Engineering
+    '1f25e912-ce9e-11ef-9430-2cf05db24bc7', // Data Science
+    '1f25ef7a-ce9e-11ef-9430-2cf05db24bc7', // Web Development
+    '1f25f02b-ce9e-11ef-9430-2cf05db24bc7', // Mobile Development
+    '1f25f0db-ce9e-11ef-9430-2cf05db24bc7', // Cybersecurity
+    '1f25f189-ce9e-11ef-9430-2cf05db24bc7', // Business Analyst
+  ];
+
+  // Thêm mapping cho tên categories
+  const CATEGORY_NAMES = {
+    '1f25e3ee-ce9e-11ef-9430-2cf05db24bc7': {
+      name: 'Software Engineering',
+      icon: 'fas fa-code'
+    },
+    '1f25e912-ce9e-11ef-9430-2cf05db24bc7': {
+      name: 'Data Science',
+      icon: 'fas fa-database'
+    },
+    '1f25ef7a-ce9e-11ef-9430-2cf05db24bc7': {
+      name: 'Web Development',
+      icon: 'fas fa-globe'
+    },
+    '1f25f02b-ce9e-11ef-9430-2cf05db24bc7': {
+      name: 'Mobile Development',
+      icon: 'fas fa-mobile-alt'
+    },
+    '1f25f0db-ce9e-11ef-9430-2cf05db24bc7': {
+      name: 'Cybersecurity',
+      icon: 'fas fa-shield-alt'
+    },
+    '1f25f189-ce9e-11ef-9430-2cf05db24bc7': {
+      name: 'Business Analyst',
+      icon: 'fas fa-chart-line'
+    }
+  };
+
   useEffect(() => {
     const fetchTopCompany = async () => {
       const response = await authAPI().get(userApis.getAllTopCompany, {
@@ -46,6 +91,59 @@ const JobIT = () => {
     };
     fetchTopCompany();
   }, [activePage]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [jobsResponse, categoriesResponse] = await Promise.all([
+          authAPI().get(userApis.getAllJobs),
+          authAPI().get(userApis.getAllCategories)
+        ]);
+
+        // Lọc jobs theo IT categories
+        const itJobs = jobsResponse.data.jobs.filter(job => 
+          IT_CATEGORY_IDS.includes(job.category_id)
+        );
+        setJobs(itJobs);
+        console.log(itJobs);
+        setFilteredJobs(itJobs);
+
+        // Lọc và đếm số lượng jobs cho mỗi IT category
+        const itCategories = categoriesResponse.data.categories
+          .filter(cat => IT_CATEGORY_IDS.includes(cat.category_id))
+          .map(cat => ({
+            ...cat,
+            name: CATEGORY_NAMES[cat.category_id].name,
+            icon: CATEGORY_NAMES[cat.category_id].icon,
+            jobCount: itJobs.filter(job => job.category_id === cat.category_id).length
+          }));
+        setCategories(itCategories);
+
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchSavedJobs = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const savedResponse = await authAPI().get(userApis.getAllSavedJobsByUser);
+        const initialSavedStatus = {};
+        savedResponse.data.savedJobs.forEach(job => {
+          initialSavedStatus[job.job_id] = true;
+        });
+        setSavedStatus(initialSavedStatus);
+      } catch (error) {
+        console.error("Error fetching saved jobs:", error);
+      }
+    };
+    fetchSavedJobs();
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -73,6 +171,52 @@ const JobIT = () => {
     }
     
     setTopCompany(filteredJobs);
+  };
+
+  // Thêm hàm xử lý click category
+  const handleCategoryClick = (categoryId) => {
+    if (selectedCategory === categoryId) {
+      // Nếu click vào category đang được chọn, bỏ chọn và hiển thị tất cả jobs
+      setSelectedCategory(null);
+      setFilteredJobs(jobs);
+    } else {
+      // Nếu click vào category mới, lọc jobs theo category đó
+      setSelectedCategory(categoryId);
+      const filtered = jobs.filter(job => job.category_id === categoryId);
+      setFilteredJobs(filtered);
+    }
+  };
+
+  const handleSaveJob = async (e, jobId) => {
+    e.stopPropagation();
+    if (!jobId) return;
+
+    try {
+      if (savedStatus[jobId]) {
+        await authAPI().delete(userApis.unsaveJob(jobId));
+        setSavedStatus(prev => ({...prev, [jobId]: false}));
+      } else {
+        await authAPI().post(userApis.saveJob(jobId));
+        setSavedStatus(prev => ({...prev, [jobId]: true}));
+      }
+      window.dispatchEvent(new Event('user-data-update'));
+    } catch (error) {
+      console.error("Error toggling job save status:", error);
+      if (error.response?.data?.message === 'Bạn đã lưu công việc này rồi') {
+        setSavedStatus(prev => ({...prev, [jobId]: true}));
+      }
+    }
+  };
+
+  const handleJobClick = async (jobId) => {
+    try {
+      // Thêm job vào viewed jobs
+      await authAPI().post(userApis.addViewedJob(jobId));
+      // Chuyển hướng đến trang chi tiết
+      navigate(`/jobs/${jobId}`);
+    } catch (error) {
+      console.error("Error adding viewed job:", error);
+    }
   };
 
   return (
@@ -147,30 +291,19 @@ const JobIT = () => {
 
       {/* Categories */}
       <div className={cx('categories')}>
-        <div className={cx('category')}>
-          <span>Git</span>
-          <span className={cx('count')}>250</span>
-        </div>
-        <div className={cx('category')}>
-          <span>Javascript</span>
-          <span className={cx('count')}>212</span>
-        </div>
-        <div className={cx('category')}>
-          <span>Làm việc nhóm</span>
-          <span className={cx('count')}>205</span>
-        </div>
-        <div className={cx('category')}>
-          <span>Phân tích yêu cầu</span>
-          <span className={cx('count')}>205</span>
-        </div>
-        <div className={cx('category')}>
-          <span>Quản lý dự án</span>
-          <span className={cx('count')}>170</span>
-        </div>
-        <div className={cx('category')}>
-          <span>Khác</span>
-          <span className={cx('count')}>1847</span>
-        </div>
+        {categories.map((category) => (
+          <div 
+            key={category.category_id} 
+            className={cx('category', { 
+              active: selectedCategory === category.category_id 
+            })}
+            onClick={() => handleCategoryClick(category.category_id)}
+          >
+            <i className={category.icon}></i>
+            <span>{category.name}</span>
+            <span className={cx('count')}>{category.jobCount}</span>
+          </div>
+        ))}
       </div>
 
       {/* Filter Options */}
@@ -187,7 +320,7 @@ const JobIT = () => {
           ))}
         </div>
         <div className={cx('results-count')}>
-          Tìm thấy <span>{topCompany.length}</span> việc làm phù hợp với yêu cầu của bạn
+          Hiển thị <span>{filteredJobs.length}</span> việc làm
         </div>
       </div>
 
@@ -195,29 +328,91 @@ const JobIT = () => {
       <div className={cx('main-content')}>
         {/* Job List */}
         <div className={cx('job-list')}>
-          {topCompany.map((item) => (
-            <div key={item.id} className={cx('job-card')}>
-              <div className={cx('company-info')}>
-                <img src={item.logo || images.company_1} alt={item.company_name} />
-                <div className={cx('job-details')}>
-                  <h3>{item.company_name}</h3>
-                  <p className={cx('location')}>
-                    <i className="fas fa-map-marker-alt"></i>
-                    Hồ Chí Minh
-                  </p>
-                  <div className={cx('tags')}>
-                    <span>Quản trị và vận hành bảo mật</span>
+          {filteredJobs.map((job) => (
+            <div 
+              key={job.job_id} 
+              className={cx('job-card')}
+              onClick={() => handleJobClick(job.job_id)}
+            >
+              <div className={cx('card-overlay')}></div>
+              <div className={cx('job-header')}>
+                <div className={cx('company-info')}>
+                  <img 
+                    src={job.company_logo || images.company_1} 
+                    alt={job.company_name} 
+                    className={cx('company-logo')}
+                  />
+                  <div className={cx('company-details')}>
+                    <h3 className={cx('job-title')}>{job.title}</h3>
+                    <p className={cx('company-name')}>{job.company_name}</p>
                   </div>
                 </div>
+                <button 
+                  className={cx('save-btn', { saved: savedStatus[job.job_id] })}
+                  onClick={(e) => handleSaveJob(e, job.job_id)}
+                >
+                  <i className={`fa${savedStatus[job.job_id] ? 's' : 'r'} fa-bookmark`}></i>
+                  <span className={cx('tooltip')}>
+                    {savedStatus[job.job_id] ? 'Đã Lưu' : 'Lưu Tin'}
+                  </span>
+                </button>
               </div>
-              <div className={cx('job-meta')}>
-                <div className={cx('salary')}>
-                  <i className="fas fa-money-bill-wave"></i>
-                  25-35 triệu
+
+              <div className={cx('job-content')}>
+                <div className={cx('info-grid')}>
+                  <div className={cx('info-item', 'salary')}>
+                    <i className="fas fa-money-bill"></i>
+                    <div>
+                      <span className={cx('label')}>Mức lương</span>
+                      <span className={cx('value')}>{job.salary}</span>
+                    </div>
+                  </div>
+                  <div className={cx('info-item', 'location')}>
+                    <i className="fas fa-map-marker-alt"></i>
+                    <div>
+                      <span className={cx('label')}>Địa điểm</span>
+                      <span className={cx('value')}>{job.location}</span>
+                    </div>
+                  </div>
+                  <div className={cx('info-item', 'experience')}>
+                    <i className="fas fa-briefcase"></i>
+                    <div>
+                      <span className={cx('label')}>Kinh nghiệm</span>
+                      <span className={cx('value')}>{job.experience}</span>
+                    </div>
+                  </div>
+                  <div className={cx('info-item', 'work-type')}>
+                    <i className="fas fa-clock"></i>
+                    <div>
+                      <span className={cx('label')}>Hình thức</span>
+                      <span className={cx('value')}>{job.working_time}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className={cx('deadline')}>
-                  <i className="far fa-clock"></i>
-                  Còn 25 ngày để ứng tuyển
+
+                <div className={cx('tags-section')}>
+                  <div className={cx('tag')}>
+                    <i className="fas fa-graduation-cap"></i>
+                    {job.education}
+                  </div>
+                  <div className={cx('tag')}>
+                    <i className="fas fa-user-tie"></i>
+                    {job.rank}
+                  </div>
+                  <div className={cx('tag')}>
+                    <i className="fas fa-map-pin"></i>
+                    {job.working_location}
+                  </div>
+                </div>
+
+                <div className={cx('deadline-section')}>
+                  <div className={cx('deadline-info')}>
+                    <i className="far fa-clock"></i>
+                    <span>
+                      Còn {Math.max(0, Math.ceil((new Date(job.deadline) - new Date()) / (1000 * 60 * 60 * 24)))} ngày để ứng tuyển
+                    </span>
+                  </div>
+                  <button className={cx('apply-btn')}>Ứng tuyển ngay</button>
                 </div>
               </div>
             </div>

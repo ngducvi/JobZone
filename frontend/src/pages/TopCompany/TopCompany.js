@@ -6,6 +6,7 @@ import styles from "./TopCompany.module.scss";
 import { authAPI, userApis } from "~/utils/api";
 import images from "~/assets/images";
 import { useNavigate } from "react-router-dom";
+import { FaStar } from "react-icons/fa";
 const cx = classNames.bind(styles);
 
 const TopCompany = () => {
@@ -14,7 +15,9 @@ const TopCompany = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [topCompany, setTopCompany] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("list"); // 'list' or 'top'
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [activeTab, setActiveTab] = useState("list");
 
   useEffect(() => {
     const fetchTopCompany = async () => {
@@ -24,21 +27,85 @@ const TopCompany = () => {
         },
       });
       setTopCompany(response.data.topCompany);
-      console.log(response.data.topCompany);
       setTotalPages(response.data.totalPages);
     };
     fetchTopCompany();
   }, [activePage]);
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
-    // Implement search logic here
+    if (!searchTerm.trim()) return;
+
+    setIsSearching(true);
+    try {
+      const response = await authAPI().get(userApis.searchCompanies, {
+        params: {
+          company_name: searchTerm,
+        },
+      });
+      setSearchResults(response.data.companies || []);
+    } catch (error) {
+      console.error("Error searching companies:", error);
+      setSearchResults([]);
+    }
   };
-
-
 
   const handleCompanyClick = (companyId) => {
     navigate(`/company-detail/${companyId}`);
+  };
+
+  const getAverageRating = (reviews) => {
+    if (!reviews || reviews.length === 0) return 0;
+    const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
+    return (sum / reviews.length).toFixed(1);
+  };
+
+  const renderReviewStats = (company) => {
+    const averageRating = getAverageRating(company.reviews);
+    return (
+      <div className={cx('review-stats')}>
+        <div className={cx('review-count')}>
+          <FaStar className={cx('icon')} />
+          <span>{averageRating}/5</span>
+          <span className={cx('review-total')}>
+            ({company.reviews?.length || 0} đánh giá)
+          </span>
+        </div>
+      </div>
+    );
+  };
+
+  const clearSearch = () => {
+    setSearchTerm("");
+    setSearchResults([]);
+    setIsSearching(false);
+  };
+
+  const renderCompanyList = (companies) => {
+    return companies.map((company, index) => (
+      <div 
+        key={company._company_id || company.company_id || index} 
+        className={cx("company-card")} 
+        onClick={() => handleCompanyClick(company.company_id)}
+      >
+        <div className={cx("company-logo")}>
+          <img
+            src={company.banner || images.banner}
+            alt={company.company_name}
+          />
+          <img
+            src={company.logo || images.company_1}
+            alt={company.company_name}
+          />
+        </div>
+        <h3>{company.company_name}</h3>
+        {renderReviewStats(company)}
+        <p>
+          {company.description ||
+            "Thành lập vào năm 2024, hướng tới mục tiêu trở thành một trong những công ty Internet hàng đầu Việt Nam, với hai dự án Solaso và GoJob.Solaso với sứ mệnh mang lại trải nghiệm mua sắm trực tuyến tiện lợi và tin cậy, cam kết cung cấp Sản phẩm hàng đầu, dịch vụ tốt nhất cho khách hàng, đồng thời không ngừng kết nối và phát triển nhằm..."}
+        </p>
+      </div>
+    ));
   };
 
   return (
@@ -67,15 +134,20 @@ const TopCompany = () => {
             Tra cứu thông tin công ty và tìm kiếm nơi làm việc tốt nhất dành cho
             bạn
           </p>
-          <div className={cx("search-box")}>
+          <form onSubmit={handleSearch} className={cx("search-box")}>
             <input
               type="text"
               placeholder="Nhập tên công ty"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <button onClick={handleSearch}>Tìm kiếm</button>
-          </div>
+            <button type="submit">Tìm kiếm</button>
+            {isSearching && (
+              <button type="button" onClick={clearSearch} className={cx("clear-search")}>
+                Xóa tìm kiếm
+              </button>
+            )}
+          </form>
         </div>
         <div className={cx("search-image")}>
           {/* Add your illustration image here */}
@@ -84,27 +156,9 @@ const TopCompany = () => {
 
       {activeTab === "list" ? (
         <div className={cx("company-list")}>
-          <h2>DANH SÁCH CÁC CÔNG TY NỔI BẬT</h2>
+          <h2>{isSearching ? "KẾT QUẢ TÌM KIẾM" : "DANH SÁCH CÁC CÔNG TY NỔI BẬT"}</h2>
           <div className={cx("company-list-content")}>
-            {topCompany.map((company, index) => (
-              <div key={company._company_id|| company.company_id || index} className={cx("company-card")} onClick={() => handleCompanyClick(company.company_id)}>
-                <div className={cx("company-logo")}>
-                  <img
-                    src={company.banner || images.banner}
-                    alt={company.company_name}
-                  />
-                  <img
-                    src={company.logo || images.company_1}
-                    alt={company.company_name}
-                  />
-                </div>
-                <h3>{company.company_name}</h3>
-                <p>
-                  {company.description ||
-                    "Thành lập vào năm 2024, hướng tới mục tiêu trở thành một trong những công ty Internet hàng đầu Việt Nam, với hai dự án Solaso và GoJob.Solaso với sứ mệnh mang lại trải nghiệm mua sắm trực tuyến tiện lợi và tin cậy, cam kết cung cấp Sản phẩm hàng đầu, dịch vụ tốt nhất cho khách hàng, đồng thời không ngừng kết nối và phát triển nhằm..."}
-                </p>
-              </div>
-            ))}
+            {isSearching ? renderCompanyList(searchResults) : renderCompanyList(topCompany)}
           </div>
         </div>
       ) : (
@@ -122,26 +176,28 @@ const TopCompany = () => {
         </div>
       )}
 
-      {/* Pagination */}
-      <div className={cx("pagination")}>
-        <button
-          className={cx("page-btn")}
-          onClick={() => setActivePage((prev) => Math.max(prev - 1, 1))}
-          disabled={activePage === 1}
-        >
-          <PrevPageIcon />
-        </button>
-        <span>{activePage}</span>
-        <button
-          className={cx("page-btn")}
-          onClick={() =>
-            setActivePage((prev) => Math.min(prev + 1, totalPages))
-          }
-          disabled={activePage === totalPages}
-        >
-          <NextPageIcon />
-        </button>
-      </div>
+      {/* Pagination - Only show when not searching */}
+      {!isSearching && (
+        <div className={cx("pagination")}>
+          <button
+            className={cx("page-btn")}
+            onClick={() => setActivePage((prev) => Math.max(prev - 1, 1))}
+            disabled={activePage === 1}
+          >
+            <PrevPageIcon />
+          </button>
+          <span>{activePage}</span>
+          <button
+            className={cx("page-btn")}
+            onClick={() =>
+              setActivePage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={activePage === totalPages}
+          >
+            <NextPageIcon />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
