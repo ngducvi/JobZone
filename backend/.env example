@@ -1,7 +1,7 @@
 DB_HOST = 127.0.0.1
 DB_USERNAME = root
-DB_PASSWORD = minhha2k3
-DB_NAME = bit_ai
+DB_PASSWORD = 123456
+DB_NAME = dbtest
 DB_PORT = 3306
 FE_URL = http://localhost:3000
 
