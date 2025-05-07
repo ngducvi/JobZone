@@ -57,6 +57,7 @@ function RecruiterCVManagement() {
   const [applications, setApplications] = useState([]);
   const [hasBusinessLicense, setHasBusinessLicense] = useState(false);
   const [isCheckingLicense, setIsCheckingLicense] = useState(true);
+  const [isCompanyActive, setIsCompanyActive] = useState(false);
 
   const token = localStorage.getItem("token");
 
@@ -69,6 +70,11 @@ function RecruiterCVManagement() {
           recruiterApis.getAllRecruiterCompanies
         );
         setCompanyInfo(responseCompany.data.companies[0]);
+
+        // Check company activation status
+        const companyResponse = await authAPI().get(recruiterApis.checkRecruiterCompany);
+        const isActive = companyResponse.data.recruiterCompany === 'active';
+        setIsCompanyActive(isActive);
 
         // Check business license
         const responseCheckLicense = await authAPI().get(
@@ -145,6 +151,10 @@ function RecruiterCVManagement() {
       await authAPI().post(recruiterApis.editJobApplicationStatus, {
         job_application_id: applicationId,
         status: newStatus,
+        user_id: user.id,
+        recruiter_id: companyInfo.user_id,
+        company_id: companyInfo.company_id,
+        company_name: companyInfo.company_name,
       });
       // Cập nhật lại danh sách ứng viên sau khi thay đổi trạng thái
       const updatedApplications = jobApplications[selectedJob.job_id].map(
@@ -215,13 +225,23 @@ function RecruiterCVManagement() {
       <div className={cx("header-section")}>
         <div className={cx("title-section")}>
           <h1>Quản lý CV Ứng Viên</h1>
-          <button
-            className={cx("create-job-btn")}
-            onClick={() => navigate("/recruiter/post-job")}
-          >
-            <i className="fa-solid fa-plus"></i>
-            Đăng tin tuyển dụng
-          </button>
+          {isCompanyActive ? (
+            <button
+              className={cx("create-job-btn")}
+              onClick={() => navigate("/recruiter/post-job")}
+            >
+              <i className="fa-solid fa-plus"></i>
+              Đăng tin tuyển dụng
+            </button>
+          ) : (
+            <button
+              className={cx("create-job-btn", "disabled")}
+              disabled
+            >
+              <i className="fa-solid fa-exclamation-circle"></i>
+              Tài khoản chưa được kích hoạt
+            </button>
+          )}
         </div>
       </div>
 

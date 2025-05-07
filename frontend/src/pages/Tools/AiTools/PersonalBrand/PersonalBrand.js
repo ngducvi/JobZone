@@ -197,7 +197,7 @@ const PersonalBrand = () => {
     }
   };
 
-  return (
+    return (
     <div className={cx('wrapper')}>
       <div className={cx('container')}>
         <div className={cx('header')}>
@@ -417,8 +417,8 @@ const PersonalBrand = () => {
           )}
         </div>
       </div>
-    </div>
-  );
+        </div>
+    );
 };
 
 export default PersonalBrand;

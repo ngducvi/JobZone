@@ -2,6 +2,8 @@
 
 const Notifications = require('../models/Notifications');
 const { getIO } = require('../../src/config/socket');
+const Message = require('../models/Messages');
+const Conversation = require('../models/Conversation');
 
 class NotificationController {
     constructor() {
@@ -26,8 +28,9 @@ class NotificationController {
             // Gửi thông báo real-time qua Socket.IO
             const io = getIO();
             if (io) {
+                // Emit to specific user's room
                 io.to(`user_${data.user_id}`).emit('new_notification', notification);
-                console.log('Notification sent to user:', data.user_id);
+                console.log('Notification sent to user:', data.user_id, 'Notification:', notification);
             }
 
             return notification;
@@ -52,17 +55,16 @@ class NotificationController {
     }
 
     // Tạo thông báo ứng tuyển cho nhà tuyển dụng
-    async createJobApplicationNotification(recruiterId, candidateId, jobId, applicationId) {
+    async createJobApplicationNotification(userId, candidateId, jobId) {
         try {
             const notification = await this.createNotification({
-                user_id: recruiterId,
+                user_id: userId,
                 sender_id: candidateId,
                 type: 'job_application',
                 title: 'Có ứng viên mới ứng tuyển',
                 content: 'Có ứng viên mới ứng tuyển vào vị trí của bạn.',
                 data: {
                     job_id: jobId,
-                    application_id: applicationId,
                     action: 'job_application'
                 }
             });
@@ -73,15 +75,66 @@ class NotificationController {
             throw error;
         }
     }
+    // tạo thông báo ứng viên đã rút đơn ứng tuyển
+    async createWithdrawApplicationNotification(userId, candidateId, jobId) {
+        try {
+            const notification = await this.createNotification({
+                user_id: userId,
+                sender_id: candidateId,
+                type: 'application_cancelled',
+                title: 'Ứng viên đã rút đơn ứng tuyển',
+                content: 'Ứng viên đã rút đơn ứng tuyển vào vị trí của bạn.',
+                data: {
+                    job_id: jobId,
+                    action: 'application_cancelled'
+                }
+            });
+            return notification;
+        } catch (error) {
+            console.error('Error in createWithdrawApplicationNotification:', error);
+            throw error;
+        }
+    }
 
     // Tạo thông báo phản hồi cho ứng viên
-    async createApplicationResponseNotification(candidateId, recruiterId, jobId, applicationId, status) {
+    async createApplicationResponseNotification(userId, recruiterId, jobId, applicationId, status, companyName) {
+        let notificationContent = '';
+
+        switch (status) {
+            case 'Đang xét duyệt':
+                notificationContent = `Đơn ứng tuyển của bạn tại ${companyName} đang được xem xét.`;
+                break;
+            case 'Chờ phỏng vấn':
+                notificationContent = `Chúc mừng! Bạn đã được ${companyName} chọn để phỏng vấn.`;
+                break;
+            case 'Đã phỏng vấn':
+                notificationContent = `Cảm ơn bạn đã tham gia phỏng vấn tại ${companyName}. Chúng tôi sẽ sớm phản hồi.`;
+                break;
+            case 'Đạt phỏng vấn':
+                notificationContent = `Chúc mừng! Bạn đã vượt qua vòng phỏng vấn tại ${companyName}.`;
+                break;
+            case 'Đã nhận':
+                notificationContent = `Chúc mừng! Bạn đã được ${companyName} nhận vào vị trí này.`;
+                break;
+            case 'Đã từ chối':
+                notificationContent = `Rất tiếc, đơn ứng tuyển của bạn tại ${companyName} đã bị từ chối.`;
+                break;
+            case 'Hết hạn':
+                notificationContent = `Đơn ứng tuyển của bạn tại ${companyName} đã hết hạn.`;
+                break;
+            case 'Đã rút đơn':
+                notificationContent = `Bạn đã rút đơn ứng tuyển tại ${companyName} thành công.`;
+                break;
+            default:
+                notificationContent = `Trạng thái đơn ứng tuyển của bạn tại ${companyName} đã được cập nhật thành: ${status}`;
+        }
+
         return this.createNotification({
-            user_id: candidateId,
+            user_id: userId,
             sender_id: recruiterId,
             type: 'application_response',
             title: 'Phản hồi đơn ứng tuyển',
-            content: `Đơn ứng tuyển của bạn đã được ${status === 'accepted' ? 'chấp nhận' : 'từ chối'}.`,
+            content: notificationContent,
             data: {
                 job_id: jobId,
                 application_id: applicationId,
@@ -107,16 +160,32 @@ class NotificationController {
         });
     }
 
-    // Tạo thông báo công việc đã đóng/hết hạn
-    async createJobClosedNotification(jobId, userId) {
+    // Tạo thông báo công việc  được duyệt được đóng hoặc hết hạn
+    async createJobClosedNotification(jobId, userId, status, title) {
+        // type: DataTypes.ENUM('Active', 'Closed','Pending'),
+        let notificationContent = '';
+        switch (status) {
+            case 'Active':
+                notificationContent = `Công việc ${title} đã được xét duyệt và đang được tuyển dụng.`;
+                break;
+            case 'Closed':
+                notificationContent = `Công việc ${title} đã được xét duyệt và đã đóng.`;
+                break;
+            case 'Pending':
+                notificationContent = `Công việc ${title} đang chờ xét duyệt.`;
+                break;
+        }
+
         return this.createNotification({
             user_id: userId,
             type: 'job_closed',
-            title: 'Công việc đã đóng/hết hạn',
-            content: 'Công việc của bạn đã đóng hoặc hết hạn.',
+            title: 'Thông báo về công việc',
+            content: notificationContent,
             data: {
                 job_id: jobId,
-                action: 'job_closed'
+                action: 'job_closed',
+                status: status,
+                title: title
             }
         });
     }
@@ -193,14 +262,15 @@ class NotificationController {
     }
 
     // Tạo thông báo có đánh giá mới về công ty
-    async createCompanyReviewNotification(companyId, userId, rating) {
+    async createCompanyReviewNotification(userId, candidate_id,user_name, rating) {
         return this.createNotification({
             user_id: userId,
+            sender_id: candidate_id,
             type: 'company_review',
             title: 'Có đánh giá mới về công ty của bạn',
-            content: `Công ty của bạn vừa nhận được một đánh giá ${rating} sao.`,
+            content: `Công ty của bạn vừa nhận được một đánh giá ${rating} sao từ ${user_name}.`,
             data: {
-                company_id: companyId,
+                // company_id: companyId,
                 rating: rating,
                 action: 'company_review'
             }
@@ -213,7 +283,7 @@ class NotificationController {
             let title = '';
             let content = '';
 
-            switch(status) {
+            switch (status) {
                 case 'Active':
                     title = 'Tài khoản đã được kích hoạt';
                     content = 'Tài khoản của bạn đã được kích hoạt thành công. Bạn có thể sử dụng đầy đủ các tính năng của hệ thống.';
@@ -252,8 +322,8 @@ class NotificationController {
         try {
             let title = '';
             let content = '';
-            
-            switch(status) {
+
+            switch (status) {
                 case 'pending':
                     title = 'Hồ sơ công ty đang được xét duyệt';
                     content = 'Hồ sơ công ty của bạn đang được quản trị viên xem xét. Chúng tôi sẽ thông báo kết quả sớm nhất.';
@@ -290,6 +360,26 @@ class NotificationController {
             throw error;
         }
     }
+    // tạo thông báo apply job cho nhà tuyển dụng
+    async createApplyJobNotification(userId, candidateId, jobId) {
+        try {
+            const notification = await this.createNotification({
+                user_id: userId,
+                sender_id: candidateId,
+                type: 'apply_job',
+                title: 'Ứng viên đã ứng tuyển vào công việc của bạn',
+                content: 'Ứng viên đã ứng tuyển vào công việc của bạn.',
+                data: {
+                    job_id: jobId,
+                    action: 'apply_job'
+                }
+            });
+            return notification;
+        } catch (error) {
+            console.error('Error in createApplyJobNotification:', error);
+            throw error;
+        }
+    }
     // Lấy danh sách thông báo của user
     async getUserNotifications(userId, page = 1, limit = 10) {
         try {
@@ -318,10 +408,10 @@ class NotificationController {
         try {
             const [updated] = await Notifications.update(
                 { is_read: true },
-                { 
-                    where: { 
+                {
+                    where: {
                         id: notificationId,
-                        user_id: userId 
+                        user_id: userId
                     }
                 }
             );
@@ -361,9 +451,9 @@ class NotificationController {
     async countUnreadNotifications(userId) {
         try {
             const count = await Notifications.count({
-                where: { 
+                where: {
                     user_id: userId,
-                    is_read: false 
+                    is_read: false
                 }
             });
             return count;

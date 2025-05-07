@@ -1,7 +1,6 @@
 const User = require("../models/User");
 const Wallet = require("../models/Wallet");
 const Job = require("../models/Job");
-const TokenUsage = require("../models/TokenUsage");
 const bcrypt = require("bcryptjs");
 const jwtService = require("../services/JWTService"); // Import the JWT service
 const mailerService = require("../services/MailerService"); // Import the Mailer service
@@ -9,7 +8,6 @@ const cacheService = require("../services/CacheService"); // Import the Cache se
 const Common = require("../helpers/Common");
 const { Op } = require("sequelize");
 const PaymentTransaction = require("../models/PaymentTransaction");
-const Conversation = require("../models/Conversation");
 const Bot = require("../models/Bot");
 const Candidate = require("../models/Candidate");
 const CategoriesPost = require("../models/CategoriesPost");
@@ -38,7 +36,8 @@ const path = require("path");
 const fs = require("fs");
 const BusinessLicenses = require("../models/BusinessLicenses");
 const Notifications = require("../models/Notifications");
-
+const fileService = require('../services/FileService');
+const NotificationController = require("./NotificationController");
 class RecruiterController {
   constructor() {
     this.generateEducationId = () => {
@@ -561,13 +560,209 @@ class RecruiterController {
   // edit job_application status
   async editJobApplicationStatus(req, res) {
     try {
-      const { job_application_id, status } = req.body;
+      const { job_application_id, status, user_id, recruiter_id, company_id, company_name } = req.body;
       const jobApplication = await JobApplication.findByPk(job_application_id);
+
+      if (!jobApplication) {
+        return res.status(404).json({
+          message: "Không tìm thấy đơn ứng tuyển",
+          code: -1
+        });
+      }
+
+      // Lấy thông tin user, job và company
+      const user = await User.findByPk(jobApplication.user_id);
+      const job = await Job.findByPk(jobApplication.job_id);
+      const company = await Company.findByPk(job.company_id);
+
+      if (!user || !job || !company) {
+        return res.status(404).json({
+          message: "Không tìm thấy thông tin người dùng, công việc hoặc công ty",
+          code: -1
+        });
+      }
+
       jobApplication.status = status;
       await jobApplication.save();
-      return res.json({ message: "Cập nhật trạng thái thành công", code: 1 });
+
+      // Tạo thông báo cho ứng viên
+      await NotificationController.createApplicationResponseNotification(
+        jobApplication.user_id,
+        jobApplication.recruiter_id,
+        jobApplication.job_id,
+        jobApplication.application_id,
+        status,
+        company_name
+      );
+
+      // Gửi email thông báo
+      let emailContent = '';
+      let statusColor = '';
+      let statusIcon = '';
+
+      switch (status) {
+        case 'Đang xét duyệt':
+          emailContent = `Đơn ứng tuyển của bạn tại ${company_name} đang được xem xét.`;
+          statusColor = '#f59e0b';
+          statusIcon = '⏳';
+          break;
+        case 'Chờ phỏng vấn':
+          emailContent = `Chúc mừng! Bạn đã được ${company_name} chọn để phỏng vấn cho vị trí ${job.title}.`;
+          statusColor = '#3b82f6';
+          statusIcon = '🎯';
+          break;
+        case 'Đã phỏng vấn':
+          emailContent = `Cảm ơn bạn đã tham gia phỏng vấn tại ${company_name} cho vị trí ${job.title}. Chúng tôi sẽ sớm phản hồi.`;
+          statusColor = '#8b5cf6';
+          statusIcon = '🤝';
+          break;
+        case 'Đạt phỏng vấn':
+          emailContent = `Chúc mừng! Bạn đã vượt qua vòng phỏng vấn tại ${company_name} cho vị trí ${job.title}.`;
+          statusColor = '#10b981';
+          statusIcon = '✨';
+          break;
+        case 'Đã nhận':
+          emailContent = `Chúc mừng! Bạn đã được ${company_name} nhận vào vị trí ${job.title}.`;
+          statusColor = '#059669';
+          statusIcon = '🎉';
+          break;
+        case 'Đã từ chối':
+          emailContent = `Rất tiếc, đơn ứng tuyển của bạn tại ${company_name} cho vị trí ${job.title} đã bị từ chối.`;
+          statusColor = '#ef4444';
+          statusIcon = '❌';
+          break;
+        case 'Hết hạn':
+          emailContent = `Đơn ứng tuyển của bạn tại ${company_name} cho vị trí ${job.title} đã hết hạn.`;
+          statusColor = '#6b7280';
+          statusIcon = '⏰';
+          break;
+        case 'Đã rút đơn':
+          emailContent = `Bạn đã rút đơn ứng tuyển tại ${company_name} cho vị trí ${job.title} thành công.`;
+          statusColor = '#6b7280';
+          statusIcon = '↩️';
+          break;
+        default:
+          emailContent = `Trạng thái đơn ứng tuyển của bạn tại ${company_name} cho vị trí ${job.title} đã được cập nhật thành: ${status}`;
+          statusColor = '#6b7280';
+          statusIcon = '📝';
+      }
+
+      const emailTemplate = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+          }
+          .header {
+            text-align: center;
+            padding: 20px 0;
+            background-color: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 20px;
+          }
+          .company-logo {
+            max-width: 150px;
+            height: auto;
+            margin-bottom: 15px;
+          }
+          .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background-color: ${statusColor}15;
+            color: ${statusColor};
+            font-weight: bold;
+            margin: 10px 0;
+          }
+          .content {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+          .job-details {
+            background-color: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+          }
+          .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            color: #6b7280;
+            font-size: 0.9em;
+          }
+          .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          ${company.logo ? `<img src="${company.logo}" alt="${company_name}" class="company-logo">` : ''}
+          <h2>Thông báo về trạng thái ứng tuyển</h2>
+        </div>
+        
+        <div class="content">
+          <p>Chào ${user.name},</p>
+          
+          <div class="status-badge">
+            ${statusIcon} ${status}
+          </div>
+          
+          <p>${emailContent}</p>
+          
+          <div class="job-details">
+            <h3>Thông tin công việc:</h3>
+            <p><strong>Vị trí:</strong> ${job.title}</p>
+            <p><strong>Công ty:</strong> ${company_name}</p>
+            ${company.address ? `<p><strong>Địa chỉ:</strong> ${company.address}</p>` : ''}
+            ${company.website ? `<p><strong>Website:</strong> <a href="${company.website}">${company.website}</a></p>` : ''}
+          </div>
+
+          <a href="${process.env.FE_URL}/job-detail/${job.job_id}" class="button">Xem chi tiết công việc</a>
+        </div>
+
+        <div class="footer">
+          <p>Trân trọng,<br>JobZone Team</p>
+          <p>Email này được gửi tự động, vui lòng không trả lời.</p>
+        </div>
+      </body>
+      </html>
+      `;
+
+      await mailerService.sendMail(
+        user.email,
+        "Thông báo về trạng thái ứng tuyển",
+        emailTemplate
+      );
+
+      return res.json({
+        message: "Cập nhật trạng thái thành công",
+        code: 1
+      });
     } catch (error) {
-      res.status(400).send(error);
+      console.error("Error in editJobApplicationStatus:", error);
+      return res.status(400).json({
+        message: error.message,
+        code: -1
+      });
     }
   }
   // get job_application by job_id
@@ -591,7 +786,7 @@ class RecruiterController {
     try {
       const candidateId = req.params.candidate_id;
       const candidate = await Candidate.findByPk(candidateId);
-      
+
       // Lấy user_id của candidate thay vì của recruiter
       const candidateUserId = candidate.user_id;
 
@@ -622,7 +817,7 @@ class RecruiterController {
       // get user by user_id từ candidate
       const user = await User.findByPk(candidateUserId);
       // get user_cv by user_id của candidate
-      const userCvs = await UserCv.findAll({ 
+      const userCvs = await UserCv.findAll({
         where: { user_id: candidateUserId }
       });
       return res.json({
@@ -902,6 +1097,22 @@ class RecruiterController {
       res.status(400).send(error);
     }
   }
+  // check xem công ty đã kich hoạt hay chưa thông qua recruitercompany
+  async checkRecruiterCompany(req, res) {
+    try {
+      const userId = req.user.id;
+      const recruiterCompany = await RecruiterCompanies.findOne({
+        where: { user_id: userId },
+      });
+      if (recruiterCompany) {
+        return res.json({ recruiterCompany: recruiterCompany.status });
+      } else {
+        return res.json({ recruiterCompany: null });
+      }
+    } catch (error) {
+      res.status(400).send(error);
+    }
+  }
   // create business license with company_id
   async createBusinessLicense(req, res) {
     const companyId = req.params.company_id;
@@ -933,7 +1144,7 @@ class RecruiterController {
         return res.status(404).json({ message: "Không tìm thấy giấy phép" });
       }
 
-      
+
       // Cập nhật dữ liệu
       const updatedData = {
         tax_id: req.body.tax_id || businessLicense.tax_id,
@@ -949,7 +1160,7 @@ class RecruiterController {
       };
 
       await businessLicense.update(updatedData);
-      
+
       return res.status(200).json({
         message: "Cập nhật giấy phép kinh doanh thành công",
         code: 1,
@@ -957,10 +1168,10 @@ class RecruiterController {
       });
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ 
+      return res.status(500).json({
         message: "Có lỗi xảy ra khi cập nhật giấy phép",
         code: -1,
-        error: error.message 
+        error: error.message
       });
     }
   }
@@ -1006,18 +1217,18 @@ class RecruiterController {
   // Thêm method search candidates
   async searchCandidates(req, res) {
     try {
-      const { 
-        industry, 
-        gender, 
-        expected_salary, 
+      const {
+        industry,
+        gender,
+        expected_salary,
         employment_type,
         experience,
         is_actively_searching,
-        ...otherFilters 
+        ...otherFilters
       } = req.body;
-      
+
       let whereClause = {};
-      
+
       // Thêm điều kiện tìm kiếm theo industry
       if (industry && industry !== 'all') {
         whereClause.industry = industry;
@@ -1051,7 +1262,7 @@ class RecruiterController {
       if (experience && experience !== 'all') {
         whereClause.experience = experience;
       }
-      
+
       // Thêm điều kiện tìm kiếm theo trạng thái tìm việc
       if (is_actively_searching !== undefined) {
         whereClause.is_actively_searching = is_actively_searching;
@@ -1084,7 +1295,7 @@ class RecruiterController {
     try {
       const userId = req.user.id;
       const { page = 1, limit = 10 } = req.query;
-      
+
       const notifications = await Notifications.findAndCountAll({
         where: { user_id: userId },
         order: [['created_at', 'DESC']],
@@ -1115,9 +1326,9 @@ class RecruiterController {
     try {
       const userId = req.user.id;
       const count = await Notifications.count({
-        where: { 
+        where: {
           user_id: userId,
-          is_read: false 
+          is_read: false
         }
       });
 

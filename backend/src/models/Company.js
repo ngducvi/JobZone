@@ -67,6 +67,10 @@ Company.init({
         allowNull: false,
         defaultValue: 'Basic'
     },
+    plan_expired_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+    },
 }, {
     sequelize,
     modelName: 'Company',

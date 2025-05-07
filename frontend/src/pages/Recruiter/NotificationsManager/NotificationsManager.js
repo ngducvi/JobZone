@@ -9,6 +9,7 @@ import { format } from 'date-fns/format';
 import { vi } from 'date-fns/locale/vi';
 import { useNotification } from '~/context/NotificationContext';
 import { toast } from 'react-hot-toast';
+import { FaBell, FaCheckCircle, FaTrash, FaEnvelopeOpenText } from 'react-icons/fa';
 
 const cx = classNames.bind(styles);
 
@@ -133,22 +134,27 @@ const NotificationsManager = () => {
 
     return (
         <div className={cx('notifications-container')}>
-            <div className={cx('header')}>
-                <h1>Quản lý thông báo</h1>
+            <div className={cx('header-modern')}>
+                <div className={cx('header-left')}>
+                    <FaBell className={cx('header-icon')} />
+                    <h1>Thông báo
+                        <span className={cx('badge-unread')}>{unreadCount}</span>
+                    </h1>
+                </div>
                 <div className={cx('actions')}>
                     <button 
-                        className={cx('action-button')}
+                        className={cx('action-button', 'read-all')}
                         onClick={handleMarkAllAsRead}
                         disabled={unreadCount === 0}
                     >
-                        Đánh dấu tất cả đã đọc
+                        <FaCheckCircle /> Đánh dấu tất cả đã đọc
                     </button>
                     <button 
-                        className={cx('action-button', 'delete')}
+                        className={cx('action-button', 'delete-all')}
                         onClick={handleDeleteAllRead}
                         disabled={notifications.every(n => !n.is_read)}
                     >
-                        Xóa tất cả đã đọc
+                        <FaTrash /> Xóa tất cả đã đọc
                     </button>
                 </div>
             </div>
@@ -158,35 +164,41 @@ const NotificationsManager = () => {
             {loading ? (
                 <div className={cx('loading')}>Đang tải thông báo...</div>
             ) : notifications.length === 0 ? (
-                <div className={cx('empty')}>Không có thông báo nào</div>
+                <div className={cx('empty-modern')}>
+                    <FaEnvelopeOpenText className={cx('empty-icon')} />
+                    <div>Không có thông báo nào</div>
+                </div>
             ) : (
-                <div className={cx('notifications-list')}>
+                <div className={cx('notifications-list-modern')}>
                     {notifications.map(notification => (
                         <div 
                             key={notification.id} 
-                            className={cx('notification-item', { unread: !notification.is_read })}
+                            className={cx('notification-item-modern', { unread: !notification.is_read })}
                         >
-                            <div className={cx('notification-content')}>
-                                <h3>{notification.title}</h3>
+                            <div className={cx('notification-content-modern')}>
+                                <div className={cx('noti-title-row')}>
+                                    <h3>{notification.title}</h3>
+                                    {!notification.is_read && <span className={cx('dot-unread')}></span>}
+                                </div>
                                 <p>{notification.content}</p>
                                 <span className={cx('timestamp')}>
                                     {format(new Date(notification.created_at), 'HH:mm dd/MM/yyyy', { locale: vi })}
                                 </span>
                             </div>
-                            <div className={cx('notification-actions')}>
+                            <div className={cx('notification-actions-modern')}>
                                 {!notification.is_read && (
                                     <button 
                                         className={cx('action-button', 'read')}
                                         onClick={() => handleMarkAsRead(notification.id)}
                                     >
-                                        Đánh dấu đã đọc
+                                        <FaCheckCircle /> Đã đọc
                                     </button>
                                 )}
                                 <button 
                                     className={cx('action-button', 'delete')}
                                     onClick={() => handleDeleteNotification(notification.id)}
                                 >
-                                    Xóa
+                                    <FaTrash /> Xóa
                                 </button>
                             </div>
                         </div>

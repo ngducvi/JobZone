@@ -24,32 +24,32 @@ $primary-green: #02a346;
 }
 
 .header {
-  text-align: center;
+    text-align: center;
   margin-bottom: 40px;
   padding: 0 20px;
 
-  .title {
+    .title {
     font-size: 32px;
-    font-weight: 700;
+        font-weight: 700;
     background: linear-gradient(135deg, $primary-blue, $primary-green);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 12px;
-  }
+    }
 
-  .subtitle {
+    .subtitle {
     font-size: 16px;
-    color: #666;
+        color: #666;
     line-height: 1.6;
-  }
+    }
 }
 
 .reviews-container {
   width: 100%;
   max-width: 1000px;
-  display: grid;
+    display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
+    gap: 24px;
   padding: 32px;
   background: white;
   border-radius: 20px;
@@ -64,247 +64,247 @@ $primary-green: #02a346;
   transition: all 0.3s ease;
   border-left: 4px solid $primary-green;
 
-  &:hover {
+    &:hover {
     transform: translateX(4px);
     box-shadow: 0 4px 12px rgba($primary-blue, 0.08);
-  }
+    }
 }
 
 .review-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 2px solid rgba($primary-blue, 0.1);
 }
 
 .company-info {
-  .company-name {
+    .company-name {
     font-size: 18px;
-    font-weight: 600;
+        font-weight: 600;
     color: $primary-blue;
-    margin-bottom: 8px;
-  }
+        margin-bottom: 8px;
+    }
 }
 
 .rating {
-  display: flex;
-  gap: 4px;
+    display: flex;
+    gap: 4px;
 
-  .star {
+    .star {
     font-size: 16px;
     cursor: pointer;
     transition: color 0.2s ease;
 
-    &.active {
-      color: #ffc107;
-    }
+        &.active {
+            color: #ffc107;
+        }
 
     &:not(.active) {
       color: #ddd;
     }
-  }
+    }
 }
 
 .review-date {
   font-size: 14px;
-  color: #666;
+    color: #666;
 }
 
 .review-content {
-  margin-bottom: 20px;
+    margin-bottom: 20px;
 
-  .comment {
+    .comment {
     font-size: 14px;
     color: #333;
-    line-height: 1.5;
-  }
+        line-height: 1.5;
+    }
 }
 
 .review-actions {
-  display: flex;
-  gap: 12px;
-  border-top: 1px solid #eee;
-  padding-top: 16px;
-
-  .action-btn {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    gap: 12px;
+    border-top: 1px solid #eee;
+    padding-top: 16px;
+
+    .action-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
     padding: 10px 16px;
     border-radius: 8px;
     font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
+        font-weight: 500;
+        cursor: pointer;
     transition: all 0.3s ease;
 
-    .icon {
+        .icon {
       font-size: 14px;
     }
 
     &:hover:not(:disabled) {
       transform: translateY(-2px);
-    }
+        }
 
-    &.edit {
+        &.edit {
       background: linear-gradient(135deg, $primary-blue, $primary-green);
       color: white;
-      border: none;
+            border: none;
       box-shadow: 0 4px 12px rgba($primary-blue, 0.2);
 
-      &:hover {
+            &:hover {
         box-shadow: 0 6px 16px rgba($primary-blue, 0.3);
-      }
-    }
+            }
+        }
 
-    &.delete {
+        &.delete {
       background: linear-gradient(135deg, #dc2626, #ef4444);
       color: white;
-      border: none;
+            border: none;
       box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
 
-      &:hover {
+            &:hover {
         box-shadow: 0 6px 16px rgba(220, 38, 38, 0.3);
-      }
+            }
+        }
     }
-  }
 }
 
 .no-reviews {
   grid-column: 1 / -1;
-  text-align: center;
-  padding: 40px;
+    text-align: center;
+    padding: 40px;
   background: white;
-  border-radius: 12px;
-  color: #666;
+    border-radius: 12px;
+    color: #666;
 }
 
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 
 .modal {
   background: white;
   padding: 32px;
   border-radius: 20px;
-  width: 100%;
-  max-width: 500px;
+    width: 100%;
+    max-width: 500px;
   box-shadow: 0 4px 20px rgba($primary-blue, 0.15);
   animation: fadeIn 0.3s ease-out;
 
-  h2 {
+    h2 {
     font-size: 24px;
-    font-weight: 600;
+        font-weight: 600;
     color: $primary-blue;
     margin-bottom: 24px;
-  }
+    }
 }
 
 .rating-input {
   margin-bottom: 24px;
 
-  label {
-    display: block;
+    label {
+        display: block;
     margin-bottom: 12px;
-    font-weight: 500;
+        font-weight: 500;
     color: $primary-blue;
-  }
+    }
 
-  .stars-input {
-    display: flex;
-    gap: 8px;
+    .stars-input {
+        display: flex;
+        gap: 8px;
 
-    .star {
+        .star {
       font-size: 24px;
-      cursor: pointer;
-      transition: color 0.2s ease;
+            cursor: pointer;
+            transition: color 0.2s ease;
 
-      &.active {
-        color: #ffc107;
-      }
+            &.active {
+                color: #ffc107;
+            }
 
       &:not(.active) {
         color: #ddd;
       }
 
-      &:hover {
-        color: #ffc107;
-      }
+            &:hover {
+                color: #ffc107;
+            }
+        }
     }
-  }
 }
 
 .comment-input {
-  margin-bottom: 24px;
+    margin-bottom: 24px;
 
-  label {
-    display: block;
+    label {
+        display: block;
     margin-bottom: 12px;
-    font-weight: 500;
+        font-weight: 500;
     color: $primary-blue;
-  }
+    }
 
-  textarea {
-    width: 100%;
+    textarea {
+        width: 100%;
     padding: 16px;
     border: 2px solid rgba($primary-blue, 0.1);
     border-radius: 12px;
     font-size: 14px;
-    resize: vertical;
+        resize: vertical;
     min-height: 120px;
     transition: all 0.3s ease;
 
-    &:focus {
-      outline: none;
+        &:focus {
+            outline: none;
       border-color: $primary-green;
       box-shadow: 0 0 0 4px rgba($primary-green, 0.1);
+        }
     }
-  }
 }
 
 .modal-actions {
-  display: flex;
-  justify-content: flex-end;
+    display: flex;
+    justify-content: flex-end;
   gap: 16px;
 
-  .modal-btn {
+    .modal-btn {
     padding: 12px 24px;
     border-radius: 8px;
-    font-weight: 500;
-    cursor: pointer;
+        font-weight: 500;
+        cursor: pointer;
     transition: all 0.3s ease;
 
     &:hover:not(:disabled) {
       transform: translateY(-2px);
     }
 
-    &.cancel {
+        &.cancel {
       background: #f3f4f6;
-      color: #666;
-      border: none;
+            color: #666;
+            border: none;
 
-      &:hover {
+            &:hover {
         background: #e5e7eb;
-      }
-    }
+            }
+        }
 
-    &.save {
+        &.save {
       background: linear-gradient(135deg, $primary-blue, $primary-green);
       color: white;
-      border: none;
+            border: none;
       box-shadow: 0 4px 12px rgba($primary-blue, 0.2);
 
-      &:hover {
+            &:hover {
         box-shadow: 0 6px 16px rgba($primary-blue, 0.3);
       }
     }
@@ -368,7 +368,7 @@ $primary-green: #02a346;
 @media (max-width: 768px) {
   .wrapper {
     padding: 20px 16px;
-  }
+            }
 
   .reviews-container {
     padding: 24px 16px;
@@ -405,6 +405,6 @@ $primary-green: #02a346;
       width: 36px;
       height: 36px;
       font-size: 14px;
+        }
     }
-  }
 }

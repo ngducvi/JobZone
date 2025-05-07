@@ -21,7 +21,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { authAPI, recruiterApis } from '~/utils/api';
 import toast from 'react-hot-toast';
-
+import { useNavigate } from 'react-router-dom';
 const cx = classNames.bind(styles);
 
 const categories = [
@@ -37,7 +37,7 @@ const categories = [
     icon: faGraduationCap,
     title: 'Đào tạo',
     description: 'Phát triển tài liệu đào tạo',
-    minPlan: 'Pro'
+    minPlan: 'ProMax'
   },
   {
     id: 3,
@@ -53,37 +53,41 @@ const templates = [
     id: 1,
     icon: faFileLines,
     title: 'Tạo mô tả công việc (JD)',
+    path: '/recruiter/my-services/tools/job-description',
     minPlan: 'Basic'
   },
   {
     id: 2,
     icon: faUserCheck,
     title: 'Đánh giá CV ứng viên',
+    path: '/recruiter/my-services/tools/cv-evaluation',
     minPlan: 'Basic'
   },
   {
     id: 3,
     icon: faBook,
     title: 'Tạo kế hoạch đào tạo',
-    minPlan: 'Pro'
+    path: '/recruiter/my-services/tools/training-plan',
+    minPlan: 'ProMax'
   },
   {
     id: 4,
     icon: faEnvelope,
     title: 'Viết email tuyển dụng',
+    path: '/recruiter/my-services/tools/write-recruitment-emails',
     minPlan: 'Basic'
   },
   {
     id: 5,
     icon: faChartBar,
     title: 'Đánh giá hiệu suất nhân viên',
-    minPlan: 'Pro'
+    minPlan: 'ProMax'
   },
   {
     id: 6,
     icon: faFileContract,
     title: 'Tạo chính sách nhân sự',
-    minPlan: 'Pro'
+    minPlan: 'ProMax'
   },
   {
     id: 7,
@@ -132,6 +136,7 @@ const planColors = {
 const RecruiterMyServices = () => {
   const [currentPlan, setCurrentPlan] = useState('Basic');
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCompanyPlan = async () => {
@@ -222,7 +227,7 @@ const RecruiterMyServices = () => {
                   className={cx('template-card', {
                     'locked': !canAccessFeature(template.minPlan)
                   })}
-                  onClick={() => handleTemplateClick(template)}
+                  onClick={() => navigate(template.path)}
                 >
                   <FontAwesomeIcon 
                     icon={template.icon} 

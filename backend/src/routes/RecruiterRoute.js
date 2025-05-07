@@ -40,4 +40,5 @@ router.put('/notifications/:notificationId/read', recruiterController.markNotifi
 router.put('/notifications/read-all', recruiterController.markAllNotificationsAsRead.bind(recruiterController));
 router.delete('/notifications/:notificationId', recruiterController.deleteNotification.bind(recruiterController));
 router.delete('/notifications/read/all', recruiterController.deleteAllReadNotifications.bind(recruiterController));
+router.get('/check-recruiter-company', recruiterController.checkRecruiterCompany.bind(recruiterController));
 module.exports = router;

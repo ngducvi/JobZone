@@ -9,7 +9,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 const cx = classNames.bind(styles);
 
 const JobSearch = () => {
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState("all");
   const [selectedExperience, setSelectedExperience] = useState("all");
   const [selectedLevel, setSelectedLevel] = useState("all");
   const [selectedSalary, setSelectedSalary] = useState("all");
@@ -31,7 +31,7 @@ const JobSearch = () => {
   const [savedStatus, setSavedStatus] = useState({});
 
   const [filters, setFilters] = useState({
-    category_id: '',
+    category_id: 'all',
     experience: 'all',
     salary: 'all', 
     working_time: 'all',

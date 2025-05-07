@@ -151,6 +151,7 @@ export const userApis = {
     cancelCvTemplate: (cv_id) => `/user/cancel-cv-template/${cv_id}`,
     toggleUserCvTemplate: (cv_id) => `/user/toggle-user-cv-template/${cv_id}`,
     cancelUserCvTemplate: (cv_id) => `/user/cancel-user-cv-template/${cv_id}`,
+    deleteUserCvTemplate: (cv_id) => `/user/delete-user-cv-template/${cv_id}`,
     deleteCandidateCv: (cv_id) => `/user/candidate-cv/${cv_id}`,
    
 
@@ -167,6 +168,12 @@ export const userApis = {
     deleteReviewByReviewId: (review_id) => `/user/reviews/${review_id}`,
     getCandidateNotification: '/user/candidate-notification',
     updateCandidateNotification: '/user/candidate-notification',
+
+    checkCandidateStatus: '/user/check-candidate-status',
+
+
+    getAllConversations: '/user/conversations',
+    getRecruiterCompanyByUserId: '/user/recruiter-company',
 };
 
 
@@ -202,6 +209,18 @@ export const recruiterApis = {
     markAllNotificationsAsRead: '/recruiter/notifications/read-all',
     deleteNotification: (notificationId) => `/recruiter/notifications/${notificationId}`,
     deleteAllReadNotifications: '/recruiter/notifications/read/all',
+    checkRecruiterCompany: '/recruiter/check-recruiter-company',
+    checkPlan: '/recruiter/check-plan',
+};
+
+export const messagesApis = {
+    getAllConversations: '/messages/conversations',
+    getConversationByUserId: (user_id) => `/messages/conversations/${user_id}`,
+    getMessagesByConversationId: (conversation_id) => `/messages/messages/${conversation_id}`,
+    sendMessage: '/messages/send-message',
+    editMessage: '/messages/edit-message',
+    deleteMessage: '/messages/delete-message',
+    createConversation: '/messages/create-conversation',
 };
 
 export const usageApis = {

@@ -34,6 +34,23 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(1, 58, 116, 0.2);
       }
+
+      &.disabled {
+        background: #e2e8f0;
+        color: #64748b;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+
+        &:hover {
+          transform: none;
+          box-shadow: none;
+        }
+
+        i {
+          color: #f59e0b;
+        }
+      }
     }
   }
 }

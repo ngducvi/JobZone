@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import styles from "./TopCompanyDetail.module.scss";
 import classNames from "classnames/bind";
-import { authAPI, userApis } from "~/utils/api";
+import { authAPI, userApis, messagesApis } from "~/utils/api";
 import { useParams } from "react-router-dom";
 import images from "~/assets/images";
 import { LoadingSpinner, CompanySkeleton } from "~/components/Loading/Loading";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { FaUser, FaEllipsisV, FaArrowLeft, FaPaperclip, FaImage, FaPaperPlane, FaEdit, FaTrash, FaEnvelope } from "react-icons/fa";
 
 const cx = classNames.bind(styles);
 
@@ -28,8 +29,10 @@ function TopCompanyDetail() {
   const [hoverRating, setHoverRating] = useState(0);
   const [currentUser, setCurrentUser] = useState(null);
   const [reviewUsers, setReviewUsers] = useState({});
+  const [recruiterCompanies, setRecruiterCompanies] = useState([]);
   const [currentReviewPage, setCurrentReviewPage] = useState(1);
   const reviewsPerPage = 5;
+  const [isMessageLoading, setIsMessageLoading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,7 +49,9 @@ function TopCompanyDetail() {
         );
         
         setCompanyDetail(response.data.company);
+        console.log(response.data.recruiterCompanies);
         setJobs(jobsResponse.data.jobs);
+        setRecruiterCompanies(response.data.recruiterCompanies);
       } catch (error) {
         console.error("Error fetching company detail:", error);
         toast.error("Không thể tải thông tin công ty. Vui lòng thử lại sau.");
@@ -183,9 +188,11 @@ function TopCompanyDetail() {
     try {
       const response = await authAPI().post(userApis.createReviewCompany, {
         company_id: company,
-        user_id: currentUser.id,
+        // user_id: currentUser.id,
         rating: rating,
-        comment: comment
+        comment: comment,
+        user_name: currentUser.name,
+        candidate_id: currentUser.id
       });
 
       // Tạo review mới với thông tin user hiện tại
@@ -239,6 +246,55 @@ function TopCompanyDetail() {
     ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1) 
     : 0;
 
+  const handleMessage = async () => {
+    if (!currentUser) {
+      toast.error("Vui lòng đăng nhập để gửi tin nhắn!");
+      return;
+    }
+
+    if (!companyDetail || !companyDetail.company_id) {
+      toast.error("Không thể tìm thấy thông tin công ty!");
+      return;
+    }
+
+    setIsMessageLoading(true);
+    try {
+      console.log("recruiterCompanies:", recruiterCompanies);
+      const recruiterUserId = Array.isArray(recruiterCompanies) && recruiterCompanies.length > 0
+        ? (recruiterCompanies[0].user_id || recruiterCompanies[0].recruiter_id)
+        : null;
+
+      console.log("recruiterUserId:", recruiterUserId);
+
+      if (!recruiterUserId) {
+        toast.error("Không tìm thấy recruiter của công ty!");
+        setIsMessageLoading(false);
+        return;
+      }
+
+      const response = await authAPI().post(messagesApis.createConversation, {
+        user1_id: parseInt(currentUser.id),
+        user2_id: parseInt(recruiterUserId)
+      });
+
+      if (response.data.success) {
+        toast.success("Đã tạo cuộc trò chuyện thành công!");
+        navigate('/messages');
+      } else {
+        toast.error(response.data.message || "Không thể tạo cuộc trò chuyện");
+      }
+    } catch (error) {
+      console.error("Error creating conversation:", error);
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Không thể tạo cuộc trò chuyện. Vui lòng thử lại sau.");
+      }
+    } finally {
+      setIsMessageLoading(false);
+    }
+  };
+
   if (isLoading) {
     return <CompanySkeleton />;
   }
@@ -248,54 +304,61 @@ function TopCompanyDetail() {
   }
 
   return (
-    <div className={cx("wrapper")}>
-      <div className={cx("hero-section")}>
-        <div className={cx("company-card")}>
-          <div className={cx("company-banner")}>
-            <img src={companyDetail?.banner || images.banner} alt="Banner" />
-            <div className={cx("overlay")}></div>
+    <div className={styles.wrapper}>
+      <div className={styles['hero-section']}>
+        <div className={styles['company-card']}>
+          <div className={styles['company-banner']}>
+            <img src={companyDetail?.banner || images.banner} alt={companyDetail?.company_name} />
+            <div className={styles.overlay} />
           </div>
 
-          <div className={cx("company-intro")}>
-            <div className={cx("logo-container")}>
-              <img src={companyDetail?.logos || images.company_1} alt="Logo" />
-              <div className={cx("pulse-effect")}></div>
+          <div className={styles['company-intro']}>
+            <div className={styles['logo-container']}>
+              <img src={companyDetail?.logo} alt={`${companyDetail?.company_name} logo`} />
+              <div className={styles['pulse-effect']} />
             </div>
 
-            <div className={cx("company-stats")}>
+            <div className={styles['company-stats']}>
               <h1>{companyDetail?.company_name}</h1>
-              <div className={cx("stat-badges")}>
-                <div className={cx("badge", "employees")}>
-                  <i className="fas fa-users-gear"></i>
-                  <span>{companyDetail?.company_emp || "250+"} Nhân viên</span>
-                </div>
-                <div className={cx("badge", "location")}>
-                  <i className="fas fa-location-crosshairs"></i>
+              
+              <div className={styles['stat-badges']}>
+                <div className={styles.badge}>
+                  <i className="fas fa-map-marker-alt" />
                   <span>{companyDetail?.address}</span>
                 </div>
-                <div className={cx("badge", "jobs")}>
-                  <i className="fas fa-briefcase-clock"></i>
-                  <span>{jobs.length} Vị trí đang tuyển</span>
+                <div className={styles.badge}>
+                  <i className="fas fa-users" />
+                  <span>{companyDetail?.company_emp || "250+"} employees</span>
                 </div>
-                {reviews.length > 0 && (
-                  <div className={cx("badge", "rating")}>
-                    <i className="fas fa-star"></i>
-                    <span>{averageRating} ({reviews.length} đánh giá)</span>
+                <div className={styles.badge}>
+                  <i className="fas fa-globe" />
+                  <span>{companyDetail?.website}</span>
+                </div>
+                <div className={`${styles.badge} ${styles.rating}`}>
+                  <i className="fas fa-star" />
+                  <span>{averageRating} rating</span>
                   </div>
-                )}
               </div>
               
-              <div className={cx("follow-button")}>
+              <div className={styles['follow-button']}>
                 <button 
-                  className={cx("button-content", { following: isFollowing })}
+                  className={`${styles['button-content']} ${isFollowing ? styles.following : ''}`}
                   onClick={handleFollow}
                 >
-                  <i className={`fas fa-${isFollowing ? 'user-check' : 'user-plus'}`}></i>
-                  <span>{isFollowing ? 'Đang theo dõi' : 'Theo dõi công ty'}</span>
+                  <i className={`fas ${isFollowing ? 'fa-user-check' : 'fa-user-plus'}`} />
+                  {isFollowing ? 'Following' : 'Follow Company'}
                 </button>
-                <div className={cx("follower-count")}>
-                  <i className="fas fa-users"></i>
-                  <span>2.5k người theo dõi</span>
+                <button 
+                  className={styles['message-button']}
+                  onClick={handleMessage}
+                  disabled={isMessageLoading}
+                >
+                  <FaEnvelope />
+                  <span>{isMessageLoading ? 'Đang xử lý...' : 'Message'}</span>
+                </button>
+                <div className={styles['follower-count']}>
+                  <i className="fas fa-users" />
+                  <span>2.5k followers</span>
                 </div>
               </div>
             </div>
@@ -303,89 +366,90 @@ function TopCompanyDetail() {
         </div>
       </div>
 
-      <div className={cx("content-grid")}>
-        <div className={cx("main-content")}>
-          <div className={cx("info-card", "about")}>
-            <div className={cx("card-header")}>
+      <div className={styles['content-grid']}>
+        <div className={styles['main-content']}>
+          <div className={styles['info-card']}>
+            <div className={styles['card-header']}>
               <i className="fas fa-building-circle-check"></i>
               <h2>Giới thiệu công ty</h2>
             </div>
             <div
-              className={cx("card-content")}
+              className={styles['card-content']}
               dangerouslySetInnerHTML={{ __html: companyDetail?.description }}
             />
           </div>
           
-          <div className={cx("info-card", "jobs")}>
-            <div className={cx("card-header")}>
+          <div className={styles['info-card']}>
+            <div className={styles['card-header']}>
               <i className="fas fa-briefcase-clock"></i>
               <h2>Vị trí đang tuyển ({jobs.length})</h2>
             </div>
             
             {jobs.length === 0 ? (
-              <div className={cx("empty-state")}>
+              <div className={styles['empty-state']}>
                 <i className="fas fa-briefcase-blank"></i>
                 <p>Hiện tại công ty chưa có vị trí nào đang tuyển dụng</p>
               </div>
             ) : (
               <>
-                <div className={cx("job-grid")}>
+                <div className={styles['job-grid']}>
                   {currentJobs.map((job, index) => (
                     <div
                       key={index}
-                      className={cx("job-card")}
+                      className={styles['job-card']}
                       onClick={() => handleJobClick(job.job_id)}
                       style={{animationDelay: `${index * 0.1}s`}}
                     >
-                      <div className={cx("job-header")}>
-                        <div className={cx("company-logo")}>
+                      <div className={styles['job-header']}>
+                        <div className={styles['company-logo']}>
                           <img
                             src={companyDetail?.logos || images.company_1}
                             alt="Logo"
                           />
                         </div>
-                        <div className={cx("job-info")}>
-                          <h3 className={cx("job-title")}>{job?.title}</h3>
-                          <div className={cx("company-name")}>
+                        <div className={styles['job-info']}>
+                          <h3 className={styles['job-title']}>{job?.title}</h3>
+                          <div className={styles['company-name']}>
                             {companyDetail?.company_name}
                           </div>
                         </div>
                       </div>
 
-                      <div className={cx("job-meta")}>
-                        <span className={cx("meta-item", "salary")}>
+                      <div className={styles['job-meta']}>
+                        <span className={styles['meta-item']}>
                           <i className="fas fa-sack-dollar"></i>
                           {job?.salary}
                         </span>
-                        <span className={cx("meta-item", "location")}>
+                        <span className={styles['meta-item']}>
                           <i className="fas fa-location-dot"></i>
                           {job?.location}
                         </span>
-                        <span className={cx("meta-item", "experience")}>
+                        <span className={styles['meta-item']}>
                           <i className="fas fa-briefcase"></i>
                           {job?.experience}
                         </span>
-                        <span className={cx("meta-item", "time")}>
+                        <span className={styles['meta-item']}>
                           <i className="fas fa-clock"></i>
                           {job?.working_time}
                         </span>
                       </div>
 
-                      <div className={cx("job-tags")}>
-                        <span className={cx("tag", "working-time")}>
+                      <div className={styles['job-tags']}>
+                        <span className={styles['tag']}>
                           {job?.working_time}
                         </span>
-                        <span className={cx("tag", "rank")}>{job?.rank}</span>
+                        <span className={styles['tag']}>{job?.rank}</span>
                         {job?.status === "Pending" && (
-                          <span className={cx("tag", "urgent")}>Gấp</span>
+                          <span className={styles['tag']}>Gấp</span>
                         )}
                       </div>
 
-                      <div className={cx("job-actions")}>
+                      <div className={styles['job-actions']}>
                         <button
-                          className={cx("save-btn", {
-                            saved: savedStatus[job.job_id],
-                          })}
+                          className={`${styles['save-btn']} ${savedStatus[job.job_id] ? styles.saved : ''}`}
+                          // className={cx("save-btn", {
+                          //   saved: savedStatus[job.job_id],
+                          // })}
                           onClick={(e) => handleSaveJob(e, job.job_id)}
                           aria-label={savedStatus[job.job_id] ? "Hủy lưu" : "Lưu tin"}
                         >

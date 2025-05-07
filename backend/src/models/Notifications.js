@@ -37,7 +37,8 @@ Notifications.init({
             'subscription_expiring',  // Gói dịch vụ sắp hết hạn
             'subscription_expired',   // Gói dịch vụ đã hết hạn
             'company_review',         // Có đánh giá mới về công ty
-            'system'                  // Thông báo hệ thống khác
+            'system',                 // Thông báo hệ thống khác
+            'new_message'             // Tin nhắn mới
         ),
         allowNull: false,
     },

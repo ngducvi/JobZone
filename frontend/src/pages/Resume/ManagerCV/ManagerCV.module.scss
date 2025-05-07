@@ -300,6 +300,16 @@
                 }
               }
             }
+
+            &.delete-btn {
+              border-color: #ff4d4f;
+              color: #ff4d4f;
+
+              &:hover {
+                background: #ff4d4f;
+                color: white;
+              }
+            }
           }
         }
 

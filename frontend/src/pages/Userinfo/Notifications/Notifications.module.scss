@@ -34,22 +34,22 @@ $primary-green: #02a346;
 }
 
 .header {
-  text-align: center;
+    text-align: center;
   margin-bottom: 40px;
   padding: 0 20px;
 
-  .title {
+    .title {
     font-size: 32px;
-    font-weight: 700;
+        font-weight: 700;
     background: linear-gradient(135deg, $primary-blue, $primary-green);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 12px;
-  }
+    }
 
-  .subtitle {
+    .subtitle {
     font-size: 16px;
-    color: #666;
+        color: #666;
     line-height: 1.6;
   }
 }
@@ -67,7 +67,7 @@ $primary-green: #02a346;
   padding: 24px;
   height: fit-content;
 
-  .section-title {
+.section-title {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -86,15 +86,15 @@ $primary-green: #02a346;
 }
 
 .settings-list {
-  display: flex;
-  flex-direction: column;
+    display: flex;
+    flex-direction: column;
   gap: 16px;
 }
 
 .setting-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   padding: 16px;
   background: white;
   border-radius: 12px;
@@ -120,15 +120,15 @@ $primary-green: #02a346;
 }
 
 .switch {
-  position: relative;
-  display: inline-block;
+    position: relative;
+    display: inline-block;
   width: 46px;
-  height: 24px;
+    height: 24px;
 
-  input {
-    opacity: 0;
-    width: 0;
-    height: 0;
+    input {
+        opacity: 0;
+        width: 0;
+        height: 0;
 
     &:checked + .slider {
       background-color: $primary-green;
@@ -141,31 +141,31 @@ $primary-green: #02a346;
     &:checked + .slider:before {
       transform: translateX(22px);
     }
-  }
+    }
 
-  .slider {
-    position: absolute;
-    cursor: pointer;
+    .slider {
+        position: absolute;
+        cursor: pointer;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #ccc;
+        background-color: #ccc;
     transition: .4s;
-    border-radius: 24px;
+        border-radius: 24px;
 
     &:before {
-      position: absolute;
-      content: "";
-      height: 18px;
-      width: 18px;
-      left: 3px;
-      bottom: 3px;
-      background-color: white;
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
       transition: .4s;
-      border-radius: 50%;
+        border-radius: 50%;
     }
-  }
+    }
 }
 
 .notifications-section {
@@ -236,8 +236,8 @@ $primary-green: #02a346;
 }
 
 .notifications-list {
-  display: flex;
-  flex-direction: column;
+    display: flex;
+    flex-direction: column;
   gap: 12px;
 }
 
@@ -247,20 +247,20 @@ $primary-green: #02a346;
   padding: 16px;
   transition: all 0.3s ease;
   border-left: 4px solid $primary-green;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
   gap: 16px;
 
-  &:hover {
-    transform: translateX(4px);
+    &:hover {
+        transform: translateX(4px);
     box-shadow: 0 4px 12px rgba($primary-blue, 0.08);
-  }
+    }
 
-  &.read {
+    &.read {
     border-left-color: #ccc;
-    opacity: 0.7;
-  }
+        opacity: 0.7;
+    }
 }
 
 .notification-content {
@@ -269,15 +269,15 @@ $primary-green: #02a346;
 }
 
 .notification-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
 }
 
 .notification-title {
   font-size: 15px;
-  font-weight: 600;
+    font-weight: 600;
   color: $primary-blue;
 }
 
@@ -288,7 +288,7 @@ $primary-green: #02a346;
 
 .notification-body {
   font-size: 14px;
-  color: #333;
+    color: #333;
   line-height: 1.5;
 }
 
@@ -297,7 +297,7 @@ $primary-green: #02a346;
   background: none;
   border: none;
   color: #666;
-  cursor: pointer;
+    cursor: pointer;
   transition: all 0.3s ease;
   font-size: 14px;
 
@@ -308,11 +308,11 @@ $primary-green: #02a346;
 }
 
 .no-notifications {
-  text-align: center;
-  padding: 40px;
+    text-align: center;
+    padding: 40px;
   background: white;
   border-radius: 12px;
-  color: #666;
+    color: #666;
 }
 
 .error-message {
@@ -324,7 +324,7 @@ $primary-green: #02a346;
   color: #991b1b;
   border: 1px solid #fecaca;
   border-radius: 12px;
-  margin-bottom: 20px;
+    margin-bottom: 20px;
   animation: slideIn 0.3s ease;
 
   .icon {
@@ -333,16 +333,16 @@ $primary-green: #02a346;
 }
 
 .load-more {
-  display: block;
-  width: 100%;
-  padding: 12px;
-  margin-top: 20px;
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-top: 20px;
   background: linear-gradient(135deg, $primary-blue, $primary-green);
   color: white;
   font-weight: 500;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba($primary-blue, 0.2);
 
@@ -353,12 +353,12 @@ $primary-green: #02a346;
 
   &:active:not(:disabled) {
     transform: translateY(0);
-  }
+    }
 
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
+    &:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
 }
 
 @keyframes slideIn {
@@ -375,7 +375,7 @@ $primary-green: #02a346;
 @media (max-width: 992px) {
   .content-grid {
     grid-template-columns: 1fr;
-  }
+}
 }
 
 @media (max-width: 768px) {
@@ -399,9 +399,9 @@ $primary-green: #02a346;
     flex-direction: column;
     gap: 16px;
     align-items: flex-start;
-  }
+}
 
-  .action-buttons {
+.action-buttons {
     width: 100%;
     flex-direction: column;
   }
@@ -463,12 +463,12 @@ $primary-green: #02a346;
 
     &.nav {
       gap: 8px;
-      
-      &:disabled {
+
+    &:disabled {
         opacity: 0.5;
         cursor: not-allowed;
         background: #f3f4f6;
-        color: #666;
+    color: #666;
         transform: none;
       }
 
@@ -476,5 +476,5 @@ $primary-green: #02a346;
         font-size: 14px;
       }
     }
-  }
+    }
 }

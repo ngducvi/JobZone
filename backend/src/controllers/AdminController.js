@@ -14,6 +14,7 @@ const Reviews = require("../models/Reviews");
 const BusinessLicenses = require("../models/BusinessLicenses");
 const Notifications = require("../models/Notifications");
 const NotificationController = require("../controllers/NotificationController");
+const mailerService = require("../services/MailerService");
 
 class AdminController {
   constructor() {
@@ -582,17 +583,315 @@ class AdminController {
         });
       }
 
+      // Lấy thông tin user và company
+      const [user, company] = await Promise.all([
+        User.findByPk(recruiterCompany.user_id),
+        Company.findByPk(recruiterCompany.company_id)
+      ]);
+
+      if (!user || !company) {
+        return res.status(404).json({
+          success: false,
+          message: "Không tìm thấy thông tin người dùng hoặc công ty"
+        });
+      }
+
       recruiterCompany.status = status;
       await recruiterCompany.save();
 
       // Tạo thông báo cho nhà tuyển dụng
       await NotificationController.createCompanyStatusNotification(recruiterCompany.user_id, status);
 
-      return res.status(200).json({ 
+      // Gửi response ngay lập tức
+      res.status(200).json({ 
         success: true,
         message: 'Cập nhật trạng thái thành công',
         recruiterCompany 
       });
+
+      // Chuẩn bị và gửi email bất đồng bộ
+      process.nextTick(async () => {
+        try {
+          // Chuẩn bị thông tin cho email
+          let statusInfo = {
+            title: '',
+            description: '',
+            color: '',
+            icon: '',
+            nextSteps: []
+          };
+
+          switch(status) {
+            case 'active':
+              statusInfo = {
+                title: 'Tài khoản nhà tuyển dụng đã được kích hoạt',
+                description: 'Tài khoản nhà tuyển dụng của bạn đã được kích hoạt thành công. Bạn có thể bắt đầu đăng tin tuyển dụng.',
+                color: '#059669',
+                icon: '✅',
+                nextSteps: [
+                  'Đăng tin tuyển dụng mới',
+                  'Cập nhật thông tin công ty',
+                  'Quản lý các tin tuyển dụng'
+                ]
+              };
+              break;
+            case 'pending':
+              statusInfo = {
+                title: 'Tài khoản nhà tuyển dụng đang chờ xét duyệt',
+                description: 'Tài khoản nhà tuyển dụng của bạn đang trong quá trình xét duyệt. Chúng tôi sẽ thông báo kết quả sớm nhất.',
+                color: '#f59e0b',
+                icon: '⏳',
+                nextSteps: [
+                  'Chờ phản hồi từ đội ngũ xét duyệt',
+                  'Chuẩn bị thông tin công ty',
+                  'Kiểm tra email thường xuyên'
+                ]
+              };
+              break;
+            case 'rejected':
+              statusInfo = {
+                title: 'Tài khoản nhà tuyển dụng bị từ chối',
+                description: 'Tài khoản nhà tuyển dụng của bạn đã bị từ chối. Vui lòng kiểm tra và cập nhật thông tin theo yêu cầu.',
+                color: '#dc2626',
+                icon: '⚠️',
+                nextSteps: [
+                  'Kiểm tra lý do từ chối',
+                  'Cập nhật thông tin theo yêu cầu',
+                  'Liên hệ hỗ trợ nếu cần thiết'
+                ]
+              };
+              break;
+          }
+
+          // Template email
+          const emailTemplate = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              body {
+                font-family: 'Segoe UI', Arial, sans-serif;
+                line-height: 1.6;
+                color: #1f2937;
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #f3f4f6;
+              }
+              .email-container {
+                background-color: #ffffff;
+                border-radius: 12px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+                overflow: hidden;
+              }
+              .header {
+                text-align: center;
+                padding: 30px 20px;
+                background: linear-gradient(135deg, ${statusInfo.color}15 0%, ${statusInfo.color}30 100%);
+                border-bottom: 1px solid ${statusInfo.color}20;
+              }
+              .header h2 {
+                color: ${statusInfo.color};
+                margin: 0;
+                font-size: 24px;
+                font-weight: 600;
+              }
+              .header-icon {
+                font-size: 48px;
+                margin-bottom: 15px;
+              }
+              .status-badge {
+                display: inline-flex;
+                align-items: center;
+                padding: 8px 16px;
+                border-radius: 50px;
+                background-color: ${statusInfo.color}15;
+                color: ${statusInfo.color};
+                font-weight: 600;
+                margin: 15px 0;
+                border: 1px solid ${statusInfo.color}30;
+              }
+              .status-badge span {
+                margin-left: 8px;
+              }
+              .content {
+                padding: 30px;
+              }
+              .greeting {
+                font-size: 18px;
+                margin-bottom: 20px;
+                color: #1f2937;
+              }
+              .message {
+                background-color: #f9fafb;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 20px 0;
+                border-left: 4px solid ${statusInfo.color};
+              }
+              .company-details {
+                background-color: #f9fafb;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 20px 0;
+              }
+              .company-details h3 {
+                color: #374151;
+                margin-top: 0;
+                font-size: 18px;
+              }
+              .next-steps {
+                background-color: #f9fafb;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 20px 0;
+              }
+              .next-steps h3 {
+                color: #374151;
+                margin-top: 0;
+                font-size: 18px;
+                display: flex;
+                align-items: center;
+              }
+              .next-steps h3::before {
+                content: '📋';
+                margin-right: 8px;
+              }
+              .next-steps ul {
+                margin: 15px 0;
+                padding-left: 20px;
+              }
+              .next-steps li {
+                margin: 10px 0;
+                padding-left: 8px;
+                position: relative;
+              }
+              .next-steps li::before {
+                content: '•';
+                color: ${statusInfo.color};
+                font-weight: bold;
+                position: absolute;
+                left: -15px;
+              }
+              .button {
+                display: inline-block;
+                padding: 12px 24px;
+                background-color: ${statusInfo.color};
+                color: white;
+                text-decoration: none;
+                border-radius: 6px;
+                margin-top: 20px;
+                font-weight: 500;
+                text-align: center;
+                transition: all 0.3s ease;
+              }
+              .button:hover {
+                background-color: ${statusInfo.color}dd;
+              }
+              .footer {
+                text-align: center;
+                padding: 20px 30px;
+                background-color: #f9fafb;
+                border-top: 1px solid #e5e7eb;
+                color: #6b7280;
+                font-size: 0.9em;
+              }
+              .footer p {
+                margin: 5px 0;
+              }
+              .divider {
+                height: 1px;
+                background-color: #e5e7eb;
+                margin: 20px 0;
+              }
+              .contact-info {
+                display: flex;
+                justify-content: center;
+                gap: 20px;
+                margin-top: 15px;
+              }
+              .contact-info a {
+                color: ${statusInfo.color};
+                text-decoration: none;
+              }
+              @media (max-width: 600px) {
+                body {
+                  padding: 10px;
+                }
+                .content {
+                  padding: 20px;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="email-container">
+              <div class="header">
+                <div class="header-icon">${statusInfo.icon}</div>
+                <h2>${statusInfo.title}</h2>
+              </div>
+              
+              <div class="content">
+                <p class="greeting">Chào ${user.name},</p>
+                
+                <div class="status-badge">
+                  ${statusInfo.icon} <span>${status}</span>
+                </div>
+                
+                <div class="message">
+                  <p>${statusInfo.description}</p>
+                </div>
+
+                <div class="company-details">
+                  <h3>Thông tin công ty:</h3>
+                  <p><strong>Tên công ty:</strong> ${company.company_name}</p>
+                  <p><strong>Địa chỉ:</strong> ${company.address || 'Chưa cập nhật'}</p>
+                  <p><strong>Website:</strong> ${company.website || 'Chưa cập nhật'}</p>
+                  <p><strong>Quy mô:</strong> ${company.company_size || 'Chưa cập nhật'}</p>
+                </div>
+                
+                <div class="next-steps">
+                  <h3>Các bước tiếp theo</h3>
+                  <ul>
+                    ${statusInfo.nextSteps.map(step => `<li>${step}</li>`).join('')}
+                  </ul>
+                </div>
+
+                <div style="text-align: center;">
+                  <a href="${process.env.FE_URL}/recruiter/dashboard" class="button">
+                    Truy cập trang quản lý
+                  </a>
+                </div>
+              </div>
+
+              <div class="footer">
+                <p style="font-weight: 600; color: #374151;">JobZone Team</p>
+                <div class="divider"></div>
+                <p>Email này được gửi tự động, vui lòng không trả lời.</p>
+                <div class="contact-info">
+                  <a href="mailto:support@jobzone.com">📧 support@jobzone.com</a>
+                  <a href="tel:+84123456789">📞 0123 456 789</a>
+                </div>
+                <p style="margin-top: 15px;">© ${new Date().getFullYear()} JobZone. All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+          </html>
+          `;
+
+          // Gửi email thông báo
+          await mailerService.sendMail(
+            user.email,
+            statusInfo.title,
+            emailTemplate
+          );
+        } catch (error) {
+          console.error('Error sending email:', error);
+        }
+      });
+
     } catch (error) {
       console.error("Error:", error);
       return res.status(500).json({
@@ -617,17 +916,303 @@ class AdminController {
         });
       }
 
+      // Lấy thông tin user
+      const user = await User.findByPk(candidate.user_id);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy thông tin người dùng'
+        });
+      }
+
       candidate.status = status;
       await candidate.save();
 
       // Tạo thông báo cho ứng viên
       await NotificationController.createCandidateStatusNotification(candidate.user_id, status);
 
-      return res.status(200).json({ 
+      // Gửi response ngay lập tức
+      res.status(200).json({
         success: true,
         message: 'Cập nhật trạng thái thành công',
         candidate 
       });
+
+      // Gửi email bất đồng bộ
+      process.nextTick(async () => {
+        try {
+          // Chuẩn bị nội dung email dựa trên trạng thái
+          let statusInfo = {
+            title: '',
+            description: '',
+            color: '',
+            icon: '',
+            nextSteps: []
+          };
+
+          switch(status) {
+            case 'active':
+              statusInfo = {
+                title: 'Hồ sơ đã được kích hoạt',
+                description: 'Hồ sơ của bạn đã được kích hoạt thành công trên JobZone.',
+                color: '#059669',
+                icon: '✅',
+                nextSteps: [
+                  'Cập nhật thông tin hồ sơ thường xuyên',
+                  'Tìm kiếm việc làm phù hợp',
+                  'Theo dõi các công ty bạn quan tâm'
+                ]
+              };
+              break;
+            case 'inactive':
+              statusInfo = {
+                title: 'Hồ sơ tạm thời bị vô hiệu hóa',
+                description: 'Hồ sơ của bạn đã bị vô hiệu hóa tạm thời. Vui lòng liên hệ với chúng tôi để biết thêm chi tiết.',
+                color: '#dc2626',
+                icon: '⚠️',
+                nextSteps: [
+                  'Kiểm tra email để biết lý do vô hiệu hóa',
+                  'Liên hệ hỗ trợ để được giải đáp',
+                  'Cập nhật thông tin theo yêu cầu (nếu có)'
+                ]
+              };
+              break;
+            case 'pending':
+              statusInfo = {
+                title: 'Hồ sơ đang chờ xét duyệt',
+                description: 'Hồ sơ của bạn đang trong quá trình xét duyệt. Chúng tôi sẽ thông báo kết quả sớm nhất.',
+                color: '#f59e0b',
+                icon: '⏳',
+                nextSteps: [
+                  'Kiểm tra email thường xuyên',
+                  'Hoàn thiện thêm thông tin hồ sơ (nếu có)',
+                  'Chờ phản hồi từ đội ngũ xét duyệt'
+                ]
+              };
+              break;
+            default:
+              statusInfo = {
+                title: 'Cập nhật trạng thái hồ sơ',
+                description: `Trạng thái hồ sơ của bạn đã được cập nhật thành: ${status}`,
+                color: '#6b7280',
+                icon: '📝',
+                nextSteps: [
+                  'Kiểm tra thông tin hồ sơ',
+                  'Cập nhật thông tin nếu cần thiết'
+                ]
+              };
+          }
+
+          // Template email
+          const emailTemplate = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              body {
+                font-family: 'Segoe UI', Arial, sans-serif;
+                line-height: 1.6;
+                color: #1f2937;
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #f3f4f6;
+              }
+              .email-container {
+                background-color: #ffffff;
+                border-radius: 12px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+                overflow: hidden;
+              }
+              .header {
+                text-align: center;
+                padding: 30px 20px;
+                background: linear-gradient(135deg, ${statusInfo.color}15 0%, ${statusInfo.color}30 100%);
+                border-bottom: 1px solid ${statusInfo.color}20;
+              }
+              .header h2 {
+                color: ${statusInfo.color};
+                margin: 0;
+                font-size: 24px;
+                font-weight: 600;
+              }
+              .header-icon {
+                font-size: 48px;
+                margin-bottom: 15px;
+              }
+              .status-badge {
+                display: inline-flex;
+                align-items: center;
+                padding: 8px 16px;
+                border-radius: 50px;
+                background-color: ${statusInfo.color}15;
+                color: ${statusInfo.color};
+                font-weight: 600;
+                margin: 15px 0;
+                border: 1px solid ${statusInfo.color}30;
+              }
+              .status-badge span {
+                margin-left: 8px;
+              }
+              .content {
+                padding: 30px;
+              }
+              .greeting {
+                font-size: 18px;
+                margin-bottom: 20px;
+                color: #1f2937;
+              }
+              .message {
+                background-color: #f9fafb;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 20px 0;
+                border-left: 4px solid ${statusInfo.color};
+              }
+              .next-steps {
+                background-color: #f9fafb;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 20px 0;
+              }
+              .next-steps h3 {
+                color: #374151;
+                margin-top: 0;
+                font-size: 18px;
+                display: flex;
+                align-items: center;
+              }
+              .next-steps h3::before {
+                content: '📋';
+                margin-right: 8px;
+              }
+              .next-steps ul {
+                margin: 15px 0;
+                padding-left: 20px;
+              }
+              .next-steps li {
+                margin: 10px 0;
+                padding-left: 8px;
+                position: relative;
+              }
+              .next-steps li::before {
+                content: '•';
+                color: ${statusInfo.color};
+                font-weight: bold;
+                position: absolute;
+                left: -15px;
+              }
+              .button {
+                display: inline-block;
+                padding: 12px 24px;
+                background-color: ${statusInfo.color};
+                color: white;
+                text-decoration: none;
+                border-radius: 6px;
+                margin-top: 20px;
+                font-weight: 500;
+                text-align: center;
+                transition: all 0.3s ease;
+              }
+              .button:hover {
+                background-color: ${statusInfo.color}dd;
+              }
+              .footer {
+                text-align: center;
+                padding: 20px 30px;
+                background-color: #f9fafb;
+                border-top: 1px solid #e5e7eb;
+                color: #6b7280;
+                font-size: 0.9em;
+              }
+              .footer p {
+                margin: 5px 0;
+              }
+              .divider {
+                height: 1px;
+                background-color: #e5e7eb;
+                margin: 20px 0;
+              }
+              .contact-info {
+                display: flex;
+                justify-content: center;
+                gap: 20px;
+                margin-top: 15px;
+              }
+              .contact-info a {
+                color: ${statusInfo.color};
+                text-decoration: none;
+              }
+              @media (max-width: 600px) {
+                body {
+                  padding: 10px;
+                }
+                .content {
+                  padding: 20px;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="email-container">
+              <div class="header">
+                <div class="header-icon">${statusInfo.icon}</div>
+                <h2>${statusInfo.title}</h2>
+              </div>
+              
+              <div class="content">
+                <p class="greeting">Chào ${user.name},</p>
+                
+                <div class="status-badge">
+                  ${statusInfo.icon} <span>${status}</span>
+                </div>
+                
+                <div class="message">
+                  <p>${statusInfo.description}</p>
+                </div>
+
+                <div class="next-steps">
+                  <h3>Các bước tiếp theo</h3>
+                  <ul>
+                    ${statusInfo.nextSteps.map(step => `<li>${step}</li>`).join('')}
+                  </ul>
+                </div>
+
+                <div style="text-align: center;">
+                  <a href="${process.env.FE_URL}/candidate/profile" class="button">
+                    Xem và cập nhật hồ sơ
+                  </a>
+                </div>
+              </div>
+
+              <div class="footer">
+                <p style="font-weight: 600; color: #374151;">JobZone Team</p>
+                <div class="divider"></div>
+                <p>Email này được gửi tự động, vui lòng không trả lời.</p>
+                <div class="contact-info">
+                  <a href="mailto:support@jobzone.com">📧 support@jobzone.com</a>
+                  <a href="tel:+84123456789">📞 0123 456 789</a>
+                </div>
+                <p style="margin-top: 15px;">© ${new Date().getFullYear()} JobZone. All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+          </html>
+          `;
+
+          // Gửi email thông báo
+          await mailerService.sendMail(
+            user.email,
+            statusInfo.title,
+            emailTemplate
+          );
+        } catch (error) {
+          console.error('Error sending email:', error);
+        }
+      });
+
     } catch (error) {
       console.error('Error in updateStatusCandidate:', error);
       return res.status(500).json({
@@ -642,12 +1227,353 @@ class AdminController {
       const { job_id } = req.params;
       const { status } = req.body;
       const job = await Job.findByPk(job_id);
+
+      if (!job) {
+        return res.status(404).json({
+          success: false,
+          message: "Không tìm thấy công việc"
+        });
+      }
+
+      // Lấy thông tin công ty và recruiter
+      const company = await Company.findByPk(job.company_id);
+      const recruiterCompany = await RecruiterCompanies.findOne({
+        where: { company_id: job.company_id }
+      });
+      const recruiter = await User.findByPk(recruiterCompany.user_id);
+
+      if (!company || !recruiter) {
+        return res.status(404).json({
+          success: false,
+          message: "Không tìm thấy thông tin công ty hoặc nhà tuyển dụng"
+        });
+      }
+
       job.status = status;
       await job.save();
-      return res.json({ job });
+
+      // Tạo thông báo cho công việc được duyệt được đóng hoặc hết hạn
+      await NotificationController.createJobClosedNotification(job_id, recruiter.id, status, job.title);
+
+      // Gửi response ngay lập tức
+      res.json({ 
+        success: true,
+        message: "Cập nhật trạng thái thành công",
+        job 
+      });
+
+      // Chuẩn bị và gửi email bất đồng bộ
+      process.nextTick(async () => {
+        try {
+          // Chuẩn bị thông tin cho email
+          let statusInfo = {
+            title: '',
+            description: '',
+            color: '',
+            icon: '',
+            nextSteps: []
+          };
+
+          switch(status) {
+            case 'active':
+              statusInfo = {
+                title: 'Tin tuyển dụng đã được kích hoạt',
+                description: 'Tin tuyển dụng của bạn đã được phê duyệt và đăng tải thành công trên JobZone.',
+                color: '#059669',
+                icon: '✅',
+                nextSteps: [
+                  'Theo dõi các ứng viên nộp đơn',
+                  'Cập nhật thông tin tuyển dụng nếu cần',
+                  'Phản hồi nhanh chóng khi có ứng viên mới'
+                ]
+              };
+              break;
+            case 'inactive':
+              statusInfo = {
+                title: 'Tin tuyển dụng tạm thời bị vô hiệu hóa',
+                description: 'Tin tuyển dụng của bạn đã bị vô hiệu hóa. Vui lòng kiểm tra và cập nhật theo yêu cầu.',
+                color: '#dc2626',
+                icon: '⚠️',
+                nextSteps: [
+                  'Kiểm tra lý do vô hiệu hóa',
+                  'Cập nhật thông tin theo yêu cầu',
+                  'Liên hệ hỗ trợ nếu cần thiết'
+                ]
+              };
+              break;
+            case 'pending':
+              statusInfo = {
+                title: 'Tin tuyển dụng đang chờ xét duyệt',
+                description: 'Tin tuyển dụng của bạn đang được xem xét. Chúng tôi sẽ thông báo kết quả sớm nhất.',
+                color: '#f59e0b',
+                icon: '⏳',
+                nextSteps: [
+                  'Chờ phản hồi từ đội ngũ xét duyệt',
+                  'Chuẩn bị kế hoạch tuyển dụng',
+                  'Kiểm tra email thường xuyên'
+                ]
+              };
+              break;
+            case 'expired':
+              statusInfo = {
+                title: 'Tin tuyển dụng đã hết hạn',
+                description: 'Tin tuyển dụng của bạn đã hết hạn đăng tải.',
+                color: '#6b7280',
+                icon: '⌛',
+                nextSteps: [
+                  'Đánh giá kết quả tuyển dụng',
+                  'Tạo tin tuyển dụng mới nếu cần',
+                  'Xem xét gia hạn tin tuyển dụng'
+                ]
+              };
+              break;
+            default:
+              statusInfo = {
+                title: 'Cập nhật trạng thái tin tuyển dụng',
+                description: `Trạng thái tin tuyển dụng đã được cập nhật thành: ${status}`,
+                color: '#6b7280',
+                icon: '📝',
+                nextSteps: [
+                  'Kiểm tra thông tin tuyển dụng',
+                  'Cập nhật nếu cần thiết'
+                ]
+              };
+          }
+
+          // Template email
+          const emailTemplate = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              body {
+                font-family: 'Segoe UI', Arial, sans-serif;
+                line-height: 1.6;
+                color: #1f2937;
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #f3f4f6;
+              }
+              .email-container {
+                background-color: #ffffff;
+                border-radius: 12px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+                overflow: hidden;
+              }
+              .header {
+                text-align: center;
+                padding: 30px 20px;
+                background: linear-gradient(135deg, ${statusInfo.color}15 0%, ${statusInfo.color}30 100%);
+                border-bottom: 1px solid ${statusInfo.color}20;
+              }
+              .header h2 {
+                color: ${statusInfo.color};
+                margin: 0;
+                font-size: 24px;
+                font-weight: 600;
+              }
+              .header-icon {
+                font-size: 48px;
+                margin-bottom: 15px;
+              }
+              .status-badge {
+                display: inline-flex;
+                align-items: center;
+                padding: 8px 16px;
+                border-radius: 50px;
+                background-color: ${statusInfo.color}15;
+                color: ${statusInfo.color};
+                font-weight: 600;
+                margin: 15px 0;
+                border: 1px solid ${statusInfo.color}30;
+              }
+              .status-badge span {
+                margin-left: 8px;
+              }
+              .content {
+                padding: 30px;
+              }
+              .greeting {
+                font-size: 18px;
+                margin-bottom: 20px;
+                color: #1f2937;
+              }
+              .message {
+                background-color: #f9fafb;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 20px 0;
+                border-left: 4px solid ${statusInfo.color};
+              }
+              .job-details {
+                background-color: #f9fafb;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 20px 0;
+              }
+              .job-details h3 {
+                color: #374151;
+                margin-top: 0;
+                font-size: 18px;
+              }
+              .next-steps {
+                background-color: #f9fafb;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 20px 0;
+              }
+              .next-steps h3 {
+                color: #374151;
+                margin-top: 0;
+                font-size: 18px;
+                display: flex;
+                align-items: center;
+              }
+              .next-steps h3::before {
+                content: '📋';
+                margin-right: 8px;
+              }
+              .next-steps ul {
+                margin: 15px 0;
+                padding-left: 20px;
+              }
+              .next-steps li {
+                margin: 10px 0;
+                padding-left: 8px;
+                position: relative;
+              }
+              .next-steps li::before {
+                content: '•';
+                color: ${statusInfo.color};
+                font-weight: bold;
+                position: absolute;
+                left: -15px;
+              }
+              .button {
+                display: inline-block;
+                padding: 12px 24px;
+                background-color: ${statusInfo.color};
+                color: white;
+                text-decoration: none;
+                border-radius: 6px;
+                margin-top: 20px;
+                font-weight: 500;
+                text-align: center;
+                transition: all 0.3s ease;
+              }
+              .button:hover {
+                background-color: ${statusInfo.color}dd;
+              }
+              .footer {
+                text-align: center;
+                padding: 20px 30px;
+                background-color: #f9fafb;
+                border-top: 1px solid #e5e7eb;
+                color: #6b7280;
+                font-size: 0.9em;
+              }
+              .footer p {
+                margin: 5px 0;
+              }
+              .divider {
+                height: 1px;
+                background-color: #e5e7eb;
+                margin: 20px 0;
+              }
+              .contact-info {
+                display: flex;
+                justify-content: center;
+                gap: 20px;
+                margin-top: 15px;
+              }
+              .contact-info a {
+                color: ${statusInfo.color};
+                text-decoration: none;
+              }
+              @media (max-width: 600px) {
+                body {
+                  padding: 10px;
+                }
+                .content {
+                  padding: 20px;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="email-container">
+              <div class="header">
+                <div class="header-icon">${statusInfo.icon}</div>
+                <h2>${statusInfo.title}</h2>
+              </div>
+              
+              <div class="content">
+                <p class="greeting">Chào ${recruiter.name},</p>
+                
+                <div class="status-badge">
+                  ${statusInfo.icon} <span>${status}</span>
+                </div>
+                
+                <div class="message">
+                  <p>${statusInfo.description}</p>
+                </div>
+
+                <div class="job-details">
+                  <h3>Thông tin tin tuyển dụng:</h3>
+                  <p><strong>Vị trí:</strong> ${job.title}</p>
+                  <p><strong>Công ty:</strong> ${company.company_name}</p>
+                  <p><strong>Địa điểm:</strong> ${job.location || 'Chưa cập nhật'}</p>
+                  <p><strong>Mức lương:</strong> ${job.salary || 'Thỏa thuận'}</p>
+                  ${job.deadline ? `<p><strong>Hạn nộp hồ sơ:</strong> ${new Date(job.deadline).toLocaleDateString('vi-VN')}</p>` : ''}
+                </div>
+                
+                <div class="next-steps">
+                  <h3>Các bước tiếp theo</h3>
+                  <ul>
+                    ${statusInfo.nextSteps.map(step => `<li>${step}</li>`).join('')}
+                  </ul>
+                </div>
+
+                <div style="text-align: center;">
+                  <a href="${process.env.FE_URL}/job-detail/${job.job_id}" class="button">
+                    Xem chi tiết tin tuyển dụng
+                  </a>
+                </div>
+              </div>
+
+              <div class="footer">
+                <p style="font-weight: 600; color: #374151;">JobZone Team</p>
+                <div class="divider"></div>
+                <p>Email này được gửi tự động, vui lòng không trả lời.</p>
+                <div class="contact-info">
+                  <a href="mailto:support@jobzone.com">📧 support@jobzone.com</a>
+                  <a href="tel:+84123456789">📞 0123 456 789</a>
+                </div>
+                <p style="margin-top: 15px;">© ${new Date().getFullYear()} JobZone. All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+          </html>
+          `;
+
+          // Gửi email thông báo
+          await mailerService.sendMail(
+            recruiter.email,
+            statusInfo.title,
+            emailTemplate
+          );
+        } catch (error) {
+          console.error('Error sending email:', error);
+        }
+      });
+
     } catch (error) {
       console.error("Error:", error);
       return res.status(500).json({
+        success: false,
         message: "Internal server error",
         error: error.message,
       });

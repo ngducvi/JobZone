@@ -10,10 +10,10 @@ import SidebarContext from "~/context/SidebarContext";
 import UserContext from "~/context/UserContext";
 import { authAPI, userApis } from "~/utils/api";
 import Modal from "~/components/Modal/Modal";
-import { FaBell } from "react-icons/fa";
+import { FaBell, FaEnvelope } from "react-icons/fa";
 import socketService from "~/utils/socket";
 import { useNotification } from '~/context/NotificationContext';
-
+import { FaFacebookMessenger } from "react-icons/fa";
 const cx = classNames.bind(styles);
 
 const sidebarIcons = [
@@ -247,7 +247,9 @@ const Sidebar = () => {
       try {
         const response = await authAPI().get(userApis.getCurrentUser);
         const token = localStorage.getItem("token");
-        socketService.connect(token);
+        if (!socketService.socket) {
+          socketService.connect(token);
+        }
         socketService.joinUserRoom(response.data.user.id);
         
         // Lắng nghe thông báo mới và cập nhật số lượng
@@ -275,7 +277,11 @@ const Sidebar = () => {
     }
 
     return () => {
-      socketService.disconnect();
+      // Don't disconnect socket here as it might be used by other features
+      // Just remove the notification listener
+      if (socketService.socket) {
+        socketService.socket.off('new_notification');
+      }
     };
   }, [token, updateUnreadCount]);
 
@@ -303,9 +309,10 @@ const Sidebar = () => {
             className={cx("menu-toggle", { active: isMobileMenuOpen })}
             onClick={toggleMobileMenu}
           >
-            <span></span>
-            <span></span>
-            <span></span>
+            <i
+              className={`fa-solid ${isMobileMenuOpen ? 'fa-xmark' : 'fa-bars'} menu-toggle__icon`}
+              style={{ color: isMobileMenuOpen ? '#fff' : '#013a74', fontSize: 24 }}
+            ></i>
           </div>
 
           <div className={cx("search-container")}>
@@ -363,6 +370,11 @@ const Sidebar = () => {
                     <Link to="/tai-khoan/notifications" className={cx("bell-icon")}>
                       <FaBell />
                       {unreadCount > 0 && <span className={cx("badge")}>{unreadCount}</span>}
+                    </Link>
+                  </div>
+                  <div className={cx("message-icon")}>
+                    <Link to="/messages" className={cx("envelope-icon")}>
+                      <FaFacebookMessenger />
                     </Link>
                   </div>
                   <div className={cx("user-dropdown")}>

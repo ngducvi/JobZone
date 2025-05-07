@@ -1,0 +1,419 @@
+import React, { useEffect, useState, useRef } from "react";
+import classNames from "classnames/bind";
+import styles from './MesagesRecruiter.module.scss';
+import { authAPI, messagesApis, userApis, recruiterApis } from "~/utils/api";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import images from "~/assets/images/index";
+import Avatar from "~/components/Avatar";
+import { FaUser, FaEllipsisV, FaArrowLeft, FaPaperclip, FaImage, FaPaperPlane, FaEdit, FaTrash } from "react-icons/fa";
+import { useMessage } from '~/context/MessageContext';
+import socketService from '~/utils/socket';
+
+const cx = classNames.bind(styles);
+
+const MessagesRecruiter = () => {
+    const [currentUser, setCurrentUser] = useState(null);
+    const [currentId, setCurrentId] = useState(null);
+    const [newMessage, setNewMessage] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [candidateDetail, setCandidateDetail] = useState(null);
+    const [editingMessage, setEditingMessage] = useState(null);
+    const [showMenuForMessage, setShowMenuForMessage] = useState(null);
+    const [isTyping, setIsTyping] = useState(false);
+    const messagesContainerRef = useRef(null);
+    const token = localStorage.getItem("token");
+    const navigate = useNavigate();
+
+    const {
+        messages,
+        conversations,
+        selectedConversation,
+        setSelectedConversation,
+        isConnected,
+        joinConversation,
+        leaveConversation,
+        sendMessage,
+        fetchMessages,
+        fetchConversations
+    } = useMessage();
+
+    const scrollToBottom = () => {
+        if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
+    useEffect(() => {
+        if (!token) return;
+
+        const fetchData = async () => {
+            try {
+                // Lấy user
+                const currentUserResponse = await authAPI().get(userApis.getCurrentUser);
+                setCurrentUser(currentUserResponse.data);
+                setCurrentId(currentUserResponse.data.user.id);
+
+                // Lấy danh sách conversation
+                await fetchConversations(currentUserResponse.data.user.id);
+
+                // Nếu có conversation thì lấy messages của conversation đầu tiên
+                if (conversations.length > 0) {
+                    const firstConversationId = conversations[0].id;
+                    await fetchMessages(firstConversationId);
+                    setSelectedConversation(conversations[0]);
+                }
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [token]);
+
+    useEffect(() => {
+        if (selectedConversation) {
+            joinConversation(selectedConversation.id);
+            return () => {
+                leaveConversation(selectedConversation.id);
+            };
+        }
+    }, [selectedConversation]);
+
+
+
+    useEffect(() => {
+        if (!selectedConversation) return;
+        const candidateId = selectedConversation.user1_id === currentId
+            ? selectedConversation.user2_id
+            : selectedConversation.user1_id;
+        const fetchCandidateDetail = async () => {
+            try {
+                const res = await authAPI().get(
+                    recruiterApis.getCandidateDetailByCandidateId(candidateId)
+                );
+                console.log("API response", res.data.user);
+                setCandidateDetail(res.data.user);
+            } catch (error) {
+                setCandidateDetail(null);
+            }
+        };
+        fetchCandidateDetail();
+    }, [selectedConversation, currentId]);
+
+    const handleConversationSelect = async (conversation) => {
+        setSelectedConversation(conversation);
+        await fetchMessages(conversation.id);
+    };
+
+    const handleEditMessage = (message) => {
+        setEditingMessage(message);
+        setNewMessage(message.content);
+        setShowMenuForMessage(null);
+    };
+
+    const handleUpdateMessage = async () => {
+        if (!editingMessage || !newMessage.trim()) return;
+
+        try {
+            const response = await authAPI().put(messagesApis.editMessage, {
+                message_id: editingMessage.id,
+                message: newMessage.trim()
+            });
+
+            if (response.data.success) {
+                setEditingMessage(null);
+                setNewMessage("");
+                toast.success("Message updated successfully");
+            } else {
+                toast.error(response.data.message || "Failed to update message");
+            }
+        } catch (error) {
+            console.error("Error updating message:", error);
+            toast.error(error.response?.data?.message || "Failed to update message");
+        }
+    };
+
+    const handleDeleteMessage = async (messageId) => {
+        try {
+            const response = await authAPI().delete(messagesApis.deleteMessage, {
+                data: { message_id: messageId }
+            });
+
+            if (response.data.success) {
+                setShowMenuForMessage(null);
+                toast.success("Message deleted successfully");
+            } else {
+                toast.error(response.data.message || "Failed to delete message");
+            }
+        } catch (error) {
+            console.error("Error deleting message:", error);
+            toast.error(error.response?.data?.message || "Failed to delete message");
+        }
+    };
+
+    const handleSendMessage = async (e) => {
+        e.preventDefault();
+        if (!newMessage.trim() || !selectedConversation) return;
+
+        try {
+            if (editingMessage) {
+                await handleUpdateMessage();
+            } else {
+                await sendMessage(selectedConversation.id, newMessage.trim());
+                setNewMessage("");
+            }
+        } catch (error) {
+            console.error("Error sending message:", error);
+            toast.error(error.response?.data?.message || "Failed to send message");
+        }
+    };
+
+    const handleTyping = (e) => {
+        setNewMessage(e.target.value);
+        if (selectedConversation && currentId) {
+            socketService.handleTyping(selectedConversation.id, currentId, true);
+        }
+    };
+
+    const formatTime = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
+    const handleBackToHome = () => {
+        navigate('/recruiter');
+    };
+
+    const handleViewCandidateProfile = (candidateId) => {
+        navigate(`/recruiter/candidate-detail/${candidateId}`);
+    };
+
+    if (loading) {
+        return (
+            <div className={cx("loading-container")}>
+                <div className={cx("loading-spinner")}></div>
+                <p>Loading conversations...</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className={cx("wrapper")}>
+            <div className={cx("conversations")}>
+                <div className={cx("header")}>
+                    <button className={cx("back-button")} onClick={handleBackToHome}>
+                        <FaArrowLeft />
+                        <span>Back</span>
+                    </button>
+                    <h2>Messages</h2>
+                </div>
+                <div className={cx("search-box")}>
+                    <input type="text" placeholder="Search conversations..." />
+                </div>
+                <div className={cx("list")}>
+                    {conversations.length > 0 ? (
+                        conversations.map((conversation) => (
+                            <div
+                                key={conversation.id}
+                                className={cx("conversation-item", {
+                                    active: selectedConversation?.id === conversation.id
+                                })}
+                                onClick={() => handleConversationSelect(conversation)}
+                            >
+                                <Avatar
+                                    src={images.avatar}
+                                    className={cx("avatar")}
+                                />
+                                <div className={cx("content")}>
+                                    <div className={cx("name")}>
+                                        {conversation.user1_id === currentId
+                                            ? conversation.user2_id
+                                            : conversation.user1_id}
+                                    </div>
+                                    <div className={cx("last-message")}>{conversation.last_message || "No messages yet"}</div>
+                                </div>
+                                <div className={cx("meta")}>
+                                    <div className={cx("time")}>
+                                        {formatTime(conversation.last_message_at || new Date())}
+                                    </div>
+                                    {conversation.user1_id === currentId
+                                        ? conversation.unread_count_user2 > 0 && (
+                                            <div className={cx("unread")}>
+                                                {conversation.unread_count_user2}
+                                            </div>
+                                        )
+                                        : conversation.unread_count_user1 > 0 && (
+                                            <div className={cx("unread")}>
+                                                {conversation.unread_count_user1}
+                                            </div>
+                                        )}
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className={cx("no-conversations")}>
+                            <div className={cx("empty-icon")}>
+                                <FaUser size={32} />
+                            </div>
+                            <p>No conversations yet</p>
+                            <span>Start connecting with candidates</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <div className={cx("chat")}>
+                {selectedConversation ? (
+                    <>
+                        <div className={cx("header")}>
+                            <div className={cx("user-info")}>
+                                <Avatar
+                                    src={images.avatar}
+                                    className={cx("avatar")}
+                                    alt="User avatar"
+                                />
+                                <div className={cx("info")}>
+                                    <div className={cx("name")}>
+                                        {selectedConversation.user1_id === currentId
+                                            ? selectedConversation.user2_id
+                                            : selectedConversation.user1_id}
+                                    </div>
+                                    <div className={cx("status")}>
+                                        <span className={cx("status-dot")}></span>
+                                        Online
+                                    </div>
+                                </div>
+                            </div>
+                            <div className={cx("actions")}>
+                                <button
+                                    className={cx("profile-button")}
+                                    onClick={() => handleViewCandidateProfile(
+                                        1
+                                    )}
+                                >
+                                    <FaUser />
+                                    <span>View Profile</span>
+                                </button>
+                                <button className={cx("more-button")}>
+                                    <FaEllipsisV />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className={cx("messages")} ref={messagesContainerRef}>
+                            {messages.length > 0 ? (
+                                messages.map((message, index) => (
+                                    <div
+                                        key={message.id || index}
+                                        className={cx("message", {
+                                            sent: message.sender_id === currentId,
+                                            received: message.sender_id !== currentId
+                                        })}
+                                    >
+                                        <div className={cx("message-content")}>
+                                            {message.content}
+                                            {message.sender_id === currentId && (
+                                                <div className={cx("message-menu")}>
+                                                    <button
+                                                        className={cx("menu-button")}
+                                                        onClick={() => setShowMenuForMessage(
+                                                            showMenuForMessage === message.id ? null : message.id
+                                                        )}
+                                                    >
+                                                        <FaEllipsisV />
+                                                    </button>
+                                                    <div className={cx("menu-options", {
+                                                        show: showMenuForMessage === message.id
+                                                    })}>
+                                                        <div
+                                                            className={cx("option")}
+                                                            onClick={() => handleEditMessage(message)}
+                                                        >
+                                                            <FaEdit />
+                                                            <span>Edit</span>
+                                                        </div>
+                                                        <div
+                                                            className={cx("option", "delete")}
+                                                            onClick={() => handleDeleteMessage(message.id)}
+                                                        >
+                                                            <FaTrash />
+                                                            <span>Delete</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className={cx("time")}>{formatTime(message.created_at)}</div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className={cx("no-messages")}>
+                                    <p>No messages yet</p>
+                                    <span>Start the conversation by sending a message</span>
+                                </div>
+                            )}
+                        </div>
+
+                        <form className={cx("input")} onSubmit={handleSendMessage}>
+                            <div className={cx("input-wrapper")}>
+                                <input
+                                    type="text"
+                                    placeholder={editingMessage ? "Edit your message..." : "Type a message..."}
+                                    value={newMessage}
+                                    onChange={handleTyping}
+                                />
+                                {editingMessage && (
+                                    <button
+                                        type="button"
+                                        className={cx("cancel-edit")}
+                                        onClick={() => {
+                                            setEditingMessage(null);
+                                            setNewMessage("");
+                                        }}
+                                    >
+                                        Cancel
+                                    </button>
+                                )}
+                                <div className={cx("attachments")}>
+                                    <button type="button" className={cx("attachment-button")}>
+                                        <FaPaperclip />
+                                    </button>
+                                    <button type="button" className={cx("attachment-button")}>
+                                        <FaImage />
+                                    </button>
+                                </div>
+                            </div>
+                            <button
+                                type="submit"
+                                className={cx("send-button", { disabled: !newMessage.trim() })}
+                                disabled={!newMessage.trim()}
+                            >
+                                <FaPaperPlane />
+                                <span>{editingMessage ? "Update" : "Send"}</span>
+                            </button>
+                        </form>
+                    </>
+                ) : (
+                    <div className={cx("no-chat")}>
+                        <div className={cx("empty-state")}>
+                            <div className={cx("empty-icon")}>
+                                <FaUser size={48} />
+                            </div>
+                            <h3>Select a conversation to start chatting</h3>
+                            <p>Connect with candidates and discuss job opportunities</p>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default MessagesRecruiter;

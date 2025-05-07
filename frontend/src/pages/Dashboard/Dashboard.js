@@ -76,7 +76,6 @@ const Dashboard = () => {
       setDisplayedJobs(salaryRes.data.jobs?.rows || []);
     } catch (error) {
       console.error("Error fetching jobs:", error);
-      toast.error("Có lỗi xảy ra khi tải dữ liệu công việc");
     } finally {
       setIsLoading(false);
     }

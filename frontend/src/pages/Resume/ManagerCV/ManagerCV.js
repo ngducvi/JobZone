@@ -37,14 +37,10 @@ const ManagerCV = () => {
     ])
       .then(([userCvResponse, candidateCvResponse, currentUserResponse, candidateProfileResponse]) => {
         setUserCv(userCvResponse.data.userCv);
-        console.log("userCv", userCvResponse.data.userCv);
         setCandidateCv(candidateCvResponse.data.candidateCv);
         setCurrentUser(currentUserResponse.data.user);
         setUserId(currentUserResponse.data.user.id);
-        console.log("currentUser", currentUserResponse.data.user);
         setCandidateProfile(candidateProfileResponse.data.candidate);
-        console.log("candidateProfile", candidateProfileResponse.data.candidate);
-        // console.log("candidateCv", candidateCvResponse.data.candidateCv);
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
@@ -257,6 +253,22 @@ const ManagerCV = () => {
     }
   };
 
+  const handleDeleteUserCv = async (cv) => {
+    try {
+      const response = await authAPI().delete(`${userApis.deleteUserCvTemplate(cv.cv_id)}`);
+
+      if (response.data.code === 1) {
+        // Refresh the CV list
+        const userCvResponse = await authAPI().get(userApis.getAllUserCvByUserId);
+        setUserCv(userCvResponse.data.userCv);
+        toast.success('Đã xóa CV thành công');
+      }
+    } catch (error) {
+      console.error('Error deleting CV:', error);
+      toast.error('Có lỗi xảy ra khi xóa CV');
+    }
+  };
+
   return (
     <div className={cx("wrapper")}>
       <div className={cx("header-section")}>
@@ -347,6 +359,12 @@ const ManagerCV = () => {
                               <FaCheck /> Cài làm mặc định
                             </>
                           )}
+                        </button>
+                        <button
+                          className={cx("action-btn", "delete-btn")}
+                          onClick={() => handleDeleteUserCv(cv)}
+                        >
+                          <FaTrash /> Xóa
                         </button>
                       </div>
                     </div>
