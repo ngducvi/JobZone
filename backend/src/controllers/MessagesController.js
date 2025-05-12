@@ -128,7 +128,8 @@ class MessagesController {
                 conversation_id,
                 sender_id: req.user.id,
                 content: message,
-                created_at: new Date()
+                created_at: new Date(),
+                is_read: false // Tin nhắn mới chưa được đọc
             });
 
             // Get conversation details
@@ -141,11 +142,26 @@ class MessagesController {
             const io = getIO();
             io.to(`conversation_${conversation_id}`).emit('new_message', newMessage);
 
-            // Update conversation's last message
-            await conversation.update({
-                last_message: message,
-                last_message_at: new Date()
-            });
+            // Cập nhật số lượng tin nhắn chưa đọc cho người nhận
+            let updateField = {};
+            if (conversation.user1_id == req.user.id) {
+                // Người gửi là user1, tăng unread_count cho user2
+                updateField = { 
+                    unread_count_user2: conversation.unread_count_user2 + 1,
+                    last_message: message,
+                    last_message_at: new Date()
+                };
+            } else {
+                // Người gửi là user2, tăng unread_count cho user1
+                updateField = { 
+                    unread_count_user1: conversation.unread_count_user1 + 1,
+                    last_message: message,
+                    last_message_at: new Date()
+                };
+            }
+            
+            // Cập nhật conversation
+            await conversation.update(updateField);
 
             // --- CREATE NOTIFICATION FOR RECIPIENT ---
             // Determine recipient (the other user in the conversation)
@@ -210,17 +226,21 @@ class MessagesController {
     async editMessage(req, res) {
         try {
             const { message_id, message } = req.body;
-            const [updatedCount, [updatedMessage]] = await Messages.update(
-                { content: message },
-                { 
-                    where: { id: message_id },
-                    returning: true
-                }
-            );
-
-            if (updatedCount === 0) {
+            
+            // First find the message
+            const existingMessage = await Messages.findByPk(message_id);
+            if (!existingMessage) {
                 throw new Error('Message not found');
             }
+
+            // Update the message
+            await existingMessage.update({
+                content: message,
+                updated_at: new Date()
+            });
+
+            // Get the updated message
+            const updatedMessage = await Messages.findByPk(message_id);
 
             // Emit edited message to all users in the conversation
             const io = getIO();
@@ -232,6 +252,7 @@ class MessagesController {
                 data: updatedMessage
             });
         } catch (error) {
+            console.error('Error in editMessage:', error);
             return res.status(500).json({
                 success: false,
                 message: error.message || 'Lỗi khi chỉnh sửa tin nhắn'
@@ -310,6 +331,120 @@ class MessagesController {
             return res.status(500).json({
                 success: false,
                 message: error.message || 'Lỗi khi xóa tin nhắn'
+            });
+        }
+    }
+    // Lấy tổng số tin nhắn chưa đọc theo user_id
+    async getTotalUnreadMessages(req, res) {
+        try {
+            const { user_id } = req.params;
+            
+            // Tìm tất cả các cuộc hội thoại của người dùng
+            const conversations = await Conversation.findAll({
+                where: {
+                    [Op.or]: [
+                        { user1_id: user_id },
+                        { user2_id: user_id }
+                    ]
+                }
+            });
+            
+            // Tính tổng số tin nhắn chưa đọc
+            let totalUnread = 0;
+            conversations.forEach(conversation => {
+                if (conversation.user1_id == user_id) {
+                    totalUnread += conversation.unread_count_user1;
+                } else if (conversation.user2_id == user_id) {
+                    totalUnread += conversation.unread_count_user2;
+                }
+            });
+            
+            return res.status(200).json({
+                success: true,
+                total_unread: totalUnread
+            });
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                message: error.message || 'Lỗi khi lấy tổng số tin nhắn chưa đọc'
+            });
+        }
+    }
+    // Đánh dấu tin nhắn đã đọc
+    async markMessagesAsRead(req, res) {
+        try {
+            const { conversation_id, user_id } = req.body;
+            
+            // Cập nhật tất cả tin nhắn chưa đọc trong cuộc hội thoại
+            await Messages.update(
+                { is_read: true },
+                { 
+                    where: { 
+                        conversation_id,
+                        sender_id: { [Op.ne]: user_id }, // Chỉ cập nhật các tin nhắn không phải do user_id gửi
+                        is_read: false
+                    } 
+                }
+            );
+            
+            const io = getIO();
+            io.to(`conversation_${conversation_id}`).emit('messages_marked_read', {
+                conversation_id,
+                reader_id: user_id
+            });
+            
+            return res.status(200).json({
+                success: true,
+                message: 'Các tin nhắn đã được đánh dấu là đã đọc'
+            });
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                message: error.message || 'Lỗi khi đánh dấu tin nhắn đã đọc'
+            });
+        }
+    }
+    
+    // Đặt lại số lượng tin nhắn chưa đọc trong cuộc hội thoại
+    async resetUnreadCount(req, res) {
+        try {
+            const { conversation_id, user_id } = req.body;
+            
+            // Lấy thông tin cuộc hội thoại
+            const conversation = await Conversation.findByPk(conversation_id);
+            if (!conversation) {
+                throw new Error('Conversation not found');
+            }
+            
+            // Xác định trường cần cập nhật dựa trên người dùng
+            let updateField;
+            if (conversation.user1_id == user_id) {
+                updateField = { unread_count_user1: 0 };
+            } else if (conversation.user2_id == user_id) {
+                updateField = { unread_count_user2: 0 };
+            } else {
+                throw new Error('User is not part of this conversation');
+            }
+            
+            // Cập nhật số lượng tin nhắn chưa đọc
+            await conversation.update(updateField);
+            
+            // Phát sự kiện unread_count_reset
+            const io = getIO();
+            io.to(`conversation_${conversation_id}`).emit('unread_count_reset', {
+                conversation_id,
+                user_id
+            });
+            
+            return res.status(200).json({
+                success: true,
+                message: 'Đặt lại số lượng tin nhắn chưa đọc thành công',
+                data: conversation
+            });
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                message: error.message || 'Lỗi khi đặt lại số lượng tin nhắn chưa đọc'
             });
         }
     }

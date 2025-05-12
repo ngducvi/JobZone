@@ -15,6 +15,7 @@ const BusinessLicenses = require("../models/BusinessLicenses");
 const Notifications = require("../models/Notifications");
 const NotificationController = require("../controllers/NotificationController");
 const mailerService = require("../services/MailerService");
+const sequelize = require("../config/database");
 
 class AdminController {
   constructor() {
@@ -43,6 +44,15 @@ class AdminController {
     const users = await User.count({
       where: {
         role: "user",
+      },
+    });
+    return res.json({ count: users });
+  }
+  // get count user có role là recruiter
+  async countAllRecruiterUsers(req, res) {
+    const users = await User.count({
+      where: {
+        role: "recruiter",
       },
     });
     return res.json({ count: users });
@@ -1779,6 +1789,419 @@ class AdminController {
       return res.status(500).json({
         message: "Internal server error",
         error: error.message,
+      });
+    }
+  }
+  // get job statistics by month
+  async getJobStatisticsByMonth(req, res) {
+    const { year } = req.query;
+    const startDate = new Date(year, 0, 1);
+    const endDate = new Date(year, 11, 31);
+
+    try {
+      const jobs = await Job.findAll({
+        attributes: [
+          [sequelize.fn("MONTH", sequelize.col("created_at")), "month"],
+          [sequelize.fn("COUNT", sequelize.col("job_id")), "count"],
+        ],
+        where: {
+          created_at: {
+            [Op.between]: [startDate, endDate],
+          },
+        },
+        group: [sequelize.fn("MONTH", sequelize.col("created_at"))],
+        order: [
+          [sequelize.fn("MONTH", sequelize.col("created_at")), "ASC"],
+        ],
+      });
+
+      const stats = jobs.map((job) => ({
+        month: job.get("month"),
+        count: job.get("count"),
+      }));
+
+      return res.json({ stats });
+    } catch (error) {
+      console.error("Error in getJobStatisticsByMonth:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message,
+      });
+    }
+  }
+  // get candidate statistics 
+  async getCandidateStatistics(req, res) {
+    try {
+      const { year, month } = req.query;
+      
+      // Calculate start and end dates for the month
+      let startDate, endDate;
+      if (month) {
+        startDate = new Date(year, month - 1, 1);
+        endDate = new Date(year, month, 0); // Last day of the specified month
+      } else {
+        startDate = new Date(year, 0, 1);
+        endDate = new Date(year, 11, 31);
+      }
+
+      // Total number of candidates
+      const totalCandidates = await Candidate.count();
+      
+      // Actively searching candidates
+      const activelySearching = await Candidate.count({
+        where: { is_actively_searching: true }
+      });
+      
+      // Searchable candidates
+      const searchable = await Candidate.count({
+        where: { is_searchable: true }
+      });
+      
+      // Active candidates (with status = 'active')
+      const activeCandidates = await Candidate.count({
+        where: { status: 'active' }
+      });
+      
+      // New candidates created in current month/year
+      const newCandidates = await Candidate.count({
+        where: {
+          created_at: {
+            [Op.between]: [startDate, endDate]
+          }
+        }
+      });
+      
+      // Candidates by month for the current year
+      const candidatesByMonth = await Candidate.findAll({
+        attributes: [
+          [sequelize.fn("MONTH", sequelize.col("created_at")), "month"],
+          [sequelize.fn("COUNT", sequelize.col("candidate_id")), "count"]
+        ],
+        where: {
+          created_at: {
+            [Op.between]: [new Date(year, 0, 1), new Date(year, 11, 31)]
+          }
+        },
+        group: [sequelize.fn("MONTH", sequelize.col("created_at"))],
+        order: [[sequelize.fn("MONTH", sequelize.col("created_at")), "ASC"]]
+      });
+      
+      const monthlyStats = candidatesByMonth.map(stat => ({
+        month: stat.get("month"),
+        count: stat.get("count")
+      }));
+      
+      return res.json({
+        totalCandidates,
+        activelySearching,
+        searchable,
+        activeCandidates,
+        newCandidates,
+        candidatesByMonth: monthlyStats
+      });
+    } catch (error) {
+      console.error("Error in getCandidateStatistics:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message
+      });
+    }
+  }
+  
+  // get candidates by status stats
+  async getCandidatesByStatusStats(req, res) {
+    try {
+      const statuses = await Candidate.findAll({
+        attributes: [
+          "status",
+          [sequelize.fn("COUNT", sequelize.col("candidate_id")), "count"]
+        ],
+        group: ["status"],
+        where: {
+          status: {
+            [Op.ne]: null
+          }
+        }
+      });
+      
+      const stats = statuses.map(status => ({
+        status: status.get("status"),
+        count: status.get("count")
+      }));
+      
+      return res.json({ stats });
+    } catch (error) {
+      console.error("Error in getCandidatesByStatusStats:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message
+      });
+    }
+  }
+  
+  // get candidates by industry stats
+  async getCandidatesByIndustryStats(req, res) {
+    try {
+      const industries = await Candidate.findAll({
+        attributes: [
+          "industry",
+          [sequelize.fn("COUNT", sequelize.col("candidate_id")), "count"]
+        ],
+        group: ["industry"],
+        where: {
+          industry: {
+            [Op.ne]: null
+          }
+        }
+      });
+      
+      const stats = industries.map(industry => ({
+        industry: industry.get("industry"),
+        count: industry.get("count")
+      }));
+      
+      return res.json({ stats });
+    } catch (error) {
+      console.error("Error in getCandidatesByIndustryStats:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message
+      });
+    }
+  }
+  // get recruiter statistics
+  async getRecruiterStatistics(req, res) {
+    try {
+      const { year, month } = req.query;
+      
+      // Calculate start and end dates for the month
+      let startDate, endDate;
+      if (month) {
+        startDate = new Date(year, month - 1, 1);
+        endDate = new Date(year, month, 0); // Last day of the specified month
+      } else {
+        startDate = new Date(year, 0, 1);
+        endDate = new Date(year, 11, 31);
+      }
+
+      // Total number of recruiters (users with role 'recruiter')
+      const totalRecruiters = await User.count({
+        where: { role: 'recruiter' }
+      });
+      
+      // Total number of companies
+      const totalCompanies = await Company.count();
+      
+      // Companies by status
+      const pendingCompanies = await RecruiterCompanies.count({
+        where: { status: 'pending' }
+      });
+      
+      const activeCompanies = await RecruiterCompanies.count({
+        where: { status: 'active' }
+      });
+      
+      const rejectedCompanies = await RecruiterCompanies.count({
+        where: { status: 'rejected' }
+      });
+      
+      // New recruiters created in current month/year
+      const newRecruiters = await User.count({
+        where: {
+          role: 'recruiter',
+          created_at: {
+            [Op.between]: [startDate, endDate]
+          }
+        }
+      });
+      
+      // New companies created in current month/year
+      const newCompanies = await Company.count({
+        where: {
+          created_at: {
+            [Op.between]: [startDate, endDate]
+          }
+        }
+      });
+      
+      // Companies by month for the current year
+      const companiesByMonth = await Company.findAll({
+        attributes: [
+          [sequelize.fn("MONTH", sequelize.col("created_at")), "month"],
+          [sequelize.fn("COUNT", sequelize.col("company_id")), "count"]
+        ],
+        where: {
+          created_at: {
+            [Op.between]: [new Date(year, 0, 1), new Date(year, 11, 31)]
+          }
+        },
+        group: [sequelize.fn("MONTH", sequelize.col("created_at"))],
+        order: [[sequelize.fn("MONTH", sequelize.col("created_at")), "ASC"]]
+      });
+      
+      const monthlyStats = companiesByMonth.map(stat => ({
+        month: stat.get("month"),
+        count: stat.get("count")
+      }));
+
+      // Get business license statistics
+      const businessLicenseStats = {
+        pending: await BusinessLicenses.count({
+          where: { business_license_status: 'pending' }
+        }),
+        verified: await BusinessLicenses.count({
+          where: { business_license_status: 'verified' }
+        }),
+        rejected: await BusinessLicenses.count({
+          where: { business_license_status: 'rejected' }
+        })
+      };
+      
+      return res.json({
+        totalRecruiters,
+        totalCompanies,
+        pendingCompanies,
+        activeCompanies,
+        rejectedCompanies,
+        newRecruiters,
+        newCompanies,
+        companiesByMonth: monthlyStats,
+        businessLicenseStats
+      });
+    } catch (error) {
+      console.error("Error in getRecruiterStatistics:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message
+      });
+    }
+  }
+  
+  // get companies by plan stats
+  async getCompaniesByPlanStats(req, res) {
+    try {
+      const plans = await Company.findAll({
+        attributes: [
+          "plan",
+          [sequelize.fn("COUNT", sequelize.col("company_id")), "count"]
+        ],
+        group: ["plan"]
+      });
+      
+      const stats = plans.map(plan => ({
+        plan: plan.get("plan"),
+        count: plan.get("count")
+      }));
+      
+      return res.json({ stats });
+    } catch (error) {
+      console.error("Error in getCompaniesByPlanStats:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message
+      });
+    }
+  }
+  
+  // get companies by business license status stats
+  async getCompaniesByLicenseStats(req, res) {
+    try {
+      // Get counts from the BusinessLicenses table
+      const licenseCounts = await BusinessLicenses.findAll({
+        attributes: [
+          "business_license_status",
+          [sequelize.fn("COUNT", sequelize.col("license_id")), "count"]
+        ],
+        group: ["business_license_status"]
+      });
+      
+      // Get total companies count
+      const totalCompanies = await Company.count();
+      
+      // Get total companies with license (any status)
+      const companiesWithLicense = await BusinessLicenses.count({
+        distinct: true,
+        col: 'company_id'
+      });
+      
+      // Calculate companies without license
+      const companiesWithoutLicense = totalCompanies - companiesWithLicense;
+      
+      // Format the response
+      const stats = licenseCounts.map(status => ({
+        status: status.get("business_license_status"),
+        count: status.get("count")
+      }));
+      
+      // Add companies without license to the stats
+      stats.push({
+        status: 'no_license',
+        count: companiesWithoutLicense
+      });
+      
+      return res.json({ stats });
+    } catch (error) {
+      console.error("Error in getCompaniesByLicenseStats:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message
+      });
+    }
+  }
+  
+  // get company registration trend (weekly for current month)
+  async getCompanyRegistrationTrend(req, res) {
+    try {
+      const { year, month } = req.query;
+      
+      // Calculate start and end dates for the specified month
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 0); // Last day of the specified month
+      
+      // Get all companies created in the month
+      const companies = await Company.findAll({
+        attributes: [
+          [sequelize.fn("DAY", sequelize.col("created_at")), "day"],
+          [sequelize.fn("COUNT", sequelize.col("company_id")), "count"]
+        ],
+        where: {
+          created_at: {
+            [Op.between]: [startDate, endDate]
+          }
+        },
+        group: [sequelize.fn("DAY", sequelize.col("created_at"))],
+        order: [[sequelize.fn("DAY", sequelize.col("created_at")), "ASC"]]
+      });
+      
+      // Group by week
+      const weeks = [];
+      const daysInMonth = new Date(year, month, 0).getDate();
+      
+      // Initialize weeks array (4 or 5 weeks depending on month)
+      const numWeeks = Math.ceil(daysInMonth / 7);
+      for (let i = 0; i < numWeeks; i++) {
+        weeks.push({ week: i + 1, count: 0 });
+      }
+      
+      // Fill in the counts
+      companies.forEach(company => {
+        const day = parseInt(company.get("day"));
+        const weekIndex = Math.floor((day - 1) / 7);
+        if (weekIndex >= 0 && weekIndex < weeks.length) {
+          weeks[weekIndex].count += parseInt(company.get("count"));
+        }
+      });
+      
+      return res.json({ 
+        year,
+        month,
+        weeks
+      });
+    } catch (error) {
+      console.error("Error in getCompanyRegistrationTrend:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message
       });
     }
   }

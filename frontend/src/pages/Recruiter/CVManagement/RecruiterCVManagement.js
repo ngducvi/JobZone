@@ -4,7 +4,7 @@ import styles from "./RecruiterCVManagement.module.scss";
 import { authAPI, userApis, recruiterApis } from "~/utils/api";
 import UserContext from "~/context/UserContext";
 import images from "~/assets/images";
-import { FaTimes } from "react-icons/fa";
+import { FaTimes, FaFileExcel } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 const cx = classNames.bind(styles);
@@ -191,6 +191,73 @@ function RecruiterCVManagement() {
     navigate("/recruiter/settings", { state: { activeTab: 'license' } });
   };
 
+  const handleExportJobApplications = async (jobId) => {
+    try {
+      // Get the token
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        toast.error("Bạn cần đăng nhập để sử dụng tính năng này");
+        return;
+      }
+      
+      toast.info("Đang chuẩn bị xuất dữ liệu, vui lòng đợi...");
+      
+      // Create a fetch request with proper headers
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}${recruiterApis.exportJobApplications(jobId)}`, 
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Có lỗi xảy ra khi xuất dữ liệu");
+      }
+      
+      // Get the filename from the response headers if available
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = 'job_applications.xlsx';
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+?)"/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1];
+        }
+      }
+      
+      // Convert the response to blob
+      const blob = await response.blob();
+      
+      // Create a temporary URL for the blob
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      
+      // Append to the document
+      document.body.appendChild(link);
+      
+      // Trigger click event to start download
+      link.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+      
+      toast.success("Xuất dữ liệu thành công!");
+    } catch (error) {
+      console.error("Error exporting job applications:", error);
+      toast.error(error.message || "Có lỗi xảy ra khi xuất danh sách ứng viên");
+    }
+  };
+
   if (isCheckingLicense) {
     return (
       <div className={cx("wrapper")}>
@@ -310,10 +377,6 @@ function RecruiterCVManagement() {
 
               <div className={cx("job-stats")}>
                 <span>
-                  <i className="fa-solid fa-eye"></i>
-                  {job.views || 0} lượt xem
-                </span>
-                <span>
                   <i className="fa-solid fa-users"></i>
                   {jobApplications[job.job_id]?.length || 0} ứng viên
                 </span>
@@ -332,6 +395,18 @@ function RecruiterCVManagement() {
                   <i className="fa-solid fa-users"></i>
                   Danh sách ứng viên
                 </button>
+                <button
+                  className={cx("action-btn", "export")}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleExportJobApplications(job.job_id);
+                  }}
+                  disabled={!jobApplications[job.job_id]?.length}
+                  title={!jobApplications[job.job_id]?.length ? "Không có ứng viên để xuất" : "Xuất danh sách ứng viên"}
+                >
+                  <FaFileExcel />
+                  Xuất Excel
+                </button>
               </div>
             </div>
           ))}
@@ -343,12 +418,22 @@ function RecruiterCVManagement() {
           <div className={cx("modal")}>
             <div className={cx("modal-header")}>
               <h3>Thông tin ứng viên cho {selectedJob?.title}</h3>
-              <button
-                className={cx("close-btn")}
-                onClick={() => setShowModal(false)}
-              >
-                <FaTimes />
-              </button>
+              <div className={cx("modal-actions")}>
+                <button 
+                  className={cx("export-btn")}
+                  onClick={() => handleExportJobApplications(selectedJob.job_id)}
+                  disabled={!jobApplications[selectedJob?.job_id]?.length}
+                >
+                  <FaFileExcel />
+                  Xuất Excel
+                </button>
+                <button
+                  className={cx("close-btn")}
+                  onClick={() => setShowModal(false)}
+                >
+                  <FaTimes />
+                </button>
+              </div>
             </div>
             <div className={cx("modal-content")}>
               <div className={cx("tabs")}>
@@ -367,9 +452,10 @@ function RecruiterCVManagement() {
                   <thead>
                     <tr>
                       <th className={cx("name-column")}>Tên</th>
+                      <th className={cx("email-column")}>Email</th>
+                      <th className={cx("phone-column")}>Số điện thoại</th>
                       <th className={cx("location-column")}>Địa điểm</th>
-                      <th className={cx("salary-column")}>Lương</th>
-                      <th className={cx("status-column-cv")}>Trạng thái CV</th>
+                      {/* <th className={cx("status-column-cv")}>Trạng thái CV</th> */}
                       <th className={cx("cv-column")}>CV</th>
                       <th className={cx("about-me-column")}>Về tôi</th>
                       <th>Mục tiêu nghề nghiệp</th>
@@ -385,16 +471,18 @@ function RecruiterCVManagement() {
                       .map((application) => (
                         <tr key={application.application_id}>
                           <td>{application.user.name || "Không có tên"}</td>
+                          <td>{application.user.email || "Không có email"}</td>
+                          <td>{application.user.phone || "Không có số điện thoại"}</td>
                           <td>
                             {application.candidate.location ||
                               "Không có địa điểm"}
                           </td>
-                          <td>
+                          {/* <td>
                             $
                             {application.candidate.current_salary ||
                               "Không có thông tin"}
-                          </td>
-                          <td>{application.status || "Không có thông tin"}</td>
+                          </td> */}
+                          {/* <td>{application.status || "Không có thông tin"}</td> */}
                           <td>
                             <a
                               href={application.candidate.CV_link}

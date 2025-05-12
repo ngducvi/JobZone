@@ -38,6 +38,8 @@ const BusinessLicenses = require("../models/BusinessLicenses");
 const Notifications = require("../models/Notifications");
 const fileService = require('../services/FileService');
 const NotificationController = require("./NotificationController");
+const excel = require('exceljs');
+
 class RecruiterController {
   constructor() {
     this.generateEducationId = () => {
@@ -835,6 +837,17 @@ class RecruiterController {
       res.status(400).send(error);
     }
   }
+  // get candidate detail by user_id
+  async getCandidateDetailByUserId(req, res) {
+    try {
+      const userId = req.params.user_id;
+      const candidate = await Candidate.findOne({ where: { user_id: userId } });
+      const user = await User.findByPk(userId);
+      return res.json({ candidate: candidate, user: user });
+    } catch (error) {
+      res.status(400).send(error);
+    }
+  }
   async postJob(req, res) {
     try {
       const job = await Job.create({
@@ -1468,6 +1481,162 @@ class RecruiterController {
       console.error('Error in deleteAllReadNotifications:', error);
       return res.status(500).json({
         message: "Lỗi khi xóa tất cả thông báo đã đọc",
+        code: -1,
+        error: error.message
+      });
+    }
+  }
+
+  // Export job applications to Excel
+  async exportJobApplications(req, res) {
+    try {
+      const jobId = req.params.job_id;
+      
+      // Get job details
+      const job = await Job.findByPk(jobId);
+      if (!job) {
+        return res.status(404).json({ 
+          message: "Không tìm thấy công việc", 
+          code: -1 
+        });
+      }
+      
+      // Get company details
+      const company = await Company.findByPk(job.company_id);
+      
+      // Get job applications
+      const jobApplications = await JobApplication.findAll({
+        where: { job_id: jobId },
+      });
+      
+      // If no applications, return an error
+      if (jobApplications.length === 0) {
+        return res.status(404).json({ 
+          message: "Không có ứng viên nào cho công việc này", 
+          code: -1 
+        });
+      }
+      
+      // Get user IDs from applications
+      const userIds = jobApplications.map(application => application.user_id);
+      
+      // Get user details
+      const users = await User.findAll({ 
+        where: { id: { [Op.in]: userIds } },
+        attributes: ['id', 'name', 'email', 'phone', 'created_at']
+      });
+      
+      // Get candidate details
+      const candidates = await Candidate.findAll({
+        where: { user_id: { [Op.in]: userIds } }
+      });
+      
+      // Prepare data for export
+      const exportData = jobApplications.map(application => {
+        const user = users.find(u => u.id === application.user_id);
+        const candidate = candidates.find(c => c.user_id === application.user_id);
+        
+        return {
+          application_id: application.application_id,
+          application_date: application.applied_at,
+          status: application.status,
+          name: user ? user.name : "N/A",
+          email: user ? user.email : "N/A",
+          phone: user ? user.phone : "N/A",
+          location: candidate ? candidate.location : "N/A",
+          experience: candidate ? candidate.experience : "N/A",
+          education: candidate ? candidate.education : "N/A",
+          expected_salary: candidate ? candidate.expected_salary : "N/A",
+          cv_link: candidate ? candidate.CV_link : "N/A",
+          about_me: candidate ? candidate.about_me : "N/A",
+          skills: candidate ? candidate.skills : "N/A",
+          career_objective: candidate ? candidate.career_objective : "N/A",
+        };
+      });
+      
+      // Create a new Excel workbook
+      const workbook = new excel.Workbook();
+      const worksheet = workbook.addWorksheet('Ứng viên');
+      
+      // Add job and company information at the top
+      worksheet.addRow(['Công việc:', job.title]);
+      worksheet.addRow(['Công ty:', company ? company.company_name : 'N/A']);
+      worksheet.addRow(['Ngày xuất:', new Date().toLocaleDateString('vi-VN')]);
+      worksheet.addRow([]);  // Empty row for spacing
+      
+      // Define columns
+      worksheet.columns = [
+        { header: 'Mã ứng tuyển', key: 'application_id', width: 20 },
+        { header: 'Ngày ứng tuyển', key: 'application_date', width: 15 },
+        { header: 'Trạng thái', key: 'status', width: 15 },
+        { header: 'Họ và tên', key: 'name', width: 20 },
+        { header: 'Email', key: 'email', width: 25 },
+        { header: 'Số điện thoại', key: 'phone', width: 15 },
+        { header: 'Địa điểm', key: 'location', width: 20 },
+        { header: 'Kinh nghiệm', key: 'experience', width: 15 },
+        { header: 'Học vấn', key: 'education', width: 15 },
+        { header: 'Mức lương mong muốn', key: 'expected_salary', width: 15 },
+        { header: 'Link CV', key: 'cv_link', width: 40 },
+        { header: 'Về bản thân', key: 'about_me', width: 40 },
+        { header: 'Kỹ năng', key: 'skills', width: 30 },
+        { header: 'Mục tiêu nghề nghiệp', key: 'career_objective', width: 40 },
+      ];
+      
+      // Add headers with styling
+      const headerRow = worksheet.addRow(worksheet.columns.map(col => col.header));
+      headerRow.eachCell((cell) => {
+        cell.font = { bold: true };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: '4167B8' }
+        };
+        cell.font = {
+          bold: true,
+          color: { argb: 'FFFFFF' }
+        };
+      });
+      
+      // Add data rows
+      exportData.forEach(data => {
+        const row = worksheet.addRow({
+          application_id: data.application_id,
+          application_date: new Date(data.application_date).toLocaleDateString('vi-VN'),
+          status: data.status,
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          location: data.location,
+          experience: data.experience,
+          education: data.education,
+          expected_salary: data.expected_salary,
+          cv_link: data.cv_link,
+          about_me: data.about_me,
+          skills: data.skills,
+          career_objective: data.career_objective,
+        });
+      });
+      
+      // Auto-filter for the header row
+      worksheet.autoFilter = {
+        from: { row: 5, column: 1 },
+        to: { row: 5, column: worksheet.columns.length }
+      };
+      
+      // Set response headers
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="job_applications_${jobId}.xlsx"`);
+      
+      // Write to response
+      await workbook.xlsx.write(res);
+      
+      // End the response
+      res.end();
+      
+    } catch (error) {
+      console.error('Error exporting job applications:', error);
+      return res.status(500).json({
+        message: 'Lỗi khi xuất danh sách ứng viên',
         code: -1,
         error: error.message
       });

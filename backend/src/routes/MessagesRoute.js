@@ -12,4 +12,8 @@ router.post('/send-message', messagesController.sendMessage.bind(messagesControl
 router.put('/edit-message', messagesController.editMessage.bind(messagesController));
 router.delete('/delete-message', messagesController.deleteMessage.bind(messagesController));
 router.post('/create-conversation', messagesController.createConversation.bind(messagesController));
+router.put('/mark-messages-read', messagesController.markMessagesAsRead.bind(messagesController));
+router.put('/reset-unread-count', messagesController.resetUnreadCount.bind(messagesController));
+router.get('/total-unread/:user_id', messagesController.getTotalUnreadMessages.bind(messagesController));
+
 module.exports = router;

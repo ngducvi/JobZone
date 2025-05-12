@@ -196,9 +196,15 @@ $plan-colors: (
   position: relative;
   transition: all 0.3s;
 
-  &:hover:not(.locked) {
+  &:hover:not(.locked):not(.early-access) {
     transform: translateY(-4px);
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  }
+
+  &.early-access {
+    border: 1px dashed #6366f1;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, rgba(79, 70, 229, 0.03) 100%);
+    cursor: default;
   }
 
   &.locked {
@@ -279,6 +285,36 @@ $plan-colors: (
     padding: 4px 12px;
     background: #f3f4f6;
     border-radius: 20px;
+  }
+}
+
+.early-access-badge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: inherit;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  
+  svg {
+    font-size: 20px;
+    color: #6366f1;
+  }
+
+  span {
+    font-size: 14px;
+    font-weight: 600;
+    color: #6366f1;
+    padding: 4px 12px;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 20px;
+    border: 1px solid rgba(99, 102, 241, 0.2);
   }
 }
 

@@ -84,12 +84,14 @@ import TrainingPlan from '~/pages/Recruiter/MyServices/Tools/TrainingPlan/Traini
 import WriteRecruitmentEmails from '~/pages/Recruiter/MyServices/Tools/WriteRecruitmentEmails/WriteRecruitmentEmails';
 import Messages from '~/pages/Messages';
 import MessagesRecruiter from '~/pages/Messages/MesagesRecruiter/MesagesRecruiter';
+import DashboardB from '~/pages/Admin/DashboardB/DashboardB';
 const publicRoutes = [
     { path: '/', component: Dashboard },
     { path: '/user/verify-email', component: VerifyEmailSuccess, layout: null },
     { path: '/templates/all', component:  AllTemplates},
     { path: '/admin', component: Home, layout: AdminLayout},
     { path: '/admin/dashboarda', component: DashboardA, layout: AdminLayout},
+    { path: '/admin/dashboardb', component: DashboardB, layout: AdminLayout},
     { path: '/admin/users', component: Users, layout: AdminLayout},
     { path: '/admin/models', component: Models, layout: AdminLayout},
     { path: '/admin/payments', component: Payments, layout: AdminLayout},

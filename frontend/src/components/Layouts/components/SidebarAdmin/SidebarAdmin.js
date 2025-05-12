@@ -24,7 +24,7 @@ const sidebarIcons = [
     to: "/admin",
     subMenu: [
       {
-        title: "Dashboard A",
+        title: "Thống kê tổng thể",
         to: "/admin",
       },
       {
@@ -33,7 +33,7 @@ const sidebarIcons = [
       },
       {
         title: "Thông kê công ty",
-        to: "/admin/dashboard/company",
+        to: "/admin/dashboardb",
       },
     ],
   },

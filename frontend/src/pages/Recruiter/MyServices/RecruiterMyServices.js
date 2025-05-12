@@ -17,7 +17,8 @@ import {
   faPieChart,
   faQuestion,
   faHandshake,
-  faLock
+  faLock,
+  faRocket
 } from '@fortawesome/free-solid-svg-icons';
 import { authAPI, recruiterApis } from '~/utils/api';
 import toast from 'react-hot-toast';
@@ -45,7 +46,8 @@ const categories = [
     title: 'Phát triển',
     description: 'Đánh giá hiệu suất, kế hoạch phát triển',
     minPlan: 'ProMax'
-  }
+  },
+  
 ];
 
 const templates = [
@@ -61,7 +63,8 @@ const templates = [
     icon: faUserCheck,
     title: 'Đánh giá CV ứng viên',
     path: '/recruiter/my-services/tools/cv-evaluation',
-    minPlan: 'Basic'
+    minPlan: 'Basic',
+    earlyAccess: true
   },
   {
     id: 3,
@@ -81,31 +84,36 @@ const templates = [
     id: 5,
     icon: faChartBar,
     title: 'Đánh giá hiệu suất nhân viên',
-    minPlan: 'ProMax'
+    minPlan: 'ProMax',
+    earlyAccess: true
   },
   {
     id: 6,
     icon: faFileContract,
     title: 'Tạo chính sách nhân sự',
-    minPlan: 'ProMax'
+    minPlan: 'ProMax',
+    earlyAccess: true
   },
   {
     id: 7,
     icon: faPieChart,
     title: 'Báo cáo & phân tích HR',
-    minPlan: 'ProMax'
+    minPlan: 'ProMax',
+    earlyAccess: true
   },
   {
     id: 8,
     icon: faQuestion,
     title: 'Tạo bài kiểm tra kiến thức',
-    minPlan: 'ProMax'
+    minPlan: 'ProMax',
+    earlyAccess: true
   },
   {
     id: 9,
     icon: faHandshake,
     title: 'Quản lý xung đột & khiếu nại',
-    minPlan: 'ProMax'
+    minPlan: 'ProMax',
+    earlyAccess: true
   }
 ];
 
@@ -161,14 +169,26 @@ const RecruiterMyServices = () => {
   };
 
   const handleTemplateClick = (template) => {
+    if (template.earlyAccess) {
+      toast(`Tính năng này đang trong giai đoạn phát triển và sẽ sớm ra mắt`, {
+        icon: '🚀',
+      });
+      return;
+    }
+    
     if (!canAccessFeature(template.minPlan)) {
       toast(`Tính năng này chỉ khả dụng cho gói ${template.minPlan} trở lên`, {
         icon: '🔒',
       });
       return;
     }
+    
     // Handle template click
-    console.log(`Clicked template: ${template.title}`);
+    if (template.path) {
+      navigate(template.path);
+    } else {
+      console.log(`Clicked template: ${template.title}`);
+    }
   };
 
   return (
@@ -225,9 +245,10 @@ const RecruiterMyServices = () => {
                 <div 
                   key={template.id} 
                   className={cx('template-card', {
-                    'locked': !canAccessFeature(template.minPlan)
+                    'locked': !canAccessFeature(template.minPlan),
+                    'early-access': template.earlyAccess
                   })}
-                  onClick={() => navigate(template.path)}
+                  onClick={() => handleTemplateClick(template)}
                 >
                   <FontAwesomeIcon 
                     icon={template.icon} 
@@ -235,7 +256,13 @@ const RecruiterMyServices = () => {
                     data-plan={template.minPlan}
                   />
                   <h3>{template.title}</h3>
-                  {!canAccessFeature(template.minPlan) && (
+                  {template.earlyAccess && (
+                    <div className={cx('early-access-badge')}>
+                      <FontAwesomeIcon icon={faRocket} />
+                      <span>Sắp ra mắt</span>
+                    </div>
+                  )}
+                  {!canAccessFeature(template.minPlan) && !template.earlyAccess && (
                     <div className={cx('lock-overlay')}>
                       <FontAwesomeIcon icon={faLock} />
                       <span data-plan={template.minPlan}>Gói {template.minPlan}</span>

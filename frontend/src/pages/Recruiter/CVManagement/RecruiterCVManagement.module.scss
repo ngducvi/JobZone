@@ -209,6 +209,7 @@
       .job-actions {
         display: flex;
         gap: 12px;
+        flex-wrap: wrap;
 
         .action-btn {
           flex: 1;
@@ -242,6 +243,54 @@
             &:hover {
               background: #dc2626;
               color: white;
+            }
+          }
+          
+          &.detail {
+            background: #e0f2fe;
+            color: #0284c7;
+            border: 1px solid #0284c7;
+
+            &:hover {
+              background: #0284c7;
+              color: white;
+            }
+          }
+          
+          &.applicants {
+            background: #f0f9ff;
+            color: #0369a1;
+            border: 1px solid #0369a1;
+
+            &:hover {
+              background: #0369a1;
+              color: white;
+            }
+          }
+          
+          &.export {
+            background: #ecfdf5;
+            color: #059669;
+            border: 1px solid #059669;
+            font-size: 13px;
+            white-space: nowrap;
+            
+            &:hover {
+              background: #059669;
+              color: white;
+            }
+            
+            &:disabled {
+              background: #f1f5f9;
+              color: #94a3b8;
+              border: 1px solid #cbd5e1;
+              cursor: not-allowed;
+              
+              &:hover {
+                background: #f1f5f9;
+                color: #94a3b8;
+                border: 1px solid #cbd5e1;
+              }
             }
           }
         }
@@ -314,15 +363,55 @@
       font-weight: 600;
     }
 
-    .close-btn {
-      background: none;
-      border: none;
-      color: #64748b;
-      cursor: pointer;
-      padding: 4px;
+    .modal-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      
+      .export-btn {
+        background: #059669;
+        color: white;
+        border: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        
+        &:hover {
+          background: #047857;
+        }
+        
+        &:disabled {
+          background: #94a3b8;
+          cursor: not-allowed;
+          
+          &:hover {
+            background: #94a3b8;
+          }
+        }
+      }
 
-      &:hover {
-        color: #ef4444;
+      .close-btn {
+        background: none;
+        border: none;
+        color: #64748b;
+        cursor: pointer;
+        padding: 8px;
+        font-size: 18px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: #fee2e2;
+          color: #ef4444;
+        }
       }
     }
   }

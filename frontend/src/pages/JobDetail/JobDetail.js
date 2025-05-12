@@ -204,6 +204,36 @@ const JobDetail = () => {
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
+      // Check file type
+      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("Chỉ chấp nhận file PDF, DOC, DOCX", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+        event.target.value = '';
+        return;
+      }
+
+      // Check file size (5MB = 5 * 1024 * 1024 bytes)
+      const maxSize = 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        toast.error("File không được vượt quá 5MB", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+        event.target.value = '';
+        return;
+      }
+
       setUploadedFile(file);
       setSelectedCvId(null);
     }
@@ -866,6 +896,10 @@ const JobDetail = () => {
                       <i className="fas fa-cloud-upload-alt"></i>
                       <p>Nhấp để tải lên CV của bạn</p>
                       <span>Hỗ trợ: PDF, DOC, DOCX (Tối đa 5MB)</span>
+                      <div className={cx("file-requirements")}>
+                        <p><i className="fas fa-check-circle"></i> Định dạng: PDF, DOC, DOCX</p>
+                        <p><i className="fas fa-check-circle"></i> Dung lượng: Tối đa 5MB</p>
+                      </div>
                     </div>
                   )}
                 </div>

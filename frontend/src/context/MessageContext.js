@@ -11,6 +11,7 @@ export const MessageProvider = ({ children }) => {
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [totalUnreadMessages, setTotalUnreadMessages] = useState(0);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -30,18 +31,116 @@ export const MessageProvider = ({ children }) => {
 
       socketService.socket.on('new_message', (message) => {
         setMessages(prevMessages => [...prevMessages, message]);
-        // Update conversation's last message
-        setConversations(prevConversations => 
-          prevConversations.map(conv => 
-            conv.id === message.conversation_id 
-              ? { ...conv, last_message: message.content, last_message_at: message.created_at }
-              : conv
+        
+        // Cập nhật conversation's last message và số tin nhắn chưa đọc
+        setConversations(prevConversations => {
+          const updatedConversations = prevConversations.map(conv => {
+            if (conv.id === message.conversation_id) {
+              // Cập nhật tin nhắn cuối cùng
+              const updatedConv = { 
+                ...conv, 
+                last_message: message.content, 
+                last_message_at: message.created_at 
+              };
+              
+              // Tăng số tin nhắn chưa đọc nếu người gửi không phải người dùng hiện tại
+              const currentUserId = JSON.parse(localStorage.getItem('user'))?.id;
+              if (currentUserId && message.sender_id !== currentUserId) {
+                if (conv.user1_id == currentUserId) {
+                  updatedConv.unread_count_user1 = (conv.unread_count_user1 || 0) + 1;
+                } else if (conv.user2_id == currentUserId) {
+                  updatedConv.unread_count_user2 = (conv.unread_count_user2 || 0) + 1;
+                }
+              }
+              
+              return updatedConv;
+            }
+            return conv;
+          });
+          
+          // Tính lại tổng số tin nhắn chưa đọc
+          const currentUserId = JSON.parse(localStorage.getItem('user'))?.id;
+          if (currentUserId) {
+            let total = 0;
+            updatedConversations.forEach(conv => {
+              if (conv.user1_id == currentUserId) {
+                total += conv.unread_count_user1 || 0;
+              } else if (conv.user2_id == currentUserId) {
+                total += conv.unread_count_user2 || 0;
+              }
+            });
+            setTotalUnreadMessages(total);
+          }
+          
+          return updatedConversations;
+        });
+      });
+
+      // Add message_updated event handler
+      socketService.socket.on('message_updated', (updatedMessage) => {
+        setMessages(prevMessages => 
+          prevMessages.map(msg => 
+            msg.id === updatedMessage.id ? updatedMessage : msg
           )
         );
       });
 
+      // Add message_deleted event handler
+      socketService.socket.on('message_deleted', (deletedMessageId) => {
+        setMessages(prevMessages => 
+          prevMessages.filter(msg => msg.id !== deletedMessageId)
+        );
+      });
+      
+      // Add messages_marked_read event handler
+      socketService.socket.on('messages_marked_read', (data) => {
+        setMessages(prevMessages => 
+          prevMessages.map(msg => 
+            msg.conversation_id === data.conversation_id && msg.sender_id !== data.reader_id
+              ? { ...msg, is_read: true }
+              : msg
+          )
+        );
+      });
+      
+      // Add unread_count_reset event handler
+      socketService.socket.on('unread_count_reset', (data) => {
+        setConversations(prevConversations => {
+          const newConversations = prevConversations.map(conv => {
+            if (conv.id === data.conversation_id) {
+              if (conv.user1_id == data.user_id) {
+                return { ...conv, unread_count_user1: 0 };
+              } else if (conv.user2_id == data.user_id) {
+                return { ...conv, unread_count_user2: 0 };
+              }
+            }
+            return conv;
+          });
+          
+          // Tính lại tổng số tin nhắn chưa đọc
+          const currentUserId = JSON.parse(localStorage.getItem('user'))?.id;
+          if (currentUserId) {
+            let total = 0;
+            newConversations.forEach(conv => {
+              if (conv.user1_id == currentUserId) {
+                total += conv.unread_count_user1;
+              } else if (conv.user2_id == currentUserId) {
+                total += conv.unread_count_user2;
+              }
+            });
+            setTotalUnreadMessages(total);
+          }
+          
+          return newConversations;
+        });
+      });
+
       return () => {
         socketService.disconnect();
+        socketService.socket.off('message_updated');
+        socketService.socket.off('message_deleted');
+        socketService.socket.off('messages_marked_read');
+        socketService.socket.off('unread_count_reset');
       };
     }
   }, []);
@@ -93,7 +192,17 @@ export const MessageProvider = ({ children }) => {
       const response = await authAPI().get(messagesApis.getConversationByUserId(userId));
       if (response.data.success) {
         setConversations(response.data.data);
-        console.log("sdf", response.data);
+        
+        // Tính tổng số tin nhắn chưa đọc
+        let total = 0;
+        response.data.data.forEach(conv => {
+          if (conv.user1_id == userId) {
+            total += conv.unread_count_user1;
+          } else if (conv.user2_id == userId) {
+            total += conv.unread_count_user2;
+          }
+        });
+        setTotalUnreadMessages(total);
       }
     } catch (error) {
       console.error('Error fetching conversations:', error);
@@ -101,9 +210,68 @@ export const MessageProvider = ({ children }) => {
     }
   };
 
+  const markMessagesAsRead = async (conversationId, userId) => {
+    try {
+      const response = await authAPI().put(messagesApis.markMessagesAsRead, {
+        conversation_id: conversationId,
+        user_id: userId
+      });
+      return response.data.success;
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
+      toast.error('Failed to mark messages as read');
+      return false;
+    }
+  };
+
+  const resetUnreadCount = async (conversationId, userId) => {
+    try {
+      const response = await authAPI().put(messagesApis.resetUnreadCount, {
+        conversation_id: conversationId,
+        user_id: userId
+      });
+      
+      if (response.data.success) {
+        // Giảm tổng số tin nhắn chưa đọc
+        setTotalUnreadMessages(prev => {
+          const conversation = conversations.find(c => c.id === conversationId);
+          if (conversation) {
+            if (conversation.user1_id == userId) {
+              return prev - conversation.unread_count_user1;
+            } else if (conversation.user2_id == userId) {
+              return prev - conversation.unread_count_user2;
+            }
+          }
+          return prev;
+        });
+      }
+      
+      return response.data.success;
+    } catch (error) {
+      console.error('Error resetting unread count:', error);
+      toast.error('Failed to reset unread count');
+      return false;
+    }
+  };
+
+  const fetchTotalUnreadMessages = async (userId) => {
+    try {
+      const response = await authAPI().get(messagesApis.getTotalUnread(userId));
+      if (response.data.success) {
+        setTotalUnreadMessages(response.data.total_unread);
+        return response.data.total_unread;
+      }
+      return 0;
+    } catch (error) {
+      console.error('Error fetching total unread messages:', error);
+      return 0;
+    }
+  };
+
   const value = {
     socket,
     messages,
+    setMessages,
     conversations,
     selectedConversation,
     setSelectedConversation,
@@ -112,7 +280,11 @@ export const MessageProvider = ({ children }) => {
     leaveConversation,
     sendMessage,
     fetchMessages,
-    fetchConversations
+    fetchConversations,
+    markMessagesAsRead,
+    resetUnreadCount,
+    totalUnreadMessages,
+    fetchTotalUnreadMessages
   };
 
   return (

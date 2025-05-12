@@ -157,6 +157,20 @@
       margin: 0;
       flex: 1;
     }
+    
+    .unread-count {
+      background-color: #ef4444;
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+      min-width: 24px;
+      height: 24px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 8px;
+    }
   }
 
   .search-box {
@@ -483,10 +497,25 @@
         line-height: 1.5;
         position: relative;
       }
+      
+      .read-status {
+        position: absolute;
+        right: 4px;
+        bottom: 2px;
+        font-size: 10px;
+        
+        .read-icon {
+          color: #34D399; // đã đọc - màu xanh lá
+        }
+        
+        .unread-icon {
+          color: #9CA3AF; // chưa đọc - màu xám
+        }
+      }
 
       .message-menu {
         position: absolute;
-        left: -40px;
+        display: none;
         top: 50%;
         transform: translateY(-50%);
         opacity: 0;
@@ -578,6 +607,17 @@
         .time {
           text-align: right;
         }
+        
+        .message-menu {
+          display: block;
+          right: -40px;
+          left: auto;
+          
+          .menu-options {
+            right: 40px;
+            left: auto;
+          }
+        }
       }
 
       &.received {
@@ -592,6 +632,16 @@
         
         .time {
           text-align: left;
+        }
+        
+        .message-menu {
+          left: -40px;
+          right: auto;
+          
+          .menu-options {
+            left: 40px;
+            right: auto;
+          }
         }
       }
 

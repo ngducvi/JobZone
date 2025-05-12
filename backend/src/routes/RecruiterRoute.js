@@ -20,6 +20,7 @@ router.get('/jobs/:company_id', recruiterController.getAllJobsByCompanyId.bind(r
 router.get('/job-applications/:job_id', recruiterController.getAllJobApplicationsByJobId.bind(recruiterController));
 router.get('/candidates', recruiterController.getAllCandidate.bind(recruiterController));
 router.get('/candidate-detail/:candidate_id', recruiterController.getCandidateDetailByCandidateId.bind(recruiterController));
+router.get('/candidate-detail-by-user-id/:user_id', recruiterController.getCandidateDetailByUserId.bind(recruiterController));
 router.post('/edit-job-application-status', recruiterController.editJobApplicationStatus.bind(recruiterController));
 router.post('/post-job', recruiterController.postJob.bind(recruiterController));
 router.post('/edit-job/:job_id', recruiterController.editJob.bind(recruiterController));
@@ -41,4 +42,5 @@ router.put('/notifications/read-all', recruiterController.markAllNotificationsAs
 router.delete('/notifications/:notificationId', recruiterController.deleteNotification.bind(recruiterController));
 router.delete('/notifications/read/all', recruiterController.deleteAllReadNotifications.bind(recruiterController));
 router.get('/check-recruiter-company', recruiterController.checkRecruiterCompany.bind(recruiterController));
+router.get('/export-job-applications/:job_id', recruiterController.exportJobApplications.bind(recruiterController));
 module.exports = router;

@@ -5,6 +5,14 @@ const HOST = process.env.REACT_APP_API_URL;
 export const adminApis = {
     sendNotification: '/send-notification',
     getStatistics: (year) => `courses/statistics/yearly/${year}`,
+    getJobStatisticsByMonth: (year) => `/admin/job/statistics/monthly?year=${year}`,
+    getCandidateStatistics: (year, month) => `/admin/candidate/statistics?year=${year}${month ? `&month=${month}` : ''}`,
+    getCandidatesByStatusStats: '/admin/candidate/status-stats',
+    getCandidatesByIndustryStats: '/admin/candidate/industry-stats',
+    getRecruiterStatistics: (year, month) => `/admin/recruiter/statistics?year=${year}${month ? `&month=${month}` : ''}`,
+    getCompaniesByPlanStats: '/admin/company/plan-stats',
+    getCompaniesByLicenseStats: '/admin/company/license-stats',
+    getCompanyRegistrationTrend: (year, month) => `/admin/company/registration-trend?year=${year}&month=${month}`,
 
     getAllUsers: '/admin/user/all',
     getAllModels: '/admin/model/all',
@@ -15,6 +23,7 @@ export const adminApis = {
     updateGiftCode: (id) => `/admin/gift-code/edit/${id}`,
     deleteGiftCode: (id) => `/admin/gift-code/delete/${id}`,
     getCountUsers: '/admin/user/count-all',
+    getCountRecruiterUsers: '/admin/user/count-recruiter',
     getCountModels: '/admin/model/count-all', 
     getCountPayments: '/admin/transaction/count-all',
     getCountGiftCodes: '/admin/gift-code/count-all',  
@@ -187,6 +196,7 @@ export const recruiterApis = {
     getAllJobApplicationsByJobId: (job_id) => `/recruiter/job-applications/${job_id}`,
     getAllCandidate: '/recruiter/candidates',
     getCandidateDetailByCandidateId: (candidate_id) => `/recruiter/candidate-detail/${candidate_id}`,
+    getCandidateDetailByUserId: (user_id) => `/recruiter/candidate-detail-by-user-id/${user_id}`,
     getJobApplicationByJobId: (job_id) => `/recruiter/job-application/${job_id}`,
     getCandidateByJobId: (job_id) => `/recruiter/job-application/${job_id}`,
     editJobApplicationStatus: '/recruiter/edit-job-application-status',
@@ -211,6 +221,7 @@ export const recruiterApis = {
     deleteAllReadNotifications: '/recruiter/notifications/read/all',
     checkRecruiterCompany: '/recruiter/check-recruiter-company',
     checkPlan: '/recruiter/check-plan',
+    exportJobApplications: (job_id) => `/recruiter/export-job-applications/${job_id}`,
 };
 
 export const messagesApis = {
@@ -221,6 +232,9 @@ export const messagesApis = {
     editMessage: '/messages/edit-message',
     deleteMessage: '/messages/delete-message',
     createConversation: '/messages/create-conversation',
+    markMessagesAsRead: '/messages/mark-messages-read',
+    resetUnreadCount: '/messages/reset-unread-count',
+    getTotalUnread: (user_id) => `/messages/total-unread/${user_id}`,
 };
 
 export const usageApis = {

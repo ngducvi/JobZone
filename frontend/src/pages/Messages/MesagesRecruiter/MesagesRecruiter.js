@@ -5,8 +5,7 @@ import { authAPI, messagesApis, userApis, recruiterApis } from "~/utils/api";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import images from "~/assets/images/index";
-import Avatar from "~/components/Avatar";
-import { FaUser, FaEllipsisV, FaArrowLeft, FaPaperclip, FaImage, FaPaperPlane, FaEdit, FaTrash } from "react-icons/fa";
+import { FaUser, FaEllipsisV, FaArrowLeft, FaPaperclip, FaImage, FaPaperPlane, FaEdit, FaTrash, FaCheck, FaCheckDouble } from "react-icons/fa";
 import { useMessage } from '~/context/MessageContext';
 import socketService from '~/utils/socket';
 
@@ -18,6 +17,8 @@ const MessagesRecruiter = () => {
     const [newMessage, setNewMessage] = useState("");
     const [loading, setLoading] = useState(true);
     const [candidateDetail, setCandidateDetail] = useState(null);
+    const [candidateprofilepicture, setcandidateprofilepicture] = useState(null);
+    const [conversationsData, setConversationsData] = useState({});
     const [editingMessage, setEditingMessage] = useState(null);
     const [showMenuForMessage, setShowMenuForMessage] = useState(null);
     const [isTyping, setIsTyping] = useState(false);
@@ -35,7 +36,9 @@ const MessagesRecruiter = () => {
         leaveConversation,
         sendMessage,
         fetchMessages,
-        fetchConversations
+        fetchConversations,
+        markMessagesAsRead,
+        resetUnreadCount
     } = useMessage();
 
     const scrollToBottom = () => {
@@ -66,6 +69,9 @@ const MessagesRecruiter = () => {
                     const firstConversationId = conversations[0].id;
                     await fetchMessages(firstConversationId);
                     setSelectedConversation(conversations[0]);
+                    
+                    // Load thông tin cho tất cả các cuộc hội thoại
+                    loadAllConversationsUserData(conversations, currentUserResponse.data.user.id);
                 }
             } catch (error) {
                 console.error("Error fetching data:", error);
@@ -75,6 +81,15 @@ const MessagesRecruiter = () => {
         };
 
         fetchData();
+        
+        // Thiết lập interval để làm mới số tin nhắn chưa đọc mỗi 30 giây
+        const refreshInterval = setInterval(() => {
+            if (currentId) {
+                fetchConversations(currentId);
+            }
+        }, 30000);
+        
+        return () => clearInterval(refreshInterval);
     }, [token]);
 
     useEffect(() => {
@@ -86,8 +101,6 @@ const MessagesRecruiter = () => {
         }
     }, [selectedConversation]);
 
-
-
     useEffect(() => {
         if (!selectedConversation) return;
         const candidateId = selectedConversation.user1_id === currentId
@@ -96,12 +109,24 @@ const MessagesRecruiter = () => {
         const fetchCandidateDetail = async () => {
             try {
                 const res = await authAPI().get(
-                    recruiterApis.getCandidateDetailByCandidateId(candidateId)
+                    recruiterApis.getCandidateDetailByUserId(candidateId)
                 );
-                console.log("API response", res.data.user);
                 setCandidateDetail(res.data.user);
+                setcandidateprofilepicture(res.data.candidate);
+                console.log("Candidate details loaded:", res.data);
+                
+                // Lưu thông tin cho conversation hiện tại
+                setConversationsData(prev => ({
+                    ...prev,
+                    [selectedConversation.id]: {
+                        user: res.data.user,
+                        profilePicture: res.data.candidate?.profile_picture || null
+                    }
+                }));
             } catch (error) {
+                console.error("Error fetching candidate details:", error);
                 setCandidateDetail(null);
+                setcandidateprofilepicture(null);
             }
         };
         fetchCandidateDetail();
@@ -110,6 +135,43 @@ const MessagesRecruiter = () => {
     const handleConversationSelect = async (conversation) => {
         setSelectedConversation(conversation);
         await fetchMessages(conversation.id);
+        
+        // Nếu chưa có thông tin người dùng cho hội thoại này, tải thông tin
+        if (!conversationsData[conversation.id]) {
+            const userId = conversation.user1_id === currentId
+                ? conversation.user2_id
+                : conversation.user1_id;
+                
+            try {
+                const res = await authAPI().get(
+                    recruiterApis.getCandidateDetailByUserId(userId)
+                );
+                
+                setCandidateDetail(res.data.user);
+                setcandidateprofilepicture(res.data.candidate);
+                
+                setConversationsData(prev => ({
+                    ...prev,
+                    [conversation.id]: {
+                        user: res.data.user,
+                        profilePicture: res.data.candidate?.profile_picture || null
+                    }
+                }));
+            } catch (error) {
+                console.error(`Error fetching user data for conversation ${conversation.id}:`, error);
+            }
+        } else {
+            // Sử dụng thông tin người dùng đã lưu trữ
+            const userData = conversationsData[conversation.id];
+            setCandidateDetail(userData.user);
+            setcandidateprofilepicture({ profile_picture: userData.profilePicture });
+        }
+        
+        // Đánh dấu tin nhắn đã đọc và đặt lại số lượng tin nhắn chưa đọc
+        if (currentId) {
+            await markMessagesAsRead(conversation.id, currentId);
+            await resetUnreadCount(conversation.id, currentId);
+        }
     };
 
     const handleEditMessage = (message) => {
@@ -195,6 +257,57 @@ const MessagesRecruiter = () => {
         navigate(`/recruiter/candidate-detail/${candidateId}`);
     };
 
+    // Hàm tải thông tin người dùng cho tất cả các cuộc hội thoại
+    const loadAllConversationsUserData = async (conversationsList, userId) => {
+        try {
+            const promises = conversationsList.map(async (conversation) => {
+                const otherUserId = conversation.user1_id === userId
+                    ? conversation.user2_id
+                    : conversation.user1_id;
+                
+                try {
+                    const res = await authAPI().get(
+                        recruiterApis.getCandidateDetailByUserId(otherUserId)
+                    );
+                    
+                    return {
+                        conversationId: conversation.id,
+                        userData: {
+                            user: res.data.user,
+                            profilePicture: res.data.candidate?.profile_picture || null
+                        }
+                    };
+                } catch (error) {
+                    console.error(`Error fetching user data for conversation ${conversation.id}:`, error);
+                    return {
+                        conversationId: conversation.id,
+                        userData: null
+                    };
+                }
+            });
+            
+            const results = await Promise.all(promises);
+            
+            const newConversationsData = {};
+            results.forEach(result => {
+                if (result.userData) {
+                    newConversationsData[result.conversationId] = result.userData;
+                }
+            });
+            
+            setConversationsData(newConversationsData);
+        } catch (error) {
+            console.error("Error loading conversations user data:", error);
+        }
+    };
+
+    useEffect(() => {
+        if (conversations.length > 0 && currentId) {
+            // Load thông tin cho tất cả các cuộc hội thoại khi danh sách thay đổi
+            loadAllConversationsUserData(conversations, currentId);
+        }
+    }, [conversations, currentId]);
+
     if (loading) {
         return (
             <div className={cx("loading-container")}>
@@ -213,50 +326,66 @@ const MessagesRecruiter = () => {
                         <span>Back</span>
                     </button>
                     <h2>Messages</h2>
+                    {conversations.length > 0 && (
+                        <div className={cx("unread-count")}>
+                            {conversations.reduce((total, conv) => {
+                                if (conv.user1_id === currentId) {
+                                    return total + conv.unread_count_user1;
+                                } else {
+                                    return total + conv.unread_count_user2;
+                                }
+                            }, 0)}
+                        </div>
+                    )}
                 </div>
                 <div className={cx("search-box")}>
                     <input type="text" placeholder="Search conversations..." />
                 </div>
                 <div className={cx("list")}>
                     {conversations.length > 0 ? (
-                        conversations.map((conversation) => (
-                            <div
-                                key={conversation.id}
-                                className={cx("conversation-item", {
-                                    active: selectedConversation?.id === conversation.id
-                                })}
-                                onClick={() => handleConversationSelect(conversation)}
-                            >
-                                <Avatar
-                                    src={images.avatar}
-                                    className={cx("avatar")}
-                                />
-                                <div className={cx("content")}>
-                                    <div className={cx("name")}>
+                        conversations.map((conversation) => {
+                            const conversationData = conversationsData[conversation.id] || {};
+                            return (
+                                <div
+                                    key={conversation.id}
+                                    className={cx("conversation-item", {
+                                        active: selectedConversation?.id === conversation.id
+                                    })}
+                                    onClick={() => handleConversationSelect(conversation)}
+                                >
+                                    <img
+                                        src={conversationData.profilePicture || images.avatar}
+                                        className={cx("avatar")}
+                                        alt={conversationData.user?.name || "User"}
+                                    />
+                                    <div className={cx("content")}>
+                                        <div className={cx("name")}>
+                                            {conversationData.user?.name || 
+                                                (conversation.user1_id === currentId
+                                                    ? conversation.user2_id
+                                                    : conversation.user1_id)}
+                                        </div>
+                                        <div className={cx("last-message")}>{conversation.last_message || "No messages yet"}</div>
+                                    </div>
+                                    <div className={cx("meta")}>
+                                        <div className={cx("time")}>
+                                            {formatTime(conversation.last_message_at || new Date())}
+                                        </div>
                                         {conversation.user1_id === currentId
-                                            ? conversation.user2_id
-                                            : conversation.user1_id}
+                                            ? conversation.unread_count_user1 > 0 && (
+                                                <div className={cx("unread")}>
+                                                    {conversation.unread_count_user1}
+                                                </div>
+                                            )
+                                            : conversation.unread_count_user2 > 0 && (
+                                                <div className={cx("unread")}>
+                                                    {conversation.unread_count_user2}
+                                                </div>
+                                            )}
                                     </div>
-                                    <div className={cx("last-message")}>{conversation.last_message || "No messages yet"}</div>
                                 </div>
-                                <div className={cx("meta")}>
-                                    <div className={cx("time")}>
-                                        {formatTime(conversation.last_message_at || new Date())}
-                                    </div>
-                                    {conversation.user1_id === currentId
-                                        ? conversation.unread_count_user2 > 0 && (
-                                            <div className={cx("unread")}>
-                                                {conversation.unread_count_user2}
-                                            </div>
-                                        )
-                                        : conversation.unread_count_user1 > 0 && (
-                                            <div className={cx("unread")}>
-                                                {conversation.unread_count_user1}
-                                            </div>
-                                        )}
-                                </div>
-                            </div>
-                        ))
+                            );
+                        })
                     ) : (
                         <div className={cx("no-conversations")}>
                             <div className={cx("empty-icon")}>
@@ -274,20 +403,25 @@ const MessagesRecruiter = () => {
                     <>
                         <div className={cx("header")}>
                             <div className={cx("user-info")}>
-                                <Avatar
-                                    src={images.avatar}
+                                <img
+                                    src={candidateprofilepicture?.profile_picture || images.avatar}
                                     className={cx("avatar")}
-                                    alt="User avatar"
+                                    alt={candidateDetail?.name || "User avatar"}
                                 />
                                 <div className={cx("info")}>
                                     <div className={cx("name")}>
-                                        {selectedConversation.user1_id === currentId
-                                            ? selectedConversation.user2_id
-                                            : selectedConversation.user1_id}
+                                        {candidateDetail?.name || (selectedConversation?.user1_id === currentId
+                                            ? selectedConversation?.user2_id
+                                            : selectedConversation?.user1_id)}
                                     </div>
                                     <div className={cx("status")}>
                                         <span className={cx("status-dot")}></span>
-                                        Online
+                                        {candidateDetail?.email && (
+                                            <span className={cx("email")}>{candidateDetail.email}</span>
+                                        )}
+                                        {candidateDetail?.phone && (
+                                            <span className={cx("phone")}> • {candidateDetail.phone}</span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -295,7 +429,7 @@ const MessagesRecruiter = () => {
                                 <button
                                     className={cx("profile-button")}
                                     onClick={() => handleViewCandidateProfile(
-                                        1
+                                        candidateDetail?.user_id || 1
                                     )}
                                 >
                                     <FaUser />
@@ -320,34 +454,43 @@ const MessagesRecruiter = () => {
                                         <div className={cx("message-content")}>
                                             {message.content}
                                             {message.sender_id === currentId && (
-                                                <div className={cx("message-menu")}>
-                                                    <button
-                                                        className={cx("menu-button")}
-                                                        onClick={() => setShowMenuForMessage(
-                                                            showMenuForMessage === message.id ? null : message.id
+                                                <>
+                                                    <div className={cx("read-status")}>
+                                                        {message.is_read ? (
+                                                            <FaCheckDouble className={cx("read-icon")} />
+                                                        ) : (
+                                                            <FaCheck className={cx("unread-icon")} />
                                                         )}
-                                                    >
-                                                        <FaEllipsisV />
-                                                    </button>
-                                                    <div className={cx("menu-options", {
-                                                        show: showMenuForMessage === message.id
-                                                    })}>
-                                                        <div
-                                                            className={cx("option")}
-                                                            onClick={() => handleEditMessage(message)}
+                                                    </div>
+                                                    <div className={cx("message-menu")}>
+                                                        <button
+                                                            className={cx("menu-button")}
+                                                            onClick={() => setShowMenuForMessage(
+                                                                showMenuForMessage === message.id ? null : message.id
+                                                            )}
                                                         >
-                                                            <FaEdit />
-                                                            <span>Edit</span>
-                                                        </div>
-                                                        <div
-                                                            className={cx("option", "delete")}
-                                                            onClick={() => handleDeleteMessage(message.id)}
-                                                        >
-                                                            <FaTrash />
-                                                            <span>Delete</span>
+                                                            <FaEllipsisV />
+                                                        </button>
+                                                        <div className={cx("menu-options", {
+                                                            show: showMenuForMessage === message.id
+                                                        })}>
+                                                            <div
+                                                                className={cx("option")}
+                                                                onClick={() => handleEditMessage(message)}
+                                                            >
+                                                                <FaEdit />
+                                                                <span>Edit</span>
+                                                            </div>
+                                                            <div
+                                                                className={cx("option", "delete")}
+                                                                onClick={() => handleDeleteMessage(message.id)}
+                                                            >
+                                                                <FaTrash />
+                                                                <span>Delete</span>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
+                                                </>
                                             )}
                                         </div>
                                         <div className={cx("time")}>{formatTime(message.created_at)}</div>
@@ -406,8 +549,8 @@ const MessagesRecruiter = () => {
                             <div className={cx("empty-icon")}>
                                 <FaUser size={48} />
                             </div>
-                            <h3>Select a conversation to start chatting</h3>
-                            <p>Connect with candidates and discuss job opportunities</p>
+                            <h3>Chọn một cuộc trò chuyện để bắt đầu</h3>
+                            <p>Kết nối với các ứng viên thảo luận về các cơ hội việc làm</p>
                         </div>
                     </div>
                 )}
