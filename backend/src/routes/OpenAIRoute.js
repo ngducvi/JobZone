@@ -28,4 +28,7 @@ router.post("/save-image", openAIController.saveImage.bind(openAIController));
 router.post("/text-to-speech", openAIController.textToVoice.bind(openAIController));
 router.post("/match-score", openAIController.matchScore.bind(openAIController));
 router.post("/compare-candidates", openAIController.compareCandidates.bind(openAIController));
+router.post("/screen-candidates", openAIController.screenCandidates.bind(openAIController));
+router.post("/find-similar-candidates", openAIController.findSimilarCandidates.bind(openAIController));
+router.post("/analyze-job-for-candidate", openAIController.analyzeJobForCandidate.bind(openAIController));
 module.exports = router;

@@ -39,6 +39,13 @@ const sidebarIcons = [
     to: "/recruiter/messages",
     minPlan: "Basic"
   },
+  // đăng tin tuyển dụng
+  {
+    icon: <i className="fa-solid fa-bullhorn"></i>,
+    title: "Đăng tin tuyển dụng",
+    to: "/recruiter/post-job",
+    minPlan: "Basic"
+  },
   {
     icon: <i className="fa-solid fa-magnifying-glass"></i>,
     title: "Tìm kiếm ứng viên",
@@ -52,13 +59,13 @@ const sidebarIcons = [
     minPlan: "ProMax",
     comingSoon: true,
   },
-  {
-    icon: <i className="fa-solid fa-bullhorn"></i>,
-    title: "Chiến dịch tuyển dụng",
-    to: "/recruiter/campaigns",
-    minPlan: "Pro",
-    disabled: true,
-  },
+  // {
+  //   icon: <i className="fa-solid fa-bullhorn"></i>,
+  //   title: "Chiến dịch tuyển dụng",
+  //   to: "/recruiter/campaigns",
+  //   minPlan: "Pro",
+  //   disabled: true,
+  // },
   {
     icon: <i className="fa-solid fa-briefcase"></i>,
     title: "Tin tuyển dụng",
@@ -272,6 +279,7 @@ const SidebarSectuiter = () => {
       })}>
         <div className={cx("header")}>
           <Avatar src={images.logo} fontsize={"5px"} alt={"Logo"} />
+          {/* nhà tuyển dụng */}
           <div className={cx("toggle-buttons")}>
             <i
               className={`fa-solid ${isOpenSidebar ? 'fa-xmark' : 'fa-bars'}`}

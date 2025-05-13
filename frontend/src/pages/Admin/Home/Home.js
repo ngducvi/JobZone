@@ -338,7 +338,7 @@ function Home() {
           </div>
         </motion.div>
       </div>
-     
+
       {/* Chart Section */}
       <div className={cx('chart-container', 'row')}>
         <div className={cx('chart-section', 'col-lg-8', 'col-md-12', 'mb-4')}>

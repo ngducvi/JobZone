@@ -53,6 +53,8 @@ const RecruiterAISuggest = () => {
     const [selectedCandidates, setSelectedCandidates] = useState([]);
     const [isComparing, setIsComparing] = useState(false);
     const [comparisonResult, setComparisonResult] = useState(null);
+    const [isScreening, setIsScreening] = useState(false);
+    const [screeningResult, setScreeningResult] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -63,6 +65,7 @@ const RecruiterAISuggest = () => {
                     recruiterApis.getAllRecruiterCompanies
                 );
                 setCompanyInfo(responseCompany.data.companies[0]);
+                console.log("Company info:", responseCompany.data.companies[0]);
 
                 // Check business license
                 const responseCheckLicense = await authAPI().get(
@@ -526,6 +529,95 @@ Hãy phân tích theo các tiêu chí:
         }
     };
 
+    const screenCandidates = async () => {
+        if (!selectedJob) {
+            toast.error("Vui lòng chọn công việc trước");
+            return;
+        }
+        
+        if (!jobApplications[selectedJob.job_id] || jobApplications[selectedJob.job_id].length === 0) {
+            toast.error("Không có ứng viên để sàng lọc");
+            return;
+        }
+
+        setIsScreening(true);
+        try {
+            // Lấy tất cả ứng viên đang ở trạng thái "Đang xét duyệt"
+            const candidatesToScreen = jobApplications[selectedJob.job_id]
+                .filter(app => app.status === "Đang xét duyệt")
+                .map(candidate => ({
+                    name: candidate.user?.name,
+                    experience: candidate.candidate?.experience,
+                    skills: candidate.candidate?.skills,
+                    current_salary: candidate.candidate?.current_salary,
+                    expected_salary: candidate.candidate?.expected_salary,
+                    location: candidate.candidate?.location,
+                    qualifications: candidate.candidate?.qualifications,
+                    career_objective: candidate.candidate?.career_objective,
+                }));
+            
+            if (candidatesToScreen.length === 0) {
+                toast.warning("Không có ứng viên ở trạng thái 'Đang xét duyệt' để sàng lọc");
+                setIsScreening(false);
+                return;
+            }
+            
+            const response = await fetch(`${process.env.REACT_APP_API_URL}/openai/screen-candidates`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    candidates: candidatesToScreen,
+                    job: selectedJob,
+                    model: selectedModel,
+                    screeningCriteria: [
+                        "Kỹ năng phù hợp với công việc ít nhất 60%",
+                        "Kinh nghiệm đáp ứng yêu cầu tối thiểu",
+                        "Mức lương mong muốn phù hợp với ngân sách",
+                        "Địa điểm làm việc phù hợp hoặc có khả năng di chuyển",
+                        "Trình độ học vấn đáp ứng yêu cầu"
+                    ]
+                }),
+            });
+            
+            const data = await response.json();
+            setScreeningResult(data);
+            
+            // Tự động cập nhật trạng thái ứng viên dựa trên kết quả sàng lọc
+            if (data.screening_results) {
+                for (const result of data.screening_results) {
+                    const application = jobApplications[selectedJob.job_id].find(
+                        app => app.user?.name === result.name
+                    );
+                    
+                    if (application) {
+                        let newStatus;
+                        if (result.status === "pass") {
+                            newStatus = "Chờ phỏng vấn";
+                        } else if (result.status === "reject") {
+                            newStatus = "Đã từ chối";
+                        } else {
+                            // Keep as is for "review" status
+                            continue;
+                        }
+                        
+                        // Update the status in the database
+                        await handleStatusChange(application.application_id, newStatus);
+                    }
+                }
+            }
+            
+            toast.success(`Đã sàng lọc ${data.screening_results.length} ứng viên thành công`);
+        } catch (error) {
+            console.error("Error screening candidates:", error);
+            toast.error("Không thể sàng lọc ứng viên");
+        } finally {
+            setIsScreening(false);
+        }
+    };
+
     if (isCheckingLicense) {
         return (
             <div className={cx("wrapper")}>
@@ -639,6 +731,23 @@ Hãy phân tích theo các tiêu chí:
                                             )}
                                         </button>
                                     )}
+                                    <button
+                                        className={cx('ai-action-btn')}
+                                        onClick={screenCandidates}
+                                        disabled={isScreening}
+                                    >
+                                        {isScreening ? (
+                                            <>
+                                                <FaSpinner className={cx("spinner")} />
+                                                Đang sàng lọc...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FaUserCheck />
+                                                Sàng lọc tự động
+                                            </>
+                                        )}
+                                    </button>
                                     <button
                                         className={cx('ai-action-btn')}
                                         onClick={analyzeJobPost}
@@ -961,6 +1070,100 @@ Hãy phân tích theo các tiêu chí:
                                     </ul>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Screening Results Modal */}
+            {screeningResult && (
+                <div className={cx('analysis-modal')}>
+                    <div className={cx('modal-content')}>
+                        <button className={cx('close-btn')} onClick={() => setScreeningResult(null)}>
+                            <FaTimes />
+                        </button>
+                        <h3>Kết quả sàng lọc tự động</h3>
+
+                        <div className={cx('screening-summary')}>
+                            <h4>Tổng quan</h4>
+                            <div className={cx('summary-stats')}>
+                                <div className={cx('stat-item', 'pass')}>
+                                    <span className={cx('stat-value')}>{screeningResult.summary.passed}</span>
+                                    <span className={cx('stat-label')}>Đạt yêu cầu</span>
+                                </div>
+                                <div className={cx('stat-item', 'review')}>
+                                    <span className={cx('stat-value')}>{screeningResult.summary.review}</span>
+                                    <span className={cx('stat-label')}>Cần xem xét</span>
+                                </div>
+                                <div className={cx('stat-item', 'reject')}>
+                                    <span className={cx('stat-value')}>{screeningResult.summary.rejected}</span>
+                                    <span className={cx('stat-label')}>Không phù hợp</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={cx('screening-results')}>
+                            <h4>Chi tiết ứng viên</h4>
+                            {screeningResult.screening_results.map((result, index) => (
+                                <div 
+                                    key={index} 
+                                    className={cx('screening-candidate', {
+                                        'pass': result.status === 'pass',
+                                        'review': result.status === 'review',
+                                        'reject': result.status === 'reject'
+                                    })}
+                                >
+                                    <h5>{result.name}</h5>
+                                    <div className={cx('status-badge', result.status)}>
+                                        {result.status === 'pass' ? 'Đạt yêu cầu' :
+                                         result.status === 'review' ? 'Cần xem xét' : 'Không phù hợp'}
+                                    </div>
+                                    
+                                    <div className={cx('score-display')}>
+                                        <div className={cx('score-bar')}>
+                                            <div 
+                                                className={cx('score-fill')}
+                                                style={{ width: `${result.score}%` }}
+                                            ></div>
+                                        </div>
+                                        <span className={cx('score-value')}>{result.score}%</span>
+                                    </div>
+                                    
+                                    <div className={cx('reasons')}>
+                                        <h6>Lý do:</h6>
+                                        <ul>
+                                            {result.reasons.map((reason, i) => (
+                                                <li key={i}>{reason}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                    
+                                    <div className={cx('recommendation')}>
+                                        <h6>Đề xuất:</h6>
+                                        <p>{result.recommendation}</p>
+                                    </div>
+                                    
+                                    {result.suggested_interview_questions && (
+                                        <div className={cx('interview-questions')}>
+                                            <h6>Câu hỏi phỏng vấn gợi ý:</h6>
+                                            <ol>
+                                                {result.suggested_interview_questions.map((question, i) => (
+                                                    <li key={i}>{question}</li>
+                                                ))}
+                                            </ol>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className={cx('recommendations')}>
+                            <h4>Đề xuất chung</h4>
+                            <ul>
+                                {screeningResult.summary.recommendations.map((recommendation, index) => (
+                                    <li key={index}>{recommendation}</li>
+                                ))}
+                            </ul>
                         </div>
                     </div>
                 </div>

@@ -13,6 +13,7 @@ export const adminApis = {
     getCompaniesByPlanStats: '/admin/company/plan-stats',
     getCompaniesByLicenseStats: '/admin/company/license-stats',
     getCompanyRegistrationTrend: (year, month) => `/admin/company/registration-trend?year=${year}&month=${month}`,
+    getNewJobApplicationsStats: (company_id, since) => `/admin/job-applications/new-stats?company_id=${company_id}${since ? `&since=${since}` : ''}`,
 
     getAllUsers: '/admin/user/all',
     getAllModels: '/admin/model/all',
@@ -57,6 +58,7 @@ export const adminApis = {
 export const userApis = {
     getCurrentUser: '/user/current-user',
     checkCandidate: '/user/check-candidate',
+    checkUserPlan: '/user/check-user-plan',
     getReturnUrl: '/api/vnpay_return',
     updatePassword: '/user/update-password',
     updateCurrentUser: '/user/current-user',
@@ -67,6 +69,7 @@ export const userApis = {
     verifyEmail: '/verify-email/',
     forgotPassword: '/user/forget-password/',
     aiCompletion: '/ai/completion/',
+    analyzeJobForCandidate: '/openai/analyze-job-for-candidate',
     getAllTopCompany: '/user/top-company',
     getAllTopCompanyPro: '/user/top-company-pro',
 
@@ -95,6 +98,7 @@ export const userApis = {
     getJobDetailByJobId: (job_id) => `/user/job-detail/${job_id}`,
     getAllCompany: '/user/companies',
     getCompanyDetailByCompanyId: (company_id) => `/user/company-detail/${company_id}`,
+    getAllReviewsByCompanyId: (company_id, rating) => `/user/reviews/${company_id}${rating ? `?rating=${rating}` : ''}`,
     getCareerHandbookByCategoryId: (category_id) => `/user/career-handbook/${category_id}`,
     getAllTemplateFieldsByTemplateId: (template_id) => `/user/template-fields/${template_id}`,
     getAllCvFieldValuesByCvId: (cv_id) => `/user/cv-field-values/${cv_id}`,
@@ -148,8 +152,6 @@ export const userApis = {
     createReviewCompany: '/user/company/review',
     updateReviewCompany: (review_id) => `/user/company/review/${review_id}`,
     deleteReviewCompany: (review_id) => `/user/company/review/${review_id}`,
-    getAllReviewsByCompanyId: (company_id) => `/user/reviews/${company_id}`,
-
     getCareerHandbookByPostId: (post_id) => `/user/career-handbook/post/${post_id}`,
     getJobsByExperience: '/user/jobs/experience',
     getJobsByWorkingTime: '/user/jobs/working-time',
@@ -222,6 +224,8 @@ export const recruiterApis = {
     checkRecruiterCompany: '/recruiter/check-recruiter-company',
     checkPlan: '/recruiter/check-plan',
     exportJobApplications: (job_id) => `/recruiter/export-job-applications/${job_id}`,
+    findSimilarCandidates: '/recruiter/find-similar-candidates',
+    getNewJobApplicationsStats: (company_id, since) => `/recruiter/job-applications/new-stats?company_id=${company_id}${since ? `&since=${since}` : ''}`,
 };
 
 export const messagesApis = {

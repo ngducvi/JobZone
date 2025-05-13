@@ -35,6 +35,7 @@ router.use(checkPlanExpiredMiddleware());
 // Protected routes
 router.get('/current-user', userController.getCurrentUser.bind(userController));
 router.get('/check-candidate', userController.checkCandidate.bind(userController));
+router.get('/check-user-plan', userController.checkUserPlan.bind(userController));
 router.patch('/current-user', userController.updateUser.bind(userController));
 router.get('/check-balance', userController.checkBalance.bind(userController));
 router.get('/logout', userController.logout.bind(userController));

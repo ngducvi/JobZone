@@ -85,6 +85,7 @@ import WriteRecruitmentEmails from '~/pages/Recruiter/MyServices/Tools/WriteRecr
 import Messages from '~/pages/Messages';
 import MessagesRecruiter from '~/pages/Messages/MesagesRecruiter/MesagesRecruiter';
 import DashboardB from '~/pages/Admin/DashboardB/DashboardB';
+import CvConsulting from '~/pages/CvConsulting/CvConsulting';
 const publicRoutes = [
     { path: '/', component: Dashboard },
     { path: '/user/verify-email', component: VerifyEmailSuccess, layout: null },
@@ -119,6 +120,7 @@ const publicRoutes = [
     { path: '/user/create-cv', component: CreateCV },
     { path: '/user/manager-cv', component: ManagerCV },
     { path: '/user/edit-cv', component: EditCV },
+    { path: '/user/cv-consulting', component: CvConsulting },
     { path: '/user/cv-library', component: CvLibrary },
     { path: '/user/see-cv', component: SeeCv, layout: null },
     { path: '/user/job-zone-profile', component: JobZoneProfile },

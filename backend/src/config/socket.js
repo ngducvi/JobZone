@@ -30,6 +30,18 @@ function initializeSocket(server) {
             console.log(`User ${userId} joined their room`);
         });
 
+        // Join company room for recruiters
+        socket.on('join_company', (companyId) => {
+            socket.join(`company_${companyId}`);
+            console.log(`User joined company room ${companyId}`);
+        });
+
+        // Leave company room
+        socket.on('leave_company', (companyId) => {
+            socket.leave(`company_${companyId}`);
+            console.log(`User left company room ${companyId}`);
+        });
+
         // Join conversation room
         socket.on('join_conversation', (conversationId) => {
             socket.join(`conversation_${conversationId}`);
@@ -85,7 +97,30 @@ function getIO() {
     return io;
 }
 
+function notifyNewJobApplication(application) {
+    if (!io) {
+        console.error('Socket.IO not initialized, cannot send job application notification');
+        return;
+    }
+    
+    try {
+        // Gửi thông báo tới công ty có job được ứng tuyển
+        io.to(`company_${application.company_id}`).emit('new_job_application', {
+            job_id: application.job_id,
+            job_title: application.job_title,
+            application_id: application.application_id,
+            candidate_name: application.candidate_name,
+            applied_at: application.applied_at
+        });
+        
+        console.log(`Emitted new job application event to company ${application.company_id}`);
+    } catch (error) {
+        console.error('Error sending job application notification:', error);
+    }
+}
+
 module.exports = {
     initializeSocket,
-    getIO
+    getIO,
+    notifyNewJobApplication
 }; 

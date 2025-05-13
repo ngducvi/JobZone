@@ -89,25 +89,25 @@ const sidebarIcons = [
       // },
       {
         title: "Dịch vụ tư vấn CV",
-        to: "/jobs/cv-consulting",
+        to: "/user/cv-consulting",
         authRequired: false
       },
-      {
-        title: "Thư viện CV theo ngành nghề",
-        badge: "MỚI",
-        to: "/user/cv-library",
-        authRequired: false
-      },
+      // {
+      //   title: "Thư viện CV theo ngành nghề",
+      //   badge: "MỚI",
+      //   to: "/user/cv-library",
+      //   authRequired: false
+      // },
       {
         title: "TopCV Profile",
         to: "/user/job-zone-profile",
         authRequired: true
       },
-      // {
-      //   title: "Test Template",
-      //   to: "/test-template",
-      //   authRequired: false
-      // },
+      {
+        title: "Test Template",
+        to: "/test-template",
+        authRequired: false
+      },
     ]
   },
   // career handbook

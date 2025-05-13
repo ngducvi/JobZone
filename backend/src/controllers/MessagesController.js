@@ -155,8 +155,8 @@ class MessagesController {
                 // Người gửi là user2, tăng unread_count cho user1
                 updateField = { 
                     unread_count_user1: conversation.unread_count_user1 + 1,
-                    last_message: message,
-                    last_message_at: new Date()
+                last_message: message,
+                last_message_at: new Date()
                 };
             }
             

@@ -5,7 +5,7 @@ import { authAPI, messagesApis, userApis, recruiterApis } from "~/utils/api";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import images from "~/assets/images/index";
-import { FaUser, FaEllipsisV, FaArrowLeft, FaPaperclip, FaImage, FaPaperPlane, FaEdit, FaTrash, FaCheck, FaCheckDouble } from "react-icons/fa";
+import { FaUser, FaEllipsisV, FaArrowLeft, FaPaperclip, FaImage, FaPaperPlane, FaEdit, FaTrash, FaCheck, FaCheckDouble, FaTimes } from "react-icons/fa";
 import { useMessage } from '~/context/MessageContext';
 import socketService from '~/utils/socket';
 
@@ -22,6 +22,8 @@ const MessagesRecruiter = () => {
     const [editingMessage, setEditingMessage] = useState(null);
     const [showMenuForMessage, setShowMenuForMessage] = useState(null);
     const [isTyping, setIsTyping] = useState(false);
+    const [isMobileView, setIsMobileView] = useState(false);
+    const [showConversations, setShowConversations] = useState(true);
     const messagesContainerRef = useRef(null);
     const token = localStorage.getItem("token");
     const navigate = useNavigate();
@@ -40,6 +42,22 @@ const MessagesRecruiter = () => {
         markMessagesAsRead,
         resetUnreadCount
     } = useMessage();
+
+    // Check if the device is mobile
+    useEffect(() => {
+        const checkMobileView = () => {
+            setIsMobileView(window.innerWidth <= 768);
+        };
+        
+        // Initial check
+        checkMobileView();
+        
+        // Add event listener for window resize
+        window.addEventListener('resize', checkMobileView);
+        
+        // Cleanup
+        return () => window.removeEventListener('resize', checkMobileView);
+    }, []);
 
     const scrollToBottom = () => {
         if (messagesContainerRef.current) {
@@ -95,11 +113,17 @@ const MessagesRecruiter = () => {
     useEffect(() => {
         if (selectedConversation) {
             joinConversation(selectedConversation.id);
+            
+            // On mobile, when a conversation is selected, hide the conversations list
+            if (isMobileView) {
+                setShowConversations(false);
+            }
+            
             return () => {
                 leaveConversation(selectedConversation.id);
             };
         }
-    }, [selectedConversation]);
+    }, [selectedConversation, isMobileView]);
 
     useEffect(() => {
         if (!selectedConversation) return;
@@ -135,6 +159,11 @@ const MessagesRecruiter = () => {
     const handleConversationSelect = async (conversation) => {
         setSelectedConversation(conversation);
         await fetchMessages(conversation.id);
+        
+        // If on mobile, hide the conversations list after selecting a conversation
+        if (isMobileView) {
+            setShowConversations(false);
+        }
         
         // Nếu chưa có thông tin người dùng cho hội thoại này, tải thông tin
         if (!conversationsData[conversation.id]) {
@@ -172,6 +201,10 @@ const MessagesRecruiter = () => {
             await markMessagesAsRead(conversation.id, currentId);
             await resetUnreadCount(conversation.id, currentId);
         }
+    };
+
+    const handleGoBackToList = () => {
+        setShowConversations(true);
     };
 
     const handleEditMessage = (message) => {
@@ -319,242 +352,251 @@ const MessagesRecruiter = () => {
 
     return (
         <div className={cx("wrapper")}>
-            <div className={cx("conversations")}>
-                <div className={cx("header")}>
-                    <button className={cx("back-button")} onClick={handleBackToHome}>
-                        <FaArrowLeft />
-                        <span>Back</span>
-                    </button>
-                    <h2>Messages</h2>
-                    {conversations.length > 0 && (
-                        <div className={cx("unread-count")}>
-                            {conversations.reduce((total, conv) => {
-                                if (conv.user1_id === currentId) {
-                                    return total + conv.unread_count_user1;
-                                } else {
-                                    return total + conv.unread_count_user2;
-                                }
-                            }, 0)}
-                        </div>
-                    )}
-                </div>
-                <div className={cx("search-box")}>
-                    <input type="text" placeholder="Search conversations..." />
-                </div>
-                <div className={cx("list")}>
-                    {conversations.length > 0 ? (
-                        conversations.map((conversation) => {
-                            const conversationData = conversationsData[conversation.id] || {};
-                            return (
-                                <div
-                                    key={conversation.id}
-                                    className={cx("conversation-item", {
-                                        active: selectedConversation?.id === conversation.id
-                                    })}
-                                    onClick={() => handleConversationSelect(conversation)}
-                                >
-                                    <img
-                                        src={conversationData.profilePicture || images.avatar}
-                                        className={cx("avatar")}
-                                        alt={conversationData.user?.name || "User"}
-                                    />
-                                    <div className={cx("content")}>
-                                        <div className={cx("name")}>
-                                            {conversationData.user?.name || 
-                                                (conversation.user1_id === currentId
-                                                    ? conversation.user2_id
-                                                    : conversation.user1_id)}
-                                        </div>
-                                        <div className={cx("last-message")}>{conversation.last_message || "No messages yet"}</div>
-                                    </div>
-                                    <div className={cx("meta")}>
-                                        <div className={cx("time")}>
-                                            {formatTime(conversation.last_message_at || new Date())}
-                                        </div>
-                                        {conversation.user1_id === currentId
-                                            ? conversation.unread_count_user1 > 0 && (
-                                                <div className={cx("unread")}>
-                                                    {conversation.unread_count_user1}
-                                                </div>
-                                            )
-                                            : conversation.unread_count_user2 > 0 && (
-                                                <div className={cx("unread")}>
-                                                    {conversation.unread_count_user2}
-                                                </div>
-                                            )}
-                                    </div>
-                                </div>
-                            );
-                        })
-                    ) : (
-                        <div className={cx("no-conversations")}>
-                            <div className={cx("empty-icon")}>
-                                <FaUser size={32} />
+            {(!isMobileView || (isMobileView && showConversations)) && (
+                <div className={cx("conversations")}>
+                    <div className={cx("header")}>
+                        <button className={cx("back-button")} onClick={handleBackToHome}>
+                            <FaArrowLeft />
+                            <span>Back</span>
+                        </button>
+                        <h2>Messages</h2>
+                        {conversations.length > 0 && (
+                            <div className={cx("unread-count")}>
+                                {conversations.reduce((total, conv) => {
+                                    if (conv.user1_id === currentId) {
+                                        return total + conv.unread_count_user1;
+                                    } else {
+                                        return total + conv.unread_count_user2;
+                                    }
+                                }, 0)}
                             </div>
-                            <p>No conversations yet</p>
-                            <span>Start connecting with candidates</span>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            <div className={cx("chat")}>
-                {selectedConversation ? (
-                    <>
-                        <div className={cx("header")}>
-                            <div className={cx("user-info")}>
-                                <img
-                                    src={candidateprofilepicture?.profile_picture || images.avatar}
-                                    className={cx("avatar")}
-                                    alt={candidateDetail?.name || "User avatar"}
-                                />
-                                <div className={cx("info")}>
-                                    <div className={cx("name")}>
-                                        {candidateDetail?.name || (selectedConversation?.user1_id === currentId
-                                            ? selectedConversation?.user2_id
-                                            : selectedConversation?.user1_id)}
-                                    </div>
-                                    <div className={cx("status")}>
-                                        <span className={cx("status-dot")}></span>
-                                        {candidateDetail?.email && (
-                                            <span className={cx("email")}>{candidateDetail.email}</span>
-                                        )}
-                                        {candidateDetail?.phone && (
-                                            <span className={cx("phone")}> • {candidateDetail.phone}</span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                            <div className={cx("actions")}>
-                                <button
-                                    className={cx("profile-button")}
-                                    onClick={() => handleViewCandidateProfile(
-                                        candidateDetail?.user_id || 1
-                                    )}
-                                >
-                                    <FaUser />
-                                    <span>View Profile</span>
-                                </button>
-                                <button className={cx("more-button")}>
-                                    <FaEllipsisV />
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className={cx("messages")} ref={messagesContainerRef}>
-                            {messages.length > 0 ? (
-                                messages.map((message, index) => (
+                        )}
+                    </div>
+                    <div className={cx("search-box")}>
+                        <input type="text" placeholder="Search conversations..." />
+                    </div>
+                    <div className={cx("list")}>
+                        {conversations.length > 0 ? (
+                            conversations.map((conversation) => {
+                                const conversationData = conversationsData[conversation.id] || {};
+                                return (
                                     <div
-                                        key={message.id || index}
-                                        className={cx("message", {
-                                            sent: message.sender_id === currentId,
-                                            received: message.sender_id !== currentId
+                                        key={conversation.id}
+                                        className={cx("conversation-item", {
+                                            active: selectedConversation?.id === conversation.id
                                         })}
+                                        onClick={() => handleConversationSelect(conversation)}
                                     >
-                                        <div className={cx("message-content")}>
-                                            {message.content}
-                                            {message.sender_id === currentId && (
-                                                <>
-                                                    <div className={cx("read-status")}>
-                                                        {message.is_read ? (
-                                                            <FaCheckDouble className={cx("read-icon")} />
-                                                        ) : (
-                                                            <FaCheck className={cx("unread-icon")} />
-                                                        )}
-                                                    </div>
-                                                    <div className={cx("message-menu")}>
-                                                        <button
-                                                            className={cx("menu-button")}
-                                                            onClick={() => setShowMenuForMessage(
-                                                                showMenuForMessage === message.id ? null : message.id
-                                                            )}
-                                                        >
-                                                            <FaEllipsisV />
-                                                        </button>
-                                                        <div className={cx("menu-options", {
-                                                            show: showMenuForMessage === message.id
-                                                        })}>
-                                                            <div
-                                                                className={cx("option")}
-                                                                onClick={() => handleEditMessage(message)}
-                                                            >
-                                                                <FaEdit />
-                                                                <span>Edit</span>
-                                                            </div>
-                                                            <div
-                                                                className={cx("option", "delete")}
-                                                                onClick={() => handleDeleteMessage(message.id)}
-                                                            >
-                                                                <FaTrash />
-                                                                <span>Delete</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </>
-                                            )}
+                                        <img
+                                            src={conversationData.profilePicture || images.avatar}
+                                            className={cx("avatar")}
+                                            alt={conversationData.user?.name || "User"}
+                                        />
+                                        <div className={cx("content")}>
+                                            <div className={cx("name")}>
+                                                {conversationData.user?.name || 
+                                                    (conversation.user1_id === currentId
+                                                        ? conversation.user2_id
+                                                        : conversation.user1_id)}
+                                            </div>
+                                            <div className={cx("last-message")}>{conversation.last_message || "No messages yet"}</div>
                                         </div>
-                                        <div className={cx("time")}>{formatTime(message.created_at)}</div>
+                                        <div className={cx("meta")}>
+                                            <div className={cx("time")}>
+                                                {formatTime(conversation.last_message_at || new Date())}
+                                            </div>
+                                            {conversation.user1_id === currentId
+                                                ? conversation.unread_count_user1 > 0 && (
+                                                    <div className={cx("unread")}>
+                                                        {conversation.unread_count_user1}
+                                                    </div>
+                                                )
+                                                : conversation.unread_count_user2 > 0 && (
+                                                    <div className={cx("unread")}>
+                                                        {conversation.unread_count_user2}
+                                                    </div>
+                                                )}
+                                        </div>
                                     </div>
-                                ))
-                            ) : (
-                                <div className={cx("no-messages")}>
-                                    <p>No messages yet</p>
-                                    <span>Start the conversation by sending a message</span>
+                                );
+                            })
+                        ) : (
+                            <div className={cx("no-conversations")}>
+                                <div className={cx("empty-icon")}>
+                                    <FaUser size={32} />
                                 </div>
-                            )}
-                        </div>
+                                <p>No conversations yet</p>
+                                <span>Start connecting with candidates</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
-                        <form className={cx("input")} onSubmit={handleSendMessage}>
-                            <div className={cx("input-wrapper")}>
-                                <input
-                                    type="text"
-                                    placeholder={editingMessage ? "Edit your message..." : "Type a message..."}
-                                    value={newMessage}
-                                    onChange={handleTyping}
-                                />
-                                {editingMessage && (
-                                    <button
-                                        type="button"
-                                        className={cx("cancel-edit")}
-                                        onClick={() => {
-                                            setEditingMessage(null);
-                                            setNewMessage("");
-                                        }}
-                                    >
-                                        Cancel
+            {(!isMobileView || (isMobileView && !showConversations)) && (
+                <div className={cx("chat")}>
+                    {selectedConversation ? (
+                        <>
+                            <div className={cx("header")}>
+                                {isMobileView && (
+                                    <button className={cx("mobile-back")} onClick={handleGoBackToList}>
+                                        <FaArrowLeft />
                                     </button>
                                 )}
-                                <div className={cx("attachments")}>
-                                    <button type="button" className={cx("attachment-button")}>
-                                        <FaPaperclip />
+                                <div className={cx("user-info")}>
+                                    <img
+                                        src={candidateprofilepicture?.profile_picture || images.avatar}
+                                        className={cx("avatar")}
+                                        alt={candidateDetail?.name || "User avatar"}
+                                    />
+                                    <div className={cx("info")}>
+                                        <div className={cx("name")}>
+                                            {candidateDetail?.name || (selectedConversation?.user1_id === currentId
+                                                ? selectedConversation?.user2_id
+                                                : selectedConversation?.user1_id)}
+                                        </div>
+                                        <div className={cx("status")}>
+                                            <span className={cx("status-dot")}></span>
+                                            {candidateDetail?.email && (
+                                                <span className={cx("email")}>{candidateDetail.email}</span>
+                                            )}
+                                            {candidateDetail?.phone && (
+                                                <span className={cx("phone")}> • {candidateDetail.phone}</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className={cx("actions")}>
+                                    <button
+                                        className={cx("profile-button")}
+                                        onClick={() => handleViewCandidateProfile(
+                                            candidateDetail?.user_id || 1
+                                        )}
+                                    >
+                                        <FaUser />
+                                        <span>View Profile</span>
                                     </button>
-                                    <button type="button" className={cx("attachment-button")}>
-                                        <FaImage />
+                                    <button className={cx("more-button")}>
+                                        <FaEllipsisV />
                                     </button>
                                 </div>
                             </div>
-                            <button
-                                type="submit"
-                                className={cx("send-button", { disabled: !newMessage.trim() })}
-                                disabled={!newMessage.trim()}
-                            >
-                                <FaPaperPlane />
-                                <span>{editingMessage ? "Update" : "Send"}</span>
-                            </button>
-                        </form>
-                    </>
-                ) : (
-                    <div className={cx("no-chat")}>
-                        <div className={cx("empty-state")}>
-                            <div className={cx("empty-icon")}>
-                                <FaUser size={48} />
+
+                            <div className={cx("messages")} ref={messagesContainerRef}>
+                                {messages.length > 0 ? (
+                                    messages.map((message, index) => (
+                                        <div
+                                            key={message.id || index}
+                                            className={cx("message", {
+                                                sent: message.sender_id === currentId,
+                                                received: message.sender_id !== currentId
+                                            })}
+                                        >
+                                            <div className={cx("message-content")}>
+                                                {message.content}
+                                                {message.sender_id === currentId && (
+                                                    <>
+                                                        <div className={cx("read-status")}>
+                                                            {message.is_read ? (
+                                                                <FaCheckDouble className={cx("read-icon")} />
+                                                            ) : (
+                                                                <FaCheck className={cx("unread-icon")} />
+                                                            )}
+                                                        </div>
+                                                        <div className={cx("message-menu")}>
+                                                            <button
+                                                                className={cx("menu-button")}
+                                                                onClick={() => setShowMenuForMessage(
+                                                                    showMenuForMessage === message.id ? null : message.id
+                                                                )}
+                                                            >
+                                                                <FaEllipsisV />
+                                                            </button>
+                                                            <div className={cx("menu-options", {
+                                                                show: showMenuForMessage === message.id
+                                                            })}>
+                                                                <div
+                                                                    className={cx("option")}
+                                                                    onClick={() => handleEditMessage(message)}
+                                                                >
+                                                                    <FaEdit />
+                                                                    <span>Edit</span>
+                                                                </div>
+                                                                <div
+                                                                    className={cx("option", "delete")}
+                                                                    onClick={() => handleDeleteMessage(message.id)}
+                                                                >
+                                                                    <FaTrash />
+                                                                    <span>Delete</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                            <div className={cx("time")}>{formatTime(message.created_at)}</div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className={cx("no-messages")}>
+                                        <p>No messages yet</p>
+                                        <span>Start the conversation by sending a message</span>
+                                    </div>
+                                )}
                             </div>
-                            <h3>Chọn một cuộc trò chuyện để bắt đầu</h3>
-                            <p>Kết nối với các ứng viên thảo luận về các cơ hội việc làm</p>
+
+                            <form className={cx("input")} onSubmit={handleSendMessage}>
+                                <div className={cx("input-wrapper")}>
+                                    <input
+                                        type="text"
+                                        placeholder={editingMessage ? "Edit your message..." : "Type a message..."}
+                                        value={newMessage}
+                                        onChange={handleTyping}
+                                    />
+                                    {editingMessage && (
+                                        <button
+                                            type="button"
+                                            className={cx("cancel-edit")}
+                                            onClick={() => {
+                                                setEditingMessage(null);
+                                                setNewMessage("");
+                                            }}
+                                        >
+                                            Cancel
+                                        </button>
+                                    )}
+                                    <div className={cx("attachments")}>
+                                        <button type="button" className={cx("attachment-button")}>
+                                            <FaPaperclip />
+                                        </button>
+                                        <button type="button" className={cx("attachment-button")}>
+                                            <FaImage />
+                                        </button>
+                                    </div>
+                                </div>
+                                <button
+                                    type="submit"
+                                    className={cx("send-button", { disabled: !newMessage.trim() })}
+                                    disabled={!newMessage.trim()}
+                                >
+                                    <FaPaperPlane />
+                                    <span>{editingMessage ? "Update" : "Send"}</span>
+                                </button>
+                            </form>
+                        </>
+                    ) : (
+                        <div className={cx("no-chat")}>
+                            <div className={cx("empty-state")}>
+                                <div className={cx("empty-icon")}>
+                                    <FaUser size={48} />
+                                </div>
+                                <h3>Chọn một cuộc trò chuyện để bắt đầu</h3>
+                                <p>Kết nối với các ứng viên thảo luận về các cơ hội việc làm</p>
+                            </div>
                         </div>
-                    </div>
-                )}
-            </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

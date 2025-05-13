@@ -16,6 +16,7 @@ const Notifications = require("../models/Notifications");
 const NotificationController = require("../controllers/NotificationController");
 const mailerService = require("../services/MailerService");
 const sequelize = require("../config/database");
+const JobApplication = require("../models/JobApplication");
 
 class AdminController {
   constructor() {
@@ -2199,6 +2200,118 @@ class AdminController {
       });
     } catch (error) {
       console.error("Error in getCompanyRegistrationTrend:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message
+      });
+    }
+  }
+
+  // Lấy thống kê CV ứng tuyển mới 
+  async getNewJobApplicationsStats(req, res) {
+    try {
+      const { company_id, since } = req.query;
+      
+      // Xác định thời điểm bắt đầu
+      let startDate;
+      if (since === 'today') {
+        // Lấy ngày hôm nay lúc 00:00:00
+        startDate = new Date();
+        startDate.setHours(0, 0, 0, 0);
+      } else if (since === 'yesterday') {
+        // Lấy ngày hôm qua lúc 00:00:00
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() - 1);
+        startDate.setHours(0, 0, 0, 0);
+      } else if (since === 'week') {
+        // Lấy 7 ngày trước 
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() - 7);
+      } else if (since === 'hour') {
+        // Lấy 1 giờ trước
+        startDate = new Date();
+        startDate.setHours(startDate.getHours() - 1);
+      } else {
+        // Mặc định 24 giờ qua
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() - 1);
+      }
+      
+      // Định nghĩa điều kiện tìm kiếm
+      const whereClause = {
+        applied_at: {
+          [Op.gte]: startDate
+        }
+      };
+      
+      // Nếu có company_id, thêm điều kiện lọc theo công ty
+      if (company_id) {
+        // Đầu tiên lấy tất cả job_id của công ty
+        const companyJobs = await Job.findAll({
+          attributes: ['job_id'],
+          where: { company_id },
+          raw: true
+        });
+        
+        const jobIds = companyJobs.map(job => job.job_id);
+        
+        if (jobIds.length > 0) {
+          whereClause.job_id = {
+            [Op.in]: jobIds
+          };
+        } else {
+          // Nếu công ty không có job nào, trả về 0
+          return res.json({
+            newApplications: 0,
+            byStatus: [],
+            recentApplications: []
+          });
+        }
+      }
+      
+      // Đếm số lượng đơn mới
+      const totalNewApplications = await JobApplication.count({
+        where: whereClause
+      });
+      
+      // Thống kê theo trạng thái
+      const applicationsByStatus = await JobApplication.findAll({
+        attributes: [
+          'status',
+          [sequelize.fn('COUNT', sequelize.col('application_id')), 'count']
+        ],
+        where: whereClause,
+        group: ['status']
+      });
+      
+      // Lấy 10 đơn ứng tuyển gần nhất
+      const recentApplications = await JobApplication.findAll({
+        where: whereClause,
+        order: [['applied_at', 'DESC']],
+        limit: 10,
+        include: [
+          {
+            model: Job,
+            attributes: ['title', 'company_id'],
+            required: true
+          }
+        ]
+      });
+      
+      // Map dữ liệu để trả về
+      const formattedByStatus = applicationsByStatus.map(status => ({
+        status: status.status,
+        count: parseInt(status.get('count'))
+      }));
+      
+      return res.json({
+        newApplications: totalNewApplications,
+        byStatus: formattedByStatus,
+        recentApplications: recentApplications
+      });
+      
+    } catch (error) {
+      console.error("Error in getNewJobApplicationsStats:", error);
       return res.status(500).json({
         message: "Internal server error",
         error: error.message

@@ -52,4 +52,5 @@ router.get("/recruiter/statistics", adminController.getRecruiterStatistics.bind(
 router.get("/company/plan-stats", adminController.getCompaniesByPlanStats.bind(adminController));
 router.get("/company/license-stats", adminController.getCompaniesByLicenseStats.bind(adminController));
 router.get("/company/registration-trend", adminController.getCompanyRegistrationTrend.bind(adminController));
+router.get("/job-applications/new-stats", adminController.getNewJobApplicationsStats.bind(adminController));
 module.exports = router;

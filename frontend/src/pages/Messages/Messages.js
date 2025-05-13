@@ -24,6 +24,8 @@ const Messages = () => {
   const [showMenuForMessage, setShowMenuForMessage] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isMobileView, setIsMobileView] = useState(false);
+  const [showConversations, setShowConversations] = useState(true);
   const messagesContainerRef = useRef(null);
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
@@ -43,6 +45,22 @@ const Messages = () => {
     markMessagesAsRead,
     resetUnreadCount
   } = useMessage();
+
+  // Check if the device is mobile
+  useEffect(() => {
+    const checkMobileView = () => {
+      setIsMobileView(window.innerWidth <= 768);
+    };
+    
+    // Initial check
+    checkMobileView();
+    
+    // Add event listener for window resize
+    window.addEventListener('resize', checkMobileView);
+    
+    // Cleanup
+    return () => window.removeEventListener('resize', checkMobileView);
+  }, []);
 
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
@@ -89,6 +107,11 @@ const Messages = () => {
     if (selectedConversation) {
       joinConversation(selectedConversation.id);
       
+      // On mobile, when a conversation is selected, hide the conversations list
+      if (isMobileView) {
+        setShowConversations(false);
+      }
+      
       // Listen for message updates
       socketService.socket.on('message_updated', (updatedMessage) => {
         // Update the message in the messages array
@@ -104,7 +127,7 @@ const Messages = () => {
         socketService.socket.off('message_updated');
       };
     }
-  }, [selectedConversation, messages]);
+  }, [selectedConversation, messages, isMobileView]);
 
   useEffect(() => {
     const fetchAllCompanyDetails = async () => {
@@ -144,11 +167,20 @@ const Messages = () => {
     setSelectedConversation(conversation);
     await fetchMessages(conversation.id);
     
+    // If on mobile, hide the conversations list
+    if (isMobileView) {
+      setShowConversations(false);
+    }
+    
     // Đánh dấu tin nhắn đã đọc và đặt lại số lượng tin nhắn chưa đọc
     if (currentId) {
       await markMessagesAsRead(conversation.id, currentId);
       await resetUnreadCount(conversation.id, currentId);
     }
+  };
+
+  const handleGoBackToList = () => {
+    setShowConversations(true);
   };
 
   const handleEditMessage = (message) => {
@@ -270,6 +302,7 @@ const Messages = () => {
 
   return (
     <div className={cx("wrapper")}>
+      {(!isMobileView || (isMobileView && showConversations)) && (
       <div className={cx("conversations")}>
         <div className={cx("header")}>
           <button className={cx("back-button")} onClick={handleBackToHome}>
@@ -277,17 +310,17 @@ const Messages = () => {
             <span>Back</span>
           </button>
           <h2>Messages</h2>
-          {conversations.length > 0 && (
-            <div className={cx("unread-count")}>
-              {conversations.reduce((total, conv) => {
-                if (conv.user1_id === currentId) {
-                  return total + conv.unread_count_user1;
-                } else {
-                  return total + conv.unread_count_user2;
-                }
-              }, 0)}
-            </div>
-          )}
+            {conversations.length > 0 && (
+              <div className={cx("unread-count")}>
+                {conversations.reduce((total, conv) => {
+                  if (conv.user1_id === currentId) {
+                    return total + conv.unread_count_user1;
+                  } else {
+                    return total + conv.unread_count_user2;
+                  }
+                }, 0)}
+              </div>
+            )}
         </div>
         <div className={cx("search-box")}>
           <input 
@@ -323,12 +356,12 @@ const Messages = () => {
                     {formatTime(conversation.last_message_at || new Date())}
                   </div>
                   {conversation.user1_id === currentId
-                    ? conversation.unread_count_user1 > 0 && (
-                      <div className={cx("unread")}>
-                        {conversation.unread_count_user1}
-                      </div>
-                    )
-                    : conversation.unread_count_user2 > 0 && (
+                      ? conversation.unread_count_user1 > 0 && (
+                        <div className={cx("unread")}>
+                          {conversation.unread_count_user1}
+                        </div>
+                      )
+                      : conversation.unread_count_user2 > 0 && (
                       <div className={cx("unread")}>
                         {conversation.unread_count_user2}
                       </div>
@@ -347,11 +380,18 @@ const Messages = () => {
           )}
         </div>
       </div>
+      )}
 
+      {(!isMobileView || (isMobileView && !showConversations)) && (
       <div className={cx("chat")}>
         {selectedConversation ? (
           <>
             <div className={cx("header")}>
+                {isMobileView && (
+                  <button className={cx("mobile-back")} onClick={handleGoBackToList}>
+                    <FaArrowLeft />
+                  </button>
+                )}
               <div className={cx("user-info")}>
                 <Avatar
                   src={companyDetails[selectedConversation.id]?.logo || images.avatar}
@@ -393,43 +433,43 @@ const Messages = () => {
                       <div className={cx("message-content")}>
                         {message.content}
                         {message.sender_id === currentId && (
-                          <>
-                            <div className={cx("read-status")}>
-                              {message.is_read ? (
-                                <FaCheckDouble className={cx("read-icon")} />
-                              ) : (
-                                <FaCheck className={cx("unread-icon")} />
-                              )}
-                            </div>
-                            <div className={cx("message-menu")}>
-                              <button
-                                className={cx("menu-button")}
-                                onClick={() => setShowMenuForMessage(
-                                  showMenuForMessage === message.id ? null : message.id
+                            <>
+                              <div className={cx("read-status")}>
+                                {message.is_read ? (
+                                  <FaCheckDouble className={cx("read-icon")} />
+                                ) : (
+                                  <FaCheck className={cx("unread-icon")} />
                                 )}
+                              </div>
+                          <div className={cx("message-menu")}>
+                            <button
+                              className={cx("menu-button")}
+                              onClick={() => setShowMenuForMessage(
+                                showMenuForMessage === message.id ? null : message.id
+                              )}
+                            >
+                              <FaEllipsisV />
+                            </button>
+                            <div className={cx("menu-options", {
+                              show: showMenuForMessage === message.id
+                            })}>
+                              <div
+                                className={cx("option")}
+                                onClick={() => handleEditMessage(message)}
                               >
-                                <FaEllipsisV />
-                              </button>
-                              <div className={cx("menu-options", {
-                                show: showMenuForMessage === message.id
-                              })}>
-                                <div
-                                  className={cx("option")}
-                                  onClick={() => handleEditMessage(message)}
-                                >
-                                  <FaEdit />
-                                  <span>Edit</span>
-                                </div>
-                                <div
-                                  className={cx("option", "delete")}
-                                  onClick={() => handleDeleteMessage(message.id)}
-                                >
-                                  <FaTrash />
-                                  <span>Delete</span>
-                                </div>
+                                <FaEdit />
+                                <span>Edit</span>
+                              </div>
+                              <div
+                                className={cx("option", "delete")}
+                                onClick={() => handleDeleteMessage(message.id)}
+                              >
+                                <FaTrash />
+                                <span>Delete</span>
                               </div>
                             </div>
-                          </>
+                          </div>
+                            </>
                         )}
                       </div>
                       <div className={cx("time")}>{formatTime(message.created_at)}</div>
@@ -495,6 +535,7 @@ const Messages = () => {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 };

@@ -66,7 +66,7 @@ const DashboardA = () => {
     }
     return colors;
   };
-
+  
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);

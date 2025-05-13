@@ -833,3 +833,253 @@
         }
     }
 }
+
+// Styling for screening feature
+.screening-summary {
+    margin-bottom: 30px;
+    background-color: #f8fafc;
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+
+    h4 {
+        margin-bottom: 15px;
+        font-size: 18px;
+        color: #1e293b;
+    }
+
+    .summary-stats {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+
+        @media (max-width: 768px) {
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .stat-item {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            
+            &.pass {
+                background-color: rgba(34, 197, 94, 0.1);
+                border-color: rgba(34, 197, 94, 0.3);
+            }
+            
+            &.review {
+                background-color: rgba(249, 115, 22, 0.1);
+                border-color: rgba(249, 115, 22, 0.3);
+            }
+            
+            &.reject {
+                background-color: rgba(239, 68, 68, 0.1);
+                border-color: rgba(239, 68, 68, 0.3);
+            }
+            
+            .stat-value {
+                font-size: 32px;
+                font-weight: bold;
+                margin-bottom: 5px;
+                
+                &.pass {
+                    color: #22c55e;
+                }
+                
+                &.review {
+                    color: #f97316;
+                }
+                
+                &.reject {
+                    color: #ef4444;
+                }
+            }
+            
+            .stat-label {
+                color: #64748b;
+                font-size: 14px;
+            }
+        }
+    }
+}
+
+.screening-results {
+    margin-bottom: 30px;
+    
+    h4 {
+        margin-bottom: 20px;
+        font-size: 18px;
+        color: #1e293b;
+    }
+    
+    .screening-candidate {
+        background-color: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 15px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border-left: 4px solid #94a3b8;
+        
+        &.pass {
+            border-left-color: #22c55e;
+        }
+        
+        &.review {
+            border-left-color: #f97316;
+        }
+        
+        &.reject {
+            border-left-color: #ef4444;
+        }
+        
+        h5 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            color: white;
+            
+            &.pass {
+                background-color: #22c55e;
+            }
+            
+            &.review {
+                background-color: #f97316;
+            }
+            
+            &.reject {
+                background-color: #ef4444;
+            }
+        }
+        
+        .score-display {
+            margin: 15px 0;
+            position: relative;
+            
+            .score-bar {
+                height: 8px;
+                background-color: #e2e8f0;
+                border-radius: 4px;
+                overflow: hidden;
+                position: relative;
+                
+                .score-fill {
+                    height: 100%;
+                    background-color: #3b82f6;
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    border-radius: 4px;
+                    
+                    .pass & {
+                        background-color: #22c55e;
+                    }
+                    
+                    .review & {
+                        background-color: #f97316;
+                    }
+                    
+                    .reject & {
+                        background-color: #ef4444;
+                    }
+                }
+            }
+            
+            .score-value {
+                position: absolute;
+                right: 0;
+                top: -20px;
+                font-size: 14px;
+                color: #64748b;
+                font-weight: 500;
+            }
+        }
+        
+        h6 {
+            font-size: 14px;
+            color: #1e293b;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .reasons, .recommendation, .interview-questions {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e2e8f0;
+            
+            &:last-child {
+                margin-bottom: 0;
+                padding-bottom: 0;
+                border-bottom: none;
+            }
+            
+            ul, ol {
+                margin: 0;
+                padding-left: 20px;
+                
+                li {
+                    color: #64748b;
+                    margin-bottom: 8px;
+                    font-size: 14px;
+                    line-height: 1.5;
+                    
+                    &:last-child {
+                        margin-bottom: 0;
+                    }
+                }
+            }
+            
+            p {
+                margin: 0;
+                color: #64748b;
+                font-size: 14px;
+                line-height: 1.5;
+            }
+        }
+    }
+}
+
+.recommendations {
+    background-color: #f8fafc;
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    
+    h4 {
+        margin-bottom: 15px;
+        font-size: 18px;
+        color: #1e293b;
+    }
+    
+    ul {
+        margin: 0;
+        padding-left: 20px;
+        
+        li {
+            color: #64748b;
+            margin-bottom: 10px;
+            font-size: 14px;
+            line-height: 1.5;
+            
+            &:last-child {
+                margin-bottom: 0;
+            }
+        }
+    }
+}

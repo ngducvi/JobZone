@@ -1003,6 +1003,7 @@ CREATE TABLE `reviews` (
   `created_by` varchar(255) DEFAULT NULL,
   `last_modified_at` datetime(6) DEFAULT NULL,
   `last_modified_by` varchar(255) DEFAULT NULL,
+  `helpful_count` int DEFAULT 0,
   `version` int DEFAULT '1',
   PRIMARY KEY (`review_id`),
   KEY `company_id` (`company_id`),

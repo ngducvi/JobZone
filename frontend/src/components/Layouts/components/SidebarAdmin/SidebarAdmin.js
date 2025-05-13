@@ -55,10 +55,10 @@ const sidebarIcons = [
         title: "Ứng viên",
         to: "/admin/candidate",
       },
-      {
-        title: "Phân quyền",
-        to: "/admin/users/roles",
-      },
+      // {
+      //   title: "Phân quyền",
+      //   to: "/admin/users/roles",
+      // },
     ],
   },
   // quản lý công ty

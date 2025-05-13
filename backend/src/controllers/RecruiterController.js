@@ -39,6 +39,7 @@ const Notifications = require("../models/Notifications");
 const fileService = require('../services/FileService');
 const NotificationController = require("./NotificationController");
 const excel = require('exceljs');
+const sequelize = require('sequelize');
 
 class RecruiterController {
   constructor() {
@@ -1639,6 +1640,287 @@ class RecruiterController {
         message: 'Lỗi khi xuất danh sách ứng viên',
         code: -1,
         error: error.message
+      });
+    }
+  }
+
+  async findSimilarCandidates(req, res) {
+    try {
+      const { idealCandidate, searchCriteria, model = "gpt-4o-mini" } = req.body;
+      
+      // Xác thực request
+      if (!idealCandidate) {
+        return res.status(400).json({
+          message: "Thiếu thông tin ứng viên mẫu",
+          code: -1
+        });
+      }
+
+      // Lấy danh sách ứng viên
+      const candidates = await Candidate.findAll({
+        where: {
+          is_searchable: true  // Chỉ tìm ứng viên cho phép tìm kiếm
+        },
+        limit: 30  // Giới hạn số lượng ứng viên để phân tích
+      });
+
+      if (candidates.length === 0) {
+        return res.status(404).json({
+          message: "Không tìm thấy ứng viên nào",
+          code: -1
+        });
+      }
+
+      // Lấy danh sách user_ids từ các ứng viên
+      const userIds = candidates.map(candidate => candidate.user_id);
+      
+      // Lấy thông tin người dùng riêng biệt thay vì dùng include
+      const users = await User.findAll({
+        where: { id: { [Op.in]: userIds } },
+        attributes: ['id', 'name', 'email']
+      });
+
+      // Chuẩn bị dữ liệu ứng viên
+      const candidatesList = candidates.map(candidate => {
+        const user = users.find(u => u.id === candidate.user_id);
+        return {
+          candidate_id: candidate.candidate_id,
+          user_id: candidate.user_id,
+          name: user ? user.name : "Unknown",
+          experience: candidate.experience,
+          skills: candidate.skills,
+          current_job_title: candidate.current_job_title,
+          current_company: candidate.current_company,
+          education: candidate.qualifications,
+          expected_salary: candidate.expected_salary,
+          location: candidate.location,
+          industry: candidate.industry,
+        };
+      });
+
+      // Gọi API OpenAI để phân tích
+      const response = await fetch(`${process.env.BASE_URL}/openai/find-similar-candidates`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${req.headers.authorization.split(' ')[1]}`
+        },
+        body: JSON.stringify({
+          idealCandidate,
+          candidatesList,
+          searchCriteria,
+          model
+        })
+      });
+
+      const data = await response.json();
+
+      // Nếu có kết quả từ OpenAI
+      if (data && data.similar_candidates) {
+        // Nếu muốn bổ sung thêm thông tin chi tiết cho từng ứng viên phù hợp
+        const enhancedResults = await Promise.all(
+          data.similar_candidates.map(async (result) => {
+            const candidateDetail = candidates.find(c => c.candidate_id === result.candidate_id);
+            const userDetail = users.find(u => candidateDetail && u.id === candidateDetail.user_id);
+            
+            // Nếu cần thêm các thông tin khác cho ứng viên
+            if (candidateDetail) {
+              return {
+                ...result,
+                additional_info: {
+                  email: userDetail ? userDetail.email : null,
+                  phone: candidateDetail.phone || null,
+                  profile_picture: candidateDetail.profile_picture || null,
+                  about_me: candidateDetail.about_me || null,
+                }
+              };
+            }
+            
+            return result;
+          })
+        );
+
+        return res.status(200).json({
+          message: "Tìm ứng viên tương tự thành công",
+          code: 1,
+          similar_candidates: enhancedResults,
+          analysis: data.analysis
+        });
+      }
+
+      return res.status(500).json({
+        message: "Không nhận được kết quả phân tích từ AI",
+        code: -1
+      });
+
+    } catch (error) {
+      console.error('Error in findSimilarCandidates:', error);
+      return res.status(500).json({
+        message: "Đã có lỗi xảy ra khi tìm ứng viên tương tự",
+        error: error.message,
+        code: -1
+      });
+    }
+  }
+
+  // Lấy thống kê CV ứng tuyển mới
+  async getNewJobApplicationsStats(req, res) {
+    try {
+      const { company_id, since } = req.query;
+      
+      // Xác định company_id từ user hiện tại nếu không được truyền vào
+      let companyId = company_id;
+      if (!companyId) {
+        const recruiterCompany = await RecruiterCompanies.findOne({
+          where: { user_id: req.user.id }
+        });
+        
+        if (!recruiterCompany) {
+          return res.status(404).json({
+            message: "Không tìm thấy thông tin công ty của nhà tuyển dụng",
+            code: -1
+          });
+        }
+        
+        companyId = recruiterCompany.company_id;
+      }
+      
+      // Xác định thời điểm bắt đầu
+      let startDate;
+      if (since === 'today') {
+        // Lấy ngày hôm nay lúc 00:00:00
+        startDate = new Date();
+        startDate.setHours(0, 0, 0, 0);
+      } else if (since === 'yesterday') {
+        // Lấy ngày hôm qua lúc 00:00:00
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() - 1);
+        startDate.setHours(0, 0, 0, 0);
+      } else if (since === 'week') {
+        // Lấy 7 ngày trước 
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() - 7);
+      } else if (since === 'hour') {
+        // Lấy 1 giờ trước
+        startDate = new Date();
+        startDate.setHours(startDate.getHours() - 1);
+      } else {
+        // Mặc định 24 giờ qua
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() - 1);
+      }
+      
+      // Lấy tất cả job_id của công ty
+      const companyJobs = await Job.findAll({
+        attributes: ['job_id', 'title'],
+        where: { company_id: companyId },
+        raw: true
+      });
+      
+      const jobIds = companyJobs.map(job => job.job_id);
+      
+      if (jobIds.length === 0) {
+        return res.json({
+          newApplications: 0,
+          byStatus: [],
+          byJob: [],
+          recentApplications: []
+        });
+      }
+      
+      // Định nghĩa điều kiện tìm kiếm
+      const whereClause = {
+        applied_at: {
+          [Op.gte]: startDate
+        },
+        job_id: {
+          [Op.in]: jobIds
+        }
+      };
+      
+      // Đếm số lượng đơn mới
+      const totalNewApplications = await JobApplication.count({
+        where: whereClause
+      });
+      
+      // Thống kê theo trạng thái
+      const applicationsByStatus = await JobApplication.findAll({
+        attributes: [
+          'status',
+          [sequelize.fn('COUNT', sequelize.col('application_id')), 'count']
+        ],
+        where: whereClause,
+        group: ['status']
+      });
+      
+      // Thống kê theo công việc
+      const applicationsByJob = await JobApplication.findAll({
+        attributes: [
+          'job_id',
+          [sequelize.fn('COUNT', sequelize.col('application_id')), 'count']
+        ],
+        where: whereClause,
+        group: ['job_id']
+      });
+      
+      // Lấy 10 đơn ứng tuyển gần nhất
+      const recentApplications = await JobApplication.findAll({
+        where: whereClause,
+        order: [['applied_at', 'DESC']],
+        limit: 10,
+        include: [
+          {
+            model: User,
+            attributes: ['name', 'email'],
+            required: true
+          }
+        ]
+      });
+      
+      // Map dữ liệu để trả về
+      const formattedByStatus = applicationsByStatus.map(status => ({
+        status: status.status,
+        count: parseInt(status.get('count'))
+      }));
+      
+      // Map dữ liệu theo công việc
+      const formattedByJob = applicationsByJob.map(item => {
+        const job = companyJobs.find(j => j.job_id === item.job_id);
+        return {
+          job_id: item.job_id,
+          job_title: job ? job.title : 'Unknown Job',
+          count: parseInt(item.get('count'))
+        };
+      });
+      
+      // Chuẩn bị dữ liệu đơn ứng tuyển gần đây
+      const formattedRecentApplications = recentApplications.map(app => {
+        const job = companyJobs.find(j => j.job_id === app.job_id);
+        return {
+          application_id: app.application_id,
+          job_id: app.job_id,
+          job_title: job ? job.title : 'Unknown Job',
+          user_name: app.User ? app.User.name : 'Unknown User',
+          user_email: app.User ? app.User.email : '',
+          status: app.status,
+          applied_at: app.applied_at
+        };
+      });
+      
+      return res.json({
+        newApplications: totalNewApplications,
+        byStatus: formattedByStatus,
+        byJob: formattedByJob,
+        recentApplications: formattedRecentApplications,
+        timestamp: new Date()
+      });
+      
+    } catch (error) {
+      console.error("Error in getNewJobApplicationsStats:", error);
+      return res.status(500).json({
+        message: "Lỗi khi lấy thống kê CV ứng tuyển mới",
+        error: error.message,
+        code: -1
       });
     }
   }

@@ -30,6 +30,18 @@ class SocketService {
         }
     }
 
+    joinCompanyRoom(companyId) {
+        if (this.socket) {
+            this.socket.emit('join_company', companyId);
+        }
+    }
+
+    leaveCompanyRoom(companyId) {
+        if (this.socket) {
+            this.socket.emit('leave_company', companyId);
+        }
+    }
+
     joinConversation(conversationId) {
         if (this.socket) {
             this.socket.emit('join_conversation', conversationId);
@@ -81,6 +93,18 @@ class SocketService {
     onNewNotification(callback) {
         if (this.socket) {
             this.socket.on('new_notification', callback);
+        }
+    }
+
+    onNewJobApplication(callback) {
+        if (this.socket) {
+            this.socket.on('new_job_application', callback);
+        }
+    }
+
+    removeNewJobApplicationListener() {
+        if (this.socket) {
+            this.socket.off('new_job_application');
         }
     }
 

@@ -52,6 +52,11 @@ Reviews.init({
         type: DataTypes.STRING,
         allowNull: true,
     },
+    helpful_count: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0,
+    },
     version: {
         type: DataTypes.INTEGER,
         allowNull: true,

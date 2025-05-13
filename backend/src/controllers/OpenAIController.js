@@ -719,6 +719,308 @@ Hãy trả về kết quả dưới dạng JSON với cấu trúc sau:
       return res.status(500).json({ error: "Lỗi khi so sánh ứng viên" });
     }
   }
+
+  async findSimilarCandidates(req, res) {
+    const { idealCandidate, candidatesList, model, searchCriteria } = req.body;
+
+    const prompt = `
+Là một chuyên gia tuyển dụng, hãy phân tích danh sách ứng viên và tìm những người phù hợp nhất với mẫu ứng viên lý tưởng. Trả về kết quả dưới dạng JSON.
+
+Mẫu ứng viên lý tưởng:
+- Kinh nghiệm: ${idealCandidate.experience || "Không yêu cầu cụ thể"}
+- Kỹ năng: ${idealCandidate.skills || "Không yêu cầu cụ thể"}
+- Vị trí công việc: ${idealCandidate.position || "Không yêu cầu cụ thể"}
+- Công ty hiện tại: ${idealCandidate.company || "Không yêu cầu cụ thể"}
+- Trình độ học vấn: ${idealCandidate.education || "Không yêu cầu cụ thể"}
+- Mức lương mong muốn: ${idealCandidate.salary || "Không yêu cầu cụ thể"}
+- Địa điểm: ${idealCandidate.location || "Không yêu cầu cụ thể"}
+- Ngành nghề: ${idealCandidate.industry || "Không yêu cầu cụ thể"}
+
+Tiêu chí tìm kiếm ưu tiên:
+${searchCriteria ? searchCriteria.map(criteria => `- ${criteria}`).join('\n') : `
+- Kỹ năng phù hợp
+- Kinh nghiệm phù hợp
+- Ngành nghề phù hợp
+- Mức lương phù hợp
+- Địa điểm phù hợp`}
+
+Danh sách ứng viên để đánh giá:
+${candidatesList.map((candidate, index) => `
+Ứng viên ${index + 1}:
+- ID: ${candidate.candidate_id}
+- Tên: ${candidate.name}
+- Kinh nghiệm: ${candidate.experience || "Chưa cập nhật"}
+- Kỹ năng: ${candidate.skills || "Chưa cập nhật"}
+- Vị trí hiện tại: ${candidate.current_job_title || "Chưa cập nhật"}
+- Công ty hiện tại: ${candidate.current_company || "Chưa cập nhật"}
+- Trình độ học vấn: ${candidate.education || "Chưa cập nhật"}
+- Mức lương mong muốn: ${candidate.expected_salary || "Chưa cập nhật"}
+- Địa điểm: ${candidate.location || "Chưa cập nhật"}
+- Ngành nghề: ${candidate.industry || "Chưa cập nhật"}
+`).join('\n')}
+
+Hãy trả về kết quả dưới dạng JSON với cấu trúc sau:
+{
+  "similar_candidates": [
+    {
+      "candidate_id": "id của ứng viên",
+      "name": "Tên ứng viên",
+      "match_score": 85,
+      "match_reasons": [
+        "Lý do phù hợp 1",
+        "Lý do phù hợp 2"
+      ],
+      "gap_analysis": [
+        "Điểm cần cải thiện 1",
+        "Điểm cần cải thiện 2"
+      ]
+    }
+  ],
+  "analysis": {
+    "total_candidates": 10,
+    "high_match_candidates": 3,
+    "medium_match_candidates": 5,
+    "low_match_candidates": 2,
+    "key_skills_missing": [
+      "Kỹ năng còn thiếu 1",
+      "Kỹ năng còn thiếu 2"
+    ],
+    "recommendations": [
+      "Đề xuất 1 cho việc tìm kiếm",
+      "Đề xuất 2 cho việc tìm kiếm"
+    ]
+  }
+}`;
+
+    try {
+      const bot = await Bot.findOne({ where: { name: model } });
+      await this.configClientSupplier(bot);
+      const completion = await this.client.chat.completions.create({
+        model,
+        messages: [
+          { role: "system", content: "Bạn là một chuyên gia tuyển dụng. Hãy tìm kiếm và đánh giá ứng viên phù hợp một cách chuyên nghiệp." },
+          { role: "user", content: prompt }
+        ],
+        stream: false,
+        response_format: { type: "json_object" }
+      });
+
+      const content = completion.choices[0].message.content;
+      let result;
+
+      try {
+        result = JSON.parse(content);
+      } catch (parseError) {
+        console.error('Error parsing JSON:', parseError);
+        console.error('Raw content:', content);
+        return res.status(500).json({ error: "Lỗi khi phân tích kết quả từ AI" });
+      }
+
+      return res.json(result);
+    } catch (error) {
+      console.error('Error in findSimilarCandidates:', error);
+      return res.status(500).json({ error: "Lỗi khi tìm ứng viên tương tự" });
+    }
+  }
+
+  async screenCandidates(req, res) {
+    const { candidates, job, model, screeningCriteria } = req.body;
+
+    const prompt = `
+Là một chuyên gia tuyển dụng, hãy sàng lọc tự động các ứng viên sau cho vị trí ${job.title} dựa trên các tiêu chí đã cho và trả về kết quả dưới dạng JSON:
+
+Thông tin công việc:
+- Tiêu đề: ${job.title}
+- Mô tả: ${job.description}
+- Yêu cầu: ${job.job_requirements}
+- Kỹ năng cần thiết: ${job.skills}
+- Mức lương: ${job.salary}
+- Địa điểm: ${job.location}
+- Trình độ yêu cầu: ${job.education}
+- Kinh nghiệm yêu cầu: ${job.experience}
+
+Tiêu chí sàng lọc:
+${screeningCriteria ? screeningCriteria.join('\n') : `
+- Mức độ phù hợp kỹ năng tối thiểu
+- Kinh nghiệm tối thiểu
+- Khả năng đáp ứng về mặt lương
+- Địa điểm làm việc phù hợp
+- Trình độ học vấn phù hợp`}
+
+Thông tin ứng viên:
+${candidates.map((candidate, index) => `
+Ứng viên ${index + 1}:
+- Tên: ${candidate.name}
+- Kinh nghiệm: ${candidate.experience}
+- Kỹ năng: ${candidate.skills}
+- Mức lương hiện tại: ${candidate.current_salary}
+- Mức lương mong muốn: ${candidate.expected_salary}
+- Địa điểm: ${candidate.location}
+- Trình độ học vấn: ${candidate.qualifications}
+- Mục tiêu nghề nghiệp: ${candidate.career_objective}
+`).join('\n')}
+
+Hãy trả về kết quả dưới dạng JSON với cấu trúc sau:
+{
+  "screening_results": [
+    {
+      "name": "Tên ứng viên",
+      "status": "pass/review/reject",
+      "reasons": [
+        "Lý do 1 cho trạng thái",
+        "Lý do 2 cho trạng thái"
+      ],
+      "score": 85,
+      "recommendation": "Đề xuất hành động tiếp theo cho ứng viên này",
+      "suggested_interview_questions": [
+        "Câu hỏi phỏng vấn 1",
+        "Câu hỏi phỏng vấn 2"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "review": 3,
+    "rejected": 2,
+    "recommendations": [
+      "Đề xuất chung 1 cho quá trình sàng lọc",
+      "Đề xuất chung 2 cho quá trình sàng lọc"
+    ]
+  }
+}`;
+
+    try {
+      const bot = await Bot.findOne({ where: { name: model } });
+      await this.configClientSupplier(bot);
+      const completion = await this.client.chat.completions.create({
+        model,
+        messages: [
+          { role: "system", content: "Bạn là một chuyên gia tuyển dụng. Hãy sàng lọc tự động các ứng viên một cách chuyên nghiệp và khách quan." },
+          { role: "user", content: prompt }
+        ],
+        stream: false,
+        response_format: { type: "json_object" }
+      });
+
+      const content = completion.choices[0].message.content;
+      let result;
+
+      try {
+        result = JSON.parse(content);
+      } catch (parseError) {
+        console.error('Error parsing JSON:', parseError);
+        console.error('Raw content:', content);
+        return res.status(500).json({ error: "Lỗi khi phân tích kết quả từ AI" });
+      }
+
+      return res.json(result);
+    } catch (error) {
+      console.error('Error in screenCandidates:', error);
+      return res.status(500).json({ error: "Lỗi khi sàng lọc ứng viên" });
+    }
+  }
+
+  async analyzeJobForCandidate(req, res) {
+    const { job, candidateProfile, model = "gpt-4o-mini" } = req.body;
+
+    if (!job || !candidateProfile) {
+      return res.status(400).json({ error: "Thông tin công việc và hồ sơ ứng viên là bắt buộc" });
+    }
+
+    const prompt = `
+Với vai trò là một cố vấn nghề nghiệp AI, hãy phân tích tin tuyển dụng này cho ứng viên và đưa ra những nhận xét chi tiết.
+
+THÔNG TIN CÔNG VIỆC:
+- Vị trí: ${job.title}
+- Công ty: ${job.company_name || "Không xác định"}
+- Mô tả: ${job.description}
+- Yêu cầu: ${job.job_requirements}
+- Lương: ${job.salary || "Không xác định"}
+- Địa điểm: ${job.location || "Không xác định"}
+- Phúc lợi: ${job.benefits || "Không xác định"}
+
+HỒ SƠ ỨNG VIÊN:
+- Kỹ năng: ${candidateProfile.skills || "Không xác định"}
+- Kinh nghiệm: ${candidateProfile.experience || "Không xác định"}
+- Học vấn: ${candidateProfile.education || "Không xác định"}
+- Vị trí hiện tại: ${candidateProfile.current_job_title || "Không xác định"}
+- Công ty hiện tại: ${candidateProfile.current_company || "Không xác định"}
+
+Dựa trên thông tin trên, vui lòng cung cấp các nội dung sau dưới dạng JSON:
+1. Phân tích chi tiết sự phù hợp giữa hồ sơ ứng viên và yêu cầu công việc
+2. Phân tích khoảng cách về kỹ năng
+3. Lời khuyên ứng tuyển cá nhân hóa
+4. Các câu hỏi phỏng vấn tiềm năng mà ứng viên có thể gặp
+5. Lời khuyên về thương lượng lương nếu có
+
+Trả về kết quả dưới dạng JSON với cấu trúc sau:
+{
+  "match_analysis": {
+    "overall_match_score": 85,
+    "strengths": ["Điểm mạnh 1", "Điểm mạnh 2"],
+    "gaps": ["Khoảng cách 1", "Khoảng cách 2"],
+    "detailed_skills_match": {
+      "matched_skills": ["Kỹ năng 1", "Kỹ năng 2"],
+      "missing_skills": ["Kỹ năng 3", "Kỹ năng 4"],
+      "partially_matched_skills": ["Kỹ năng 5 (lý do phù hợp một phần)"]
+    }
+  },
+  "application_tips": [
+    "Lời khuyên 1",
+    "Lời khuyên 2"
+  ],
+  "interview_questions": [
+    {
+      "question": "Câu hỏi 1?",
+      "reasoning": "Tại sao câu hỏi này có thể được hỏi",
+      "preparation_tips": "Cách chuẩn bị cho câu hỏi này"
+    },
+    {
+      "question": "Câu hỏi 2?",
+      "reasoning": "Tại sao câu hỏi này có thể được hỏi",
+      "preparation_tips": "Cách chuẩn bị cho câu hỏi này"
+    }
+  ],
+  "salary_advice": {
+    "market_insights": "Thông tin về mức lương cho vị trí này",
+    "negotiation_tips": [
+      "Lời khuyên 1",
+      "Lời khuyên 2"
+    ]
+  },
+  "summary": "Tóm tắt ngắn gọn về phân tích tổng thể và các khuyến nghị chính"
+}`;
+
+    try {
+      const bot = await Bot.findOne({ where: { name: model } });
+      await this.configClientSupplier(bot);
+      const completion = await this.client.chat.completions.create({
+        model,
+        messages: [
+          { role: "system", content: "Bạn là một cố vấn nghề nghiệp chuyên giúp các ứng viên phân tích tin tuyển dụng. Hãy đưa ra những nhận xét chi tiết và thiết thực." },
+          { role: "user", content: prompt }
+        ],
+        stream: false,
+        response_format: { type: "json_object" }
+      });
+
+      const content = completion.choices[0].message.content;
+      let result;
+
+      try {
+        result = JSON.parse(content);
+      } catch (parseError) {
+        console.error('Lỗi phân tích JSON:', parseError);
+        console.error('Nội dung thô:', content);
+        return res.status(500).json({ error: "Lỗi khi phân tích phản hồi từ AI" });
+      }
+
+      return res.json(result);
+    } catch (error) {
+      console.error('Lỗi trong analyzeJobForCandidate:', error);
+      return res.status(500).json({ error: "Lỗi khi phân tích công việc cho ứng viên" });
+    }
+  }
 }
 
 module.exports = new OpenAIController();

@@ -5,6 +5,11 @@
     padding: 20px;
     gap: 20px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    
+    @media (max-width: 768px) {
+      padding: 10px;
+      gap: 0;
+    }
   }
   
   // Loading state
@@ -47,6 +52,12 @@
     flex-direction: column;
     overflow: hidden;
     transition: all 0.3s ease;
+    
+    @media (max-width: 768px) {
+      flex: 1;
+      width: 100%;
+      border-radius: 8px;
+    }
   
     .header {
       padding: 16px 20px;
@@ -291,6 +302,12 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    
+    @media (max-width: 768px) {
+      flex: 1;
+      width: 100%;
+      border-radius: 8px;
+    }
   
     .header {
       padding: 16px 20px;
@@ -300,10 +317,36 @@
       justify-content: space-between;
       background: #013a74;
       
+      @media (max-width: 768px) {
+        padding: 12px 16px;
+      }
+      
+      .mobile-back {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        background: rgba(255, 255, 255, 0.15);
+        border: none;
+        color: white;
+        border-radius: 8px;
+        margin-right: 12px;
+        cursor: pointer;
+        
+        &:hover {
+          background: rgba(255, 255, 255, 0.25);
+        }
+      }
+      
       .user-info {
         display: flex;
         align-items: center;
         gap: 12px;
+        
+        @media (max-width: 768px) {
+          gap: 8px;
+        }
       }
   
       .avatar {
@@ -312,6 +355,11 @@
         border-radius: 50%;
         object-fit: cover;
         border: 2px solid white;
+        
+        @media (max-width: 768px) {
+          width: 48px;
+          height: 48px;
+        }
       }
   
       .info {
@@ -320,6 +368,11 @@
           color: white;
           margin-bottom: 8px;
           font-size: 20px;
+          
+          @media (max-width: 768px) {
+            font-size: 16px;
+          margin-bottom: 4px;
+          }
         }
   
         .status {
@@ -328,6 +381,11 @@
           display: flex;
           align-items: center;
           gap: 6px;
+          
+          @media (max-width: 768px) {
+            font-size: 12px;
+            gap: 4px;
+          }
           
           .status-dot {
             width: 8px;
@@ -343,6 +401,10 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            
+            @media (max-width: 768px) {
+              max-width: 180px;
+            }
           }
         }
       }
@@ -350,6 +412,10 @@
       .actions {
         display: flex;
         gap: 8px;
+        
+        @media (max-width: 768px) {
+          display: none;
+        }
   
         .profile-button {
           display: flex;
@@ -397,6 +463,10 @@
       display: flex;
       flex-direction: column;
       background: #f8f9fa;
+      
+      @media (max-width: 768px) {
+        padding: 16px;
+      }
   
       &::-webkit-scrollbar {
         width: 6px;
@@ -421,6 +491,11 @@
         position: relative;
         margin-bottom: 16px;
         
+        @media (max-width: 768px) {
+          max-width: 80%;
+          margin-bottom: 12px;
+        }
+        
         .message-content {
           padding: 12px 16px;
           border-radius: 16px;
@@ -428,6 +503,11 @@
           position: relative;
           font-size: 14px;
           word-break: break-word;
+          
+          @media (max-width: 768px) {
+            padding: 10px 14px;
+            font-size: 13px;
+          }
         }
   
         .read-status {
@@ -454,6 +534,11 @@
           visibility: hidden;
           transition: all 0.2s ease;
           z-index: 10;
+          
+          @media (max-width: 768px) {
+            top: -20px;
+            transform: none;
+          }
   
           .menu-button {
             width: 32px;
@@ -468,6 +553,12 @@
             cursor: pointer;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             transition: all 0.2s ease;
+            
+            @media (max-width: 768px) {
+              width: 28px;
+              height: 28px;
+              font-size: 12px;
+            }
   
             &:hover {
               background: #f3f4f6;
@@ -488,6 +579,13 @@
             opacity: 0;
             visibility: hidden;
             transition: all 0.2s ease;
+            
+            @media (max-width: 768px) {
+              top: 0;
+              transform: none;
+              right: 36px;
+              min-width: 140px;
+            }
   
             &.show {
               opacity: 1;
@@ -503,6 +601,11 @@
               cursor: pointer;
               transition: all 0.2s ease;
               font-size: 14px;
+              
+              @media (max-width: 768px) {
+                padding: 8px 12px;
+                font-size: 13px;
+              }
   
               &:hover {
                 background: #f3f4f6;
@@ -542,6 +645,10 @@
             color: #9ca3af;
             margin-top: 4px;
             padding: 0 4px;
+            
+            @media (max-width: 768px) {
+              font-size: 10px;
+            }
           }
           
           .message-menu {
@@ -549,9 +656,17 @@
             right: -40px;
             left: auto;
             
+            @media (max-width: 768px) {
+              right: -30px;
+            }
+            
             .menu-options {
               right: 40px;
               left: auto;
+              
+              @media (max-width: 768px) {
+                right: 36px;
+              }
             }
           }
         }
@@ -567,19 +682,31 @@
           
           .time {
             text-align: left;
-            font-size: 12px;
-            color: #9ca3af;
+          font-size: 12px;
+          color: #9ca3af;
             margin-top: 4px;
-            padding: 0 4px;
+          padding: 0 4px;
+            
+            @media (max-width: 768px) {
+              font-size: 10px;
+            }
           }
           
           .message-menu {
             left: -40px;
             right: auto;
             
+            @media (max-width: 768px) {
+              left: -30px;
+            }
+            
             .menu-options {
               left: 40px;
               right: auto;
+              
+              @media (max-width: 768px) {
+                left: 36px;
+              }
             }
           }
         }
@@ -614,6 +741,11 @@
       gap: 12px;
       background: white;
       align-items: center;
+      
+      @media (max-width: 768px) {
+        padding: 12px;
+        gap: 8px;
+      }
   
       .input-wrapper {
         flex: 1;
@@ -625,6 +757,11 @@
         border-radius: 50px;
         transition: all 0.2s ease;
         background: #f9fafb;
+        
+        @media (max-width: 768px) {
+          padding: 6px 12px;
+          gap: 6px;
+        }
   
         &:focus-within {
           border-color: #013a74;
@@ -639,6 +776,11 @@
           font-size: 15px;
           background: transparent;
           padding: 8px 0;
+          
+          @media (max-width: 768px) {
+            font-size: 14px;
+            padding: 6px 0;
+          }
   
           &::placeholder {
             color: #9ca3af;
@@ -648,6 +790,10 @@
         .attachments {
           display: flex;
           gap: 8px;
+          
+          @media (max-width: 768px) {
+            gap: 4px;
+          }
   
           .attachment-button {
             width: 36px;
@@ -661,6 +807,11 @@
             cursor: pointer;
             transition: all 0.2s ease;
             border-radius: 50%;
+            
+            @media (max-width: 768px) {
+              width: 32px;
+              height: 32px;
+            }
   
             &:hover {
               color: #013a74;
@@ -683,6 +834,12 @@
         border-radius: 50%;
         cursor: pointer;
         transition: all 0.2s ease;
+        
+        @media (max-width: 768px) {
+          width: 40px;
+          height: 40px;
+          min-width: 40px;
+        }
   
         span {
           display: none;
@@ -716,6 +873,10 @@
       padding: 40px;
       max-width: 400px;
       
+      @media (max-width: 768px) {
+        padding: 20px;
+      }
+      
       .empty-icon {
         width: 80px;
         height: 80px;
@@ -726,6 +887,12 @@
         justify-content: center;
         margin-bottom: 24px;
         color: #6b7280;
+        
+        @media (max-width: 768px) {
+          width: 60px;
+          height: 60px;
+          margin-bottom: 16px;
+        }
       }
       
       h3 {
@@ -733,12 +900,21 @@
         margin-bottom: 12px;
         font-size: 18px;
         color: #374151;
+        
+        @media (max-width: 768px) {
+          font-size: 16px;
+          margin-bottom: 8px;
+        }
       }
       
       p {
         font-size: 15px;
         color: #6b7280;
         line-height: 1.5;
+        
+        @media (max-width: 768px) {
+          font-size: 13px;
+        }
       }
     }
   }

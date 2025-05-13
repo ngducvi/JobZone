@@ -39,6 +39,7 @@ const RecruiterCompanies = require("../models/RecruiterConpanies");
 const Reviews = require("../models/Reviews");
 const fileService = require('../services/FileService');
 const NotificationController = require("./NotificationController");
+const { getIO, notifyNewJobApplication } = require("../config/socket");
 
 class UserController {
   constructor() {
@@ -1373,13 +1374,28 @@ class UserController {
   }
   // get all reviews by company_id
   async getAllReviewsByCompanyId(req, res) {
-    const reviews = await Reviews.findAll({
-      where: {
-        company_id: req.params.company_id,
-      },
-      order: [["review_date", "DESC"]],
-    });
-    return res.json({ reviews });
+    try {
+      const { company_id } = req.params;
+      const { rating } = req.query;
+      
+      // Build where clause
+      const whereClause = { company_id };
+      
+      // Add rating filter if provided
+      if (rating) {
+        whereClause.rating = parseInt(rating);
+      }
+      
+      const reviews = await Reviews.findAll({
+        where: whereClause,
+        order: [["review_date", "DESC"]],
+      });
+      
+      return res.json({ reviews });
+    } catch (error) {
+      console.error('Error getting reviews by company ID:', error);
+      return res.status(500).json({ message: 'Lỗi khi lấy đánh giá', error: error.message });
+    }
   }
 
   // get all jobs với lọc deadline  
@@ -2603,17 +2619,69 @@ class UserController {
       return res.status(200).json({
         candidateStatus,
       });
-    } catch (error)   {
+    } catch (error) {
       return res.status(500).json({
         message: error.message,
         code: -1,
       });
     }
   }
+  
+  async checkUserPlan(req, res) {
+    try {
+      const userId = req.user.id;
+      const user = await User.findByPk(userId);
+      
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+          code: -1
+        });
+      }
+      
+      // Determine AI features access level based on plan
+      const plan = user.plan || 'Basic';
+      let aiAccess = {
+        canUseAI: false,
+        features: [],
+        plan: plan
+      };
+      
+      switch (plan) {
+        case 'ProMax':
+          aiAccess.canUseAI = true;
+          aiAccess.features = ['job_analysis', 'skills_match', 'resume_tips', 'interview_prep', 'salary_negotiation'];
+          break;
+        case 'Pro':
+          aiAccess.canUseAI = true;
+          aiAccess.features = ['job_analysis', 'skills_match', 'resume_tips'];
+          break;
+        case 'Basic':
+          aiAccess.canUseAI = true;
+          aiAccess.features = ['job_analysis'];
+          break;
+        default:
+          aiAccess.canUseAI = false;
+          aiAccess.features = [];
+      }
+      
+      return res.status(200).json({
+        aiAccess,
+        code: 1
+      });
+    } catch (error) {
+      console.error("Error in checkUserPlan:", error);
+      return res.status(500).json({
+        message: "Error checking user plan",
+        code: -1,
+        error: error.message
+      });
+    }
+  }
 
   // Thêm vào UserController
   async applyForJob(req, res) {
-    const { job_id } = req.body;
+    const { job_id, cv_id, previous_status } = req.body;
     const userId = req.user.id;
 
     try {
@@ -2649,10 +2717,44 @@ class UserController {
       });
 
       if (existingApplication) {
-        return res.status(400).json({
-          message: "Bạn đã nộp đơn cho công việc này rồi",
-          code: -1,
-        });
+        // Kiểm tra nếu đơn ứng tuyển đã được rút hoặc bị từ chối và đã qua thời gian chờ
+        if ((existingApplication.status === "Đã rút đơn" || existingApplication.status === "Đã từ chối") && existingApplication.updated_at) {
+          const updatedDate = new Date(existingApplication.updated_at);
+          const now = new Date();
+          
+          // Reset time part to 00:00:00 to compare only dates
+          updatedDate.setHours(0, 0, 0, 0);
+          now.setHours(0, 0, 0, 0);
+          
+          const daysSinceUpdate = Math.floor((now - updatedDate) / (1000 * 60 * 60 * 24));
+          const requiredDays = existingApplication.status === "Đã rút đơn" ? 7 : 30;
+          
+          if (daysSinceUpdate < requiredDays) {
+            return res.status(400).json({
+              message: `Bạn cần đợi ${requiredDays - daysSinceUpdate} ngày nữa để ứng tuyển lại`,
+              code: -1,
+            });
+          }
+          
+          // Nếu đã qua thời gian chờ, cập nhật trạng thái của đơn ứng tuyển
+          await existingApplication.update({
+            status: "Đang xét duyệt",
+            updated_at: new Date()
+          });
+          
+          // Trả về thành công
+          return res.status(200).json({
+            message: "Ứng tuyển lại thành công",
+            code: 1,
+            application: existingApplication
+          });
+        } else if (existingApplication.status !== "Đã rút đơn" && existingApplication.status !== "Đã từ chối") {
+          // Nếu đơn ứng tuyển không phải đã rút hoặc bị từ chối, không cho phép ứng tuyển lại
+          return res.status(400).json({
+            message: "Bạn đã nộp đơn cho công việc này rồi",
+            code: -1,
+          });
+        }
       }
 
       // Lấy thông tin user và company
@@ -2666,14 +2768,22 @@ class UserController {
         });
       }
 
-      // Tạo đơn ứng tuyển mới
-      const application = await JobApplication.create({
-        application_id: this.generateApplicationId(),
-        user_id: userId,
-        job_id: job_id,
-        applied_at: new Date(),
-        status: "Đang xét duyệt",
-      });
+      // Tạo đơn ứng tuyển mới hoặc cập nhật đơn hiện có
+      let application;
+      if (existingApplication) {
+        application = existingApplication;
+        application.status = "Đang xét duyệt";
+        application.updated_at = new Date();
+        await application.save();
+      } else {
+        application = await JobApplication.create({
+          application_id: this.generateApplicationId(),
+          user_id: userId,
+          job_id: job_id,
+          applied_at: new Date(),
+          status: "Đang xét duyệt",
+        });
+      }
 
       // từ company_id lây ra user_id từ bảng RecruiterCompanies
       const recruiterCompany = await RecruiterCompanies.findOne({
@@ -2694,6 +2804,29 @@ class UserController {
       } catch (notificationError) {
         console.error('Error creating notification:', notificationError);
         // Không trả về lỗi nếu tạo thông báo thất bại
+      }
+      
+      // Gửi thông báo realtime qua socket.io
+      try {
+        // Lấy thông tin candidate
+        const candidate = await Candidate.findOne({
+          where: { user_id: userId }
+        });
+        
+        // Gửi thông báo realtime
+        notifyNewJobApplication({
+          job_id: job_id,
+          job_title: job.title,
+          application_id: application.application_id,
+          candidate_name: user.name,
+          applied_at: application.applied_at,
+          company_id: job.company_id,
+          user_id: userId,
+          candidate_id: candidate ? candidate.candidate_id : null
+        });
+      } catch (socketError) {
+        console.error('Error sending realtime notification:', socketError);
+        // Không trả về lỗi nếu gửi thông báo realtime thất bại
       }
 
       // Gửi response ngay lập tức
@@ -3834,10 +3967,6 @@ class UserController {
     }
   }
 }
-
-
-
-
 
 
 module.exports = new UserController();
