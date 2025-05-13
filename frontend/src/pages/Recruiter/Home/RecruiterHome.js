@@ -50,6 +50,38 @@ function RecruiterHome() {
   const token = localStorage.getItem("token");
   const [hasBusinessLicense, setHasBusinessLicense] = useState(false);
 
+  const handleStatusChange = async (applicationId, newStatus) => {
+    try {
+      await authAPI().post(recruiterApis.editJobApplicationStatus, {
+        job_application_id: applicationId,
+        status: newStatus,
+        user_id: user.id,
+        recruiter_id: companyInfo.user_id,
+        company_id: companyInfo.company_id,
+        company_name: companyInfo.company_name,
+      });
+
+      // Cập nhật state jobApplications sau khi thay đổi trạng thái
+      setJobApplications(prevState => {
+        const newState = { ...prevState };
+        // Tìm và cập nhật application trong tất cả các job
+        Object.keys(newState).forEach(jobId => {
+          newState[jobId] = newState[jobId].map(application => 
+            application.application_id === applicationId 
+              ? { ...application, status: newStatus }
+              : application
+          );
+        });
+        return newState;
+      });
+
+      toast.success(`Đã cập nhật trạng thái ứng viên thành ${newStatus}`);
+    } catch (error) {
+      console.error("Error updating application status:", error);
+      toast.error("Có lỗi xảy ra khi cập nhật trạng thái");
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -324,53 +356,106 @@ function RecruiterHome() {
         {/* recent job_applications */}
         <div className={cx("recent-job-applications")}>
           <h3>Tin tuyển dụng mới nhất</h3>
-          <div className={cx("job-list")}>
-            {Object.keys(jobApplications).map((jobId) => (
-              <div key={jobId}>
-                {jobApplications[jobId].map((application) => (
-                  <div
-                    key={application.application_id}
-                    className={cx("applicant-card")}
-                  >
-                    <img
-                      src={application.candidate.profile_picture}
-                      alt={application.candidate.name}
-                    />
-                    <div>
-                      <h3>{application.user.name || "Không có tên"}</h3>
-                      <p>
-                        {application.candidate.location || "Không có địa điểm"}
-                      </p>
-                      <p>
-                        $
-                        {application.candidate.current_salary ||
-                          "Không có thông tin"}{" "}
-                        / hour
-                      </p>
-                      <div className={cx("tags")}>
-                        <span>App</span>
-                        <span>Design</span>
-                        <span>Digital</span>
-                      </div>
-                    </div>
-                    <div className={cx("applicant-actions")}>
-                      <button className={cx("action-btn")}>
-                        <FontAwesomeIcon icon={faEye} />
-                      </button>
-                      <button className={cx("action-btn")}>
-                        <FontAwesomeIcon icon={faCheck} />
-                      </button>
-                      <button className={cx("action-btn")}>
-                        <FontAwesomeIcon icon={faTimes} />
-                      </button>
-                      <button className={cx("action-btn")}>
-                        <FontAwesomeIcon icon={faTrash} />
-                      </button>
-                    </div>
+          <div className={cx("jobs-container")}>
+            {jobs.slice(0, 5).map((job) => (
+              <div key={job.job_id} className={cx("job-section")}>
+                <div className={cx("job-header")}>
+                  <h4>{job.title}</h4>
+                  <div className={cx("job-meta")}>
+                    <span>
+                      <i className="fa-solid fa-users"></i>
+                      {jobApplications[job.job_id]?.length || 0} ứng viên
+                    </span>
+                    <span>
+                      <i className="fa-solid fa-clock"></i>
+                      Hết hạn: {new Date(job.deadline).toLocaleDateString("vi-VN")}
+                    </span>
                   </div>
-                ))}
+                </div>
+                
+                <div className={cx("applicants-list")}>
+                  {jobApplications[job.job_id]?.length > 0 ? (
+                    jobApplications[job.job_id].slice(0, 3).map((application) => (
+                      <div
+                        key={application.application_id}
+                        className={cx("applicant-card")}
+                      >
+                        <img
+                          src={application.candidate.profile_picture || images.avatar}
+                          alt={application.user.name}
+                          className={cx("applicant-avatar")}
+                        />
+                        <div className={cx("applicant-info")}>
+                          <h5>{application.user.name || "Không có tên"}</h5>
+                          <p className={cx("location")}>
+                            <i className="fa-solid fa-location-dot"></i>
+                            {application.candidate.location || "Không có địa điểm"}
+                          </p>
+                          <p className={cx("salary")}>
+                            <i className="fa-solid fa-money-bill"></i>
+                            {application.candidate.current_salary || "Chưa cập nhật"} / giờ
+                          </p>
+                          <div className={cx("tags")}>
+                            {Array.isArray(application.candidate.skills) ? (
+                              application.candidate.skills.slice(0, 3).map((skill, index) => (
+                                <span key={index}>{skill}</span>
+                              ))
+                            ) : (
+                              <>
+                                <span>App</span>
+                                <span>Design</span>
+                                <span>Digital</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <div className={cx("applicant-actions")}>
+                          <button 
+                            className={cx("action-btn", "view")}
+                            onClick={() => navigate(`/recruiter/candidate-detail/${application.candidate.candidate_id}`)}
+                          >
+                            <FontAwesomeIcon icon={faEye} />
+                          </button>
+                          <button 
+                            className={cx("action-btn", "approve")}
+                            onClick={() => handleStatusChange(application.application_id, "Đạt phỏng vấn")}
+                          >
+                            <FontAwesomeIcon icon={faCheck} />
+                          </button>
+                          <button 
+                            className={cx("action-btn", "reject")}
+                            onClick={() => handleStatusChange(application.application_id, "Đã từ chối")}
+                          >
+                            <FontAwesomeIcon icon={faTimes} />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className={cx("no-applicants")}>
+                      <i className="fa-solid fa-user-slash"></i>
+                      <p>Chưa có ứng viên nào</p>
+                    </div>
+                  )}
+                  {jobApplications[job.job_id]?.length > 3 && (
+                    <button 
+                      className={cx("view-all-btn")}
+                      onClick={() => navigate("/recruiter/cv-management")}
+                    >
+                      Xem tất cả {jobApplications[job.job_id].length} ứng viên
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
+            {jobs.length > 5 && (
+              <button 
+                className={cx("view-more-jobs")}
+                onClick={() => navigate("/recruiter/jobs")}
+              >
+                Xem thêm {jobs.length - 5} tin tuyển dụng khác
+              </button>
+            )}
           </div>
         </div>
       </div>

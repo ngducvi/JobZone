@@ -65,6 +65,11 @@ User.init({
         allowNull: false,
         defaultValue: 'Basic'
     },
+    plan_expired_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: null
+    },
 }, {
     sequelize,
     modelName: 'User',

@@ -142,6 +142,26 @@
           }
         }
 
+        &.message-btn {
+          background: #02a346;
+          color: white;
+          border: none;
+
+          &:hover {
+            background: #028a3b;
+          }
+
+          &:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            background: #02a346;
+          }
+
+          svg {
+            font-size: 16px;
+          }
+        }
+
         &.contact-btn {
           background: white;
           color: #013a74;

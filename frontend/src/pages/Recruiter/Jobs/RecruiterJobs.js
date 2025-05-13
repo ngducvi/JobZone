@@ -60,6 +60,7 @@ function EditJobModal({ isOpen, onClose, jobData, onEdit, setSelectedJob }) {
   const [selectedProvince, setSelectedProvince] = useState(null);
   const [selectedDistrict, setSelectedDistrict] = useState(null);
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [companyStatus, setCompanyStatus] = useState(null);
   const locationRef = useRef(null);
 
   // active, pending, closed
@@ -88,6 +89,9 @@ function EditJobModal({ isOpen, onClose, jobData, onEdit, setSelectedJob }) {
     const fetchProvinces = async () => {
       try {
         const response = await fetch("https://esgoo.net/api-tinhthanh/1/0.htm");
+        const companyResponse = await authAPI().get(recruiterApis.checkRecruiterCompany);
+        setCompanyStatus(companyResponse.data.recruiterCompany);
+        console.log("companyResponse",companyResponse.data.recruiterCompany);
         const data = await response.json();
         if (Array.isArray(data.data)) {
           setProvinces(data.data);
@@ -367,6 +371,7 @@ function RecruiterJobs() {
   const jobsPerPage = 8;
   const [hasBusinessLicense, setHasBusinessLicense] = useState(false);
   const [isCheckingLicense, setIsCheckingLicense] = useState(true);
+  const [isCompanyActive, setIsCompanyActive] = useState(false);
 
   const token = localStorage.getItem("token");
 
@@ -377,6 +382,11 @@ function RecruiterJobs() {
         // Fetch company info
         const responseCompany = await authAPI().get(recruiterApis.getAllRecruiterCompanies);
         setCompanyInfo(responseCompany.data.companies[0]);
+
+        // Check company activation status
+        const companyResponse = await authAPI().get(recruiterApis.checkRecruiterCompany);
+        const isActive = companyResponse.data.recruiterCompany === 'active';
+        setIsCompanyActive(isActive);
 
         // Check business license
         const responseCheckLicense = await authAPI().get(
@@ -546,10 +556,17 @@ function RecruiterJobs() {
       <div className={cx('header-section')}>
         <div className={cx('title-section')}>
           <h1>Quản lý Tin Tuyển Dụng</h1>
-          <button className={cx('create-job-btn')} onClick={() => navigate('/recruiter/post-job')}>
-            <i className="fa-solid fa-plus"></i>
-            Đăng tin tuyển dụng
-          </button>
+          {isCompanyActive ? (
+            <button className={cx('create-job-btn')} onClick={() => navigate('/recruiter/post-job')}>
+              <i className="fa-solid fa-plus"></i>
+              Đăng tin tuyển dụng
+            </button>
+          ) : (
+            <button className={cx('create-job-btn', 'disabled')} disabled>
+              <i className="fa-solid fa-exclamation-circle"></i>
+              Tài khoản chưa được kích hoạt
+            </button>
+          )}
         </div>
 
         <div className={cx('stats-section')}>

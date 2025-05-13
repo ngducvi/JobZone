@@ -1,6 +1,6 @@
 const { Model, DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-
+const User = require('./User');
 class Conversation extends Model {}
 
 Conversation.init({
@@ -8,57 +8,44 @@ Conversation.init({
         type: DataTypes.STRING,
         primaryKey: true,
     },
-    bot_id: {
-        type: DataTypes.STRING,
+    user1_id: {
+        type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'bots',
+            model: User,
             key: 'id',
         },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE',
     },
-    completed_at: {
-        type: DataTypes.BIGINT,
-        allowNull: true,
+    user2_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: User,
+            key: 'id',
+        },
     },
     created_at: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
     },
-    status:{
-        type: DataTypes.STRING,
-        allowNull: false,
-        defaultValue: 'pending',
+    last_message: {
+        type: DataTypes.TEXT,
+        allowNull: true,
     },
-    updated_at: {
+    last_message_at: {
         type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
+        allowNull: true,
     },
-    last_error: {
-        type: DataTypes.JSON,
-        allowNull: false,
-        defaultValue: { code: 0, msg: "" },
-    },
-    user_id: {
+    unread_count_user1: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-            model: 'users',
-            key: 'id'
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE',
+        defaultValue: 0,
     },
-    content: {
-        type: DataTypes.TEXT,
+    unread_count_user2: {
+        type: DataTypes.INTEGER,
         allowNull: false,
+        defaultValue: 0,
     },
-    method_used:{
-        type: DataTypes.ENUM('website', 'api_key'),
-        allowNull: false,
-        defaultValue: 'website',
-    }
 }, {
     sequelize,
     modelName: 'Conversation',

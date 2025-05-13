@@ -74,10 +74,11 @@
   
   .pricing-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 30px;
-    max-width: 1200px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 40px;
+    max-width: 800px;
     margin: 0 auto;
+    justify-content: center;
   }
   
   .pricing-card {
@@ -88,6 +89,9 @@
     transition: all 0.3s ease;
     animation: fadeInUp 0.6s ease backwards;
     position: relative;
+    min-width: 280px;
+    max-width: 400px;
+    margin: 0 auto;
     
     &:hover {
       transform: translateY(-10px);
@@ -98,18 +102,12 @@
       --plan-color: #013a74;
     }
   
-    &.pro {
+    &.promax {
       --plan-color: #02a346;
-      transform: scale(1.05);
+      transform: scale(1.06);
       z-index: 2;
-
-      @media (max-width: 768px) {
-        transform: scale(1);
-      }
-    }
-  
-    &.premium {
-      --plan-color: #013a74;
+      border: 2.5px solid #02a346;
+      box-shadow: 0 8px 24px rgba(2,163,70,0.10);
     }
   
     .popular-badge {
@@ -141,7 +139,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent);
         z-index: 1;
       }
   
@@ -177,10 +175,16 @@
           font-size: 42px;
           font-weight: 700;
           line-height: 1;
-          
-          @media (max-width: 768px) {
-            font-size: 36px;
-          }
+        }
+  
+        .amount.free {
+          font-size: 36px;
+          color: #fffbe7;
+          font-weight: 700;
+          background: #02a346;
+          border-radius: 8px;
+          padding: 2px 16px;
+          margin: 0 4px;
         }
   
         .period {
@@ -234,14 +238,26 @@
         transition: all 0.3s ease;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        margin-top: 10px;
   
         &:hover {
-          opacity: 0.9;
+          opacity: 0.93;
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          box-shadow: 0 4px 12px rgba(2,163,70,0.15);
         }
       }
     }
+  }
+  
+  .subscribe-btn.current-plan-btn {
+    background: #e0e0e0 !important;
+    color: #02a346 !important;
+    border: 2px solid #02a346 !important;
+    font-weight: 700;
+    cursor: not-allowed;
+    opacity: 1;
+    box-shadow: none;
+    text-transform: none;
   }
   
   // Animations
@@ -261,6 +277,16 @@
     .pricing-grid {
       gap: 16px;
       padding: 0 12px;
+      grid-template-columns: 1fr;
+      max-width: 100%;
+    }
+    .pricing-card {
+      margin: 0 12px;
+      max-width: 100%;
+      &.promax {
+        transform: none;
+        border-width: 2px;
+      }
     }
   }
   
@@ -343,6 +369,15 @@
   
   html {
     scroll-behavior: smooth;
+  }
+  
+  .plan-expired-text {
+    margin-top: 10px;
+    color: #02a346;
+    font-weight: 600;
+    font-size: 15px;
+    text-align: center;
+    letter-spacing: 0.5px;
   }
   
   

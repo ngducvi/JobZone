@@ -26,7 +26,7 @@ export const NotificationProvider = ({ children }) => {
             // Check if user is recruiter
             try {
                 const response = await authAPI().get(userApis.getCurrentUser);
-                console.log("response",response.data);
+                // console.log("response",response.data);
                 if (response.data.code === 1) {
                     setUser(response.data.user);
                     return response.data.user;
@@ -150,11 +150,14 @@ export const NotificationProvider = ({ children }) => {
             await fetchNotificationSettings();
 
             // Connect socket and join user room
-            socketService.connect(token);
+            if (!socketService.socket) {
+                socketService.connect(token);
+            }
             socketService.joinUserRoom(currentUser.id);
             
             // Set up new notification listener
             socketService.onNewNotification((newNotification) => {
+                console.log('New notification received:', newNotification);
                 setUnreadCount(prev => prev + 1);
                 showNotificationToast(newNotification);
             });
@@ -174,8 +177,10 @@ export const NotificationProvider = ({ children }) => {
         setupSocketConnection();
 
         return () => {
+            // Don't disconnect socket here as it might be used by other features
+            // Just remove the notification listener
             if (socketService.socket) {
-                socketService.disconnect();
+                socketService.socket.off('new_notification');
             }
         };
     }, []);

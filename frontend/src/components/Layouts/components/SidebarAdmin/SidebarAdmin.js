@@ -24,7 +24,7 @@ const sidebarIcons = [
     to: "/admin",
     subMenu: [
       {
-        title: "Dashboard A",
+        title: "Thống kê tổng thể",
         to: "/admin",
       },
       {
@@ -33,7 +33,7 @@ const sidebarIcons = [
       },
       {
         title: "Thông kê công ty",
-        to: "/admin/dashboard/company",
+        to: "/admin/dashboardb",
       },
     ],
   },
@@ -55,10 +55,10 @@ const sidebarIcons = [
         title: "Ứng viên",
         to: "/admin/candidate",
       },
-      {
-        title: "Phân quyền",
-        to: "/admin/users/roles",
-      },
+      // {
+      //   title: "Phân quyền",
+      //   to: "/admin/users/roles",
+      // },
     ],
   },
   // quản lý công ty

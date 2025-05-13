@@ -16,6 +16,7 @@ const images = {
     company_info: require('~/assets/images/fpt_logo.png'),
     default_cv: require('~/assets/images/defaulcv.png'),
     coverletter: require('~/assets/images/coverletter.png'),
+    avt: require('~/assets/images/avt.png'),
 };
 
 export default images;

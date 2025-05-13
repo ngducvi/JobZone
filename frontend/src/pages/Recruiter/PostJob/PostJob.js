@@ -1,11 +1,14 @@
 // PostJob page
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import classNames from "classnames/bind";
 import styles from "./PostJob.module.scss";
 import { authAPI, recruiterApis, userApis } from "~/utils/api";
 import { useNavigate } from "react-router-dom";
 import UserContext from "~/context/UserContext";
 import { toast } from "react-toastify";
+import { EventSourcePolyfill } from "event-source-polyfill";
+import { FaRobot, FaSpinner, FaChartBar } from "react-icons/fa";
+import ModelAI from "~/components/ModelAI";
 
 const cx = classNames.bind(styles);
 
@@ -37,6 +40,73 @@ const categories = [
 
 // Preview Modal Component
 const PreviewJobModal = ({ isOpen, onClose, jobDetails, companyInfo }) => {
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState(null);
+  const [selectedModel, setSelectedModel] = useState("gpt-4o-mini");
+
+  const analyzeJobPost = async () => {
+    if (isAnalyzing) return;
+    
+    setIsAnalyzing(true);
+    const token = localStorage.getItem("token");
+    
+    const prompt = `Là một chuyên gia tuyển dụng, hãy phân tích job post sau và đưa ra nhận xét về ưu điểm và nhược điểm:
+
+Tiêu đề: ${jobDetails.title}
+Mô tả: ${jobDetails.description}
+Yêu cầu: ${jobDetails.jobRequirements}
+Quyền lợi: ${jobDetails.benefits}
+Mức lương: ${jobDetails.salary}
+Kinh nghiệm: ${jobDetails.experience}
+Cấp độ: ${jobDetails.rank}
+Địa điểm: ${jobDetails.location}
+Hình thức: ${jobDetails.jobType}
+
+Hãy phân tích theo các tiêu chí sau:
+1. Tính hấp dẫn của job post
+2. Tính rõ ràng và đầy đủ của thông tin
+3. Tính cạnh tranh của mức lương và phúc lợi
+4. Tính phù hợp giữa yêu cầu và quyền lợi
+5. Đề xuất cải thiện`;
+
+    try {
+      const eventSource = new EventSourcePolyfill(
+        `${process.env.REACT_APP_API_URL}/openai/chat-stream?prompt=${encodeURIComponent(prompt)}&model=${encodeURIComponent(selectedModel)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Accept': 'text/event-stream',
+          },
+          withCredentials: false,
+          heartbeatTimeout: 60000,
+        }
+      );
+
+      let aiResponse = "";
+
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          aiResponse += data;
+          setAnalysis(aiResponse);
+        } catch (error) {
+          console.error('Error parsing event data:', error);
+        }
+      };
+
+      eventSource.onerror = (error) => {
+        console.error('EventSource error:', error);
+        eventSource.close();
+        setIsAnalyzing(false);
+      };
+
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error("Đã xảy ra lỗi khi phân tích job post");
+      setIsAnalyzing(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   const formatDate = (dateString) => {
@@ -163,13 +233,44 @@ const PreviewJobModal = ({ isOpen, onClose, jobDetails, companyInfo }) => {
               </div>
               <div className={cx("stat-item")}>
                 <i className="fa-solid fa-location-dot"></i>
-                123 Car St, MI
+                {jobDetails.location}
               </div>
             </div>
             <a href="#" className={cx("company-link")}>
               Xem trang công ty
               <i className="fa-solid fa-arrow-right"></i>
             </a>
+          </div>
+
+          <div className={cx("analysis-section")}>
+            <h4>Phân tích AI</h4>
+            <button 
+              className={cx("analyze-btn")} 
+              onClick={analyzeJobPost}
+              disabled={isAnalyzing}
+            >
+              {isAnalyzing ? (
+                <>
+                  <FaSpinner className={cx("spinner")} />
+                  Đang phân tích...
+                </>
+              ) : (
+                <>
+                  <FaChartBar />
+                  Phân tích job post
+                </>
+              )}
+            </button>
+            {analysis && (
+              <div className={cx("analysis-content")}>
+                <h5>Kết quả phân tích:</h5>
+                <div className={cx("analysis-text")}>
+                  {analysis.split('\n').map((line, index) => (
+                    <p key={index}>{line}</p>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className={cx("action-buttons")}>
@@ -210,6 +311,14 @@ function PostJob() {
   const [companyId, setCompanyId] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [isAILoading, setIsAILoading] = useState(false);
+  const [selectedModel, setSelectedModel] = useState("gpt-4o-mini");
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [selectedProvinces, setSelectedProvinces] = useState([]);
+  const [selectedDistricts, setSelectedDistricts] = useState([]);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const locationRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -229,6 +338,160 @@ function PostJob() {
     };
     fetchData();
   }, []);
+
+  // Fetch provinces on mount
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      try {
+        const response = await fetch("https://esgoo.net/api-tinhthanh/1/0.htm");
+        const data = await response.json();
+        if (Array.isArray(data.data)) {
+          setProvinces(data.data);
+        } else {
+          setProvinces([]);
+        }
+      } catch (error) {
+        setProvinces([]);
+      }
+    };
+    fetchProvinces();
+  }, []);
+
+  // Fetch districts when provinces change
+  useEffect(() => {
+    const fetchDistricts = async () => {
+      try {
+        const districtsData = await Promise.all(
+          selectedProvinces.map(async (provinceId) => {
+            const formattedId = provinceId.toString().padStart(2, "0");
+            const response = await fetch(`https://esgoo.net/api-tinhthanh/2/${formattedId}.htm`);
+            const data = await response.json();
+            if (Array.isArray(data.data)) {
+              return data.data.map((district) => ({
+                ...district,
+                provinceId: provinceId,
+              }));
+            }
+            return [];
+          })
+        );
+        setDistricts(districtsData.flat());
+      } catch (error) {
+        console.error("Error fetching districts:", error);
+        setDistricts([]);
+      }
+    };
+
+    if (selectedProvinces.length > 0) {
+      fetchDistricts();
+    } else {
+      setDistricts([]);
+    }
+  }, [selectedProvinces]);
+
+  // Handle clicks outside location dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (locationRef.current && !locationRef.current.contains(event.target)) {
+        setShowLocationModal(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleProvinceSelect = (provinceId) => {
+    setSelectedProvinces((prev) => {
+      const isSelected = prev.includes(provinceId);
+      if (isSelected) {
+        return prev.filter((id) => id !== provinceId);
+      } else {
+        return [...prev, provinceId];
+      }
+    });
+  };
+
+  const handleDistrictSelect = (districtId) => {
+    setSelectedDistricts((prev) => {
+      const isSelected = prev.includes(districtId);
+      if (isSelected) {
+        return prev.filter((id) => id !== districtId);
+      } else {
+        return [...prev, districtId];
+      }
+    });
+  };
+
+  const handleSelectAllDistricts = (provinceId) => {
+    const provinceDistricts = districts
+      .filter((d) => d.provinceId === provinceId)
+      .map((d) => d.id);
+
+    setSelectedDistricts((prev) => {
+      const allSelected = provinceDistricts.every((id) => prev.includes(id));
+      if (allSelected) {
+        return prev.filter((id) => !provinceDistricts.includes(id));
+      } else {
+        return [...new Set([...prev, ...provinceDistricts])];
+      }
+    });
+  };
+
+  const getLocationDisplay = () => {
+    if (selectedProvinces.length === 0) return "Chọn địa điểm làm việc";
+    const provinceNames = selectedProvinces
+      .map((id) => provinces.find((p) => p.id === id)?.name)
+      .filter(Boolean);
+    return provinceNames.join(", ");
+  };
+
+  const renderDistrictsByProvince = (provinceId) => {
+    const province = provinces.find((p) => p.id === provinceId);
+    const provinceDistricts = districts.filter((d) => d.provinceId === provinceId);
+
+    if (!provinceDistricts.length) return null;
+
+    return (
+      <div key={provinceId} className={cx("district-group")}>
+        <label className={cx("checkbox-item", "province-header")}>
+          <input
+            type="checkbox"
+            checked={provinceDistricts.every((d) =>
+              selectedDistricts.includes(d.id)
+            )}
+            onChange={() => handleSelectAllDistricts(provinceId)}
+          />
+          <span>{province?.name}</span>
+        </label>
+        <div className={cx("district-items")}>
+          {provinceDistricts.map((district) => (
+            <label key={district.id} className={cx("checkbox-item")}>
+              <input
+                type="checkbox"
+                checked={selectedDistricts.includes(district.id)}
+                onChange={() => handleDistrictSelect(district.id)}
+              />
+              <span>{district.name}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const handleConfirmLocation = () => {
+    const selectedProvinceNames = selectedProvinces
+      .map(id => provinces.find(p => p.id === id)?.name)
+      .filter(Boolean);
+    const selectedDistrictNames = selectedDistricts
+      .map(id => districts.find(d => d.id === id)?.name)
+      .filter(Boolean);
+    
+    const locationText = [...selectedProvinceNames, ...selectedDistrictNames].join(', ');
+    setLocation(locationText);
+    setShowLocationModal(false);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -283,6 +546,135 @@ function PostJob() {
 
   const handlePreview = () => {
     setIsPreviewModalOpen(true);
+     console.log("Submitting job data:", {
+      jobTitle,
+      description,
+      email,
+      specialisms,
+      salary,
+      username,
+      jobType,
+      careerLevel,
+      experience,
+      location,
+      benefits,
+      jobRequirements,
+      deadline,
+      company_id: companyId,
+      category_id: categoryId,
+    });
+  };
+
+  const handleAIAssist = async () => {
+    if (!jobTitle) {
+      toast.error("Vui lòng nhập vị trí công việc trước khi sử dụng AI hỗ trợ");
+      return;
+    }
+
+    if (!selectedModel) {
+      toast.error("Vui lòng chọn model AI");
+      return;
+    }
+
+    setIsAILoading(true);
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Vui lòng đăng nhập để sử dụng tính năng này");
+      setIsAILoading(false);
+      return;
+    }
+
+    const prompt = `Là một chuyên gia tuyển dụng, hãy tạo một bản mô tả công việc chi tiết cho vị trí "${jobTitle}". 
+    Hãy cung cấp thông tin theo format sau:
+    
+    1. Mô tả công việc:
+    - Tổng quan về vị trí
+    - Các trách nhiệm chính
+    - Môi trường làm việc
+    
+    2. Yêu cầu công việc:
+    - Kỹ năng cần thiết
+    - Kinh nghiệm yêu cầu
+    - Trình độ học vấn
+    
+    3. Quyền lợi:
+    - Lương thưởng
+    - Phúc lợi
+    - Cơ hội phát triển
+    
+    4. Thông tin bổ sung:
+    - Địa điểm làm việc
+    - Hình thức làm việc
+    - Thời gian làm việc`;
+
+    let eventSource;
+    try {
+      eventSource = new EventSourcePolyfill(
+        `${process.env.REACT_APP_API_URL}/openai/chat-stream?prompt=${encodeURIComponent(prompt)}&model=${encodeURIComponent(selectedModel)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Accept': 'text/event-stream',
+          },
+          withCredentials: false,
+          heartbeatTimeout: 60000,
+        }
+      );
+
+      let aiResponse = "";
+
+      eventSource.onopen = () => {
+        console.log("EventSource connection opened");
+      };
+
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          aiResponse += data;
+        } catch (error) {
+          console.error('Error parsing event data:', error);
+        }
+      };
+
+      eventSource.onerror = (error) => {
+        console.error('EventSource error:', error);
+        eventSource.close();
+        setIsAILoading(false);
+
+        if (aiResponse) {
+          try {
+            // Parse AI response and update form fields
+            const sections = aiResponse.split('\n\n');
+            sections.forEach(section => {
+              if (section.includes('Mô tả công việc:')) {
+                setDescription(section.replace('Mô tả công việc:', '').trim());
+              } else if (section.includes('Yêu cầu công việc:')) {
+                setJobRequirements(section.replace('Yêu cầu công việc:', '').trim());
+              } else if (section.includes('Quyền lợi:')) {
+                setBenefits(section.replace('Quyền lợi:', '').trim());
+              }
+            });
+            toast.success("Đã tạo nội dung thành công!");
+          } catch (error) {
+            console.error('Error parsing AI response:', error);
+            toast.error("Có lỗi xảy ra khi xử lý nội dung");
+          }
+        } else {
+          toast.error("Không thể kết nối với AI. Vui lòng thử lại sau.");
+        }
+      };
+
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error("Đã xảy ra lỗi khi sử dụng AI hỗ trợ");
+      setIsAILoading(false);
+    }
+
+    return () => {
+      if (eventSource) {
+        eventSource.close();
+      }
+    };
   };
 
   return (
@@ -293,6 +685,7 @@ function PostJob() {
       <form onSubmit={handleSubmit}>
         <div className={cx("form-group")}>
           <label htmlFor="jobTitle">Tiêu đề công việc</label>
+          <div className={cx("input-with-ai")}>
           <input
             type="text"
             id="jobTitle"
@@ -300,6 +693,28 @@ function PostJob() {
             onChange={(e) => setJobTitle(e.target.value)}
             required
           />
+            <div className={cx("ai-controls")}>
+              <ModelAI selectedModel={selectedModel} setSelectedModel={setSelectedModel} />
+              <button
+                type="button"
+                className={cx("ai-assist-btn")}
+                onClick={handleAIAssist}
+                disabled={isAILoading || !jobTitle || !selectedModel}
+              >
+                {isAILoading ? (
+                  <>
+                    <FaSpinner className={cx("spinner")} />
+                    Đang xử lý...
+                  </>
+                ) : (
+                  <>
+                    <FaRobot />
+                    AI Hỗ trợ
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
         <div className={cx("form-group")}>
           <label htmlFor="description">Mô tả công việc</label>
@@ -312,13 +727,11 @@ function PostJob() {
         </div>
         <div className={cx("form-group")}>
           <label htmlFor="location">Địa điểm làm việc</label>
-          <input
-            type="text"
-            id="location"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            required
-          />
+          <div className={cx("location-input")} onClick={() => setShowLocationModal(true)}>
+            <i className="fa-solid fa-map-marker-alt"></i>
+            <span className={cx("location-text")}>{location || "Chọn địa điểm làm việc"}</span>
+            <i className="fa-solid fa-chevron-right"></i>
+          </div>
         </div>
         <div className={cx("form-group")}>
           <label htmlFor="benefits">Quyền lợi</label>
@@ -506,6 +919,56 @@ function PostJob() {
         }}
         companyInfo={companyInfo}
       />
+
+      {/* Location Selection Modal */}
+      {showLocationModal && (
+        <div className={cx("modal-overlay")}>
+          <div className={cx("modal-content", "location-modal")}>
+            <div className={cx("modal-header")}>
+              <h3>Chọn địa điểm làm việc</h3>
+              <button className={cx("close-btn")} onClick={() => setShowLocationModal(false)}>
+                <i className="fa-solid fa-times"></i>
+              </button>
+            </div>
+
+            <div className={cx("modal-body")}>
+              <div className={cx("location-sections")}>
+                <div className={cx("provinces-section")}>
+                  <h4>Tỉnh/Thành phố</h4>
+                  <div className={cx("provinces-list")}>
+                    {provinces.map((province) => (
+                      <label key={province.id} className={cx("checkbox-item")}>
+                        <input
+                          type="checkbox"
+                          checked={selectedProvinces.includes(province.id)}
+                          onChange={() => handleProvinceSelect(province.id)}
+                        />
+                        <span>{province.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={cx("districts-section")}>
+                  <h4>Quận/Huyện</h4>
+                  <div className={cx("districts-list")}>
+                    {selectedProvinces.map((provinceId) => renderDistrictsByProvince(provinceId))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className={cx("modal-footer")}>
+              <button className={cx("cancel-btn")} onClick={() => setShowLocationModal(false)}>
+                Hủy
+              </button>
+              <button className={cx("confirm-btn")} onClick={handleConfirmLocation}>
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -5,11 +5,12 @@ import styles from "./JobSearch.module.scss";
 import JobCard from "~/components/JobCard/JobCard";
 import images from "~/assets/images";
 import { authAPI, userApis, recruiterApis } from "~/utils/api";
+import api from "~/utils/api";
 import { useNavigate, useLocation } from "react-router-dom";
 const cx = classNames.bind(styles);
 
 const JobSearch = () => {
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState("all");
   const [selectedExperience, setSelectedExperience] = useState("all");
   const [selectedLevel, setSelectedLevel] = useState("all");
   const [selectedSalary, setSelectedSalary] = useState("all");
@@ -31,7 +32,7 @@ const JobSearch = () => {
   const [savedStatus, setSavedStatus] = useState({});
 
   const [filters, setFilters] = useState({
-    category_id: '',
+    category_id: 'all',
     experience: 'all',
     salary: 'all', 
     working_time: 'all',
@@ -172,7 +173,7 @@ const JobSearch = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const responseJobs = await authAPI().get(userApis.getAllJobs);
+      const responseJobs = await api.get(userApis.getAllJobs);
       setJobs(responseJobs.data.jobs);
       setTotalJobs(responseJobs.data.jobs.length);
       console.log("responseJobs", responseJobs.data.jobs);
@@ -254,7 +255,7 @@ const JobSearch = () => {
         queryParams.append('location', searchLocation);
       }
 
-      const response = await authAPI().get(
+      const response = await api.get(
         `${userApis.filterJobs}?${queryParams.toString()}`
       );
 
@@ -358,7 +359,7 @@ const JobSearch = () => {
     }));
   };
 
-  // Modify handleSearch to use both state and URL params
+  // Modify handleSearch to use non-authenticated API
   const handleSearch = async () => {
     setIsSearching(true);
     try {
@@ -373,37 +374,37 @@ const JobSearch = () => {
         }
       });
 
-      const response = await authAPI().get(`${userApis.filterJobs}?${params.toString()}`);
+      const response = await api.get(`${userApis.filterJobs}?${params.toString()}`);
       setJobs(response.data.jobs || []);
       setTotalJobs(response.data.jobs?.length || 0);
     } catch (error) {
       console.error('Error searching jobs:', error);
     } finally {
-    setIsSearching(false);
+      setIsSearching(false);
     }
   };
 
-  // Thêm hàm xử lý click vào job
-  const handleJobClick = (jobId) => {
-    navigate(`/jobs/${jobId}`);
-  };
-
-  // Thêm hàm xử lý lưu/hủy lưu job
+  // Modify handleSaveJob to check for authentication
   const handleSaveJob = async (e, jobId) => {
     e.stopPropagation();
     if (!jobId) return;
 
+    // Check if user is logged in
+    const token = localStorage.getItem("token");
+    if (!token) {
+      // Redirect to login page or show login modal
+      navigate('/login');
+      return;
+    }
+
     try {
       if (savedStatus[jobId]) {
-        // Nếu đã lưu thì gọi API hủy lưu
         await authAPI().delete(userApis.unsaveJob(jobId));
         setSavedStatus(prev => ({...prev, [jobId]: false}));
       } else {
-        // Nếu chưa lưu thì gọi API lưu
         await authAPI().post(userApis.saveJob(jobId));
         setSavedStatus(prev => ({...prev, [jobId]: true}));
       }
-      // Emit sự kiện để cập nhật UserInfo
       window.dispatchEvent(new Event('user-data-update'));
     } catch (error) {
       console.error("Error toggling job save status:", error);
@@ -411,6 +412,16 @@ const JobSearch = () => {
         setSavedStatus(prev => ({...prev, [jobId]: true}));
       }
     }
+  };
+
+  // Modify handleJobClick to check for authentication
+  const handleJobClick = (jobId) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      // If logged in, add to viewed jobs
+      authAPI().post(userApis.addViewedJob(jobId));
+    }
+    navigate(`/jobs/${jobId}`);
   };
 
   // Thêm hàm tính toán số lượng việc làm cho mỗi filter

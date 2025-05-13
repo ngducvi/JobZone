@@ -1,16 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { authAPI, recruiterApis, userApis } from "~/utils/api";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import classNames from "classnames/bind";
 import styles from "./CandidateDetail.module.scss";
 import images from "~/assets/images";
 import useScrollTop from '~/hooks/useScrollTop';
 import { toast } from "react-hot-toast";
 import html2pdf from 'html2pdf.js';
+import { FaUser, FaEllipsisV, FaArrowLeft, FaPaperclip, FaImage, FaPaperPlane, FaEdit, FaTrash, FaEnvelope } from "react-icons/fa";
+import { messagesApis } from "~/utils/api";
 
 const cx = classNames.bind(styles);
 
 const CandidateDetail = () => {
+  const navigate = useNavigate();
   const { candidate_id } = useParams();
   const [candidate, setCandidate] = useState(null);
   const [candidateExperiences, setCandidateExperiences] = useState(null);
@@ -31,6 +34,20 @@ const CandidateDetail = () => {
   const [fieldValues, setFieldValues] = useState({});
   const [selectedColor, setSelectedColor] = useState('#013a74');
   const [bgColor, setBgColor] = useState('rgba(240, 247, 255, 0.5)');
+  const [isMessageLoading, setIsMessageLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await authAPI().get(userApis.getCurrentUser);
+        setCurrentUser(response.data.user);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
 
   useEffect(() => {
     const fetchCandidateDetail = async () => {
@@ -190,6 +207,48 @@ const CandidateDetail = () => {
       });
   };
 
+  const handleMessage = async () => {
+    if (!currentUser) {
+      toast.error("Vui lòng đăng nhập để gửi tin nhắn!");
+      return;
+    }
+
+    if (!user || !user.id) {
+      toast.error("Không thể tìm thấy thông tin ứng viên!");
+      return;
+    }
+
+    setIsMessageLoading(true);
+    try {
+      // Log để debug
+      console.log('Creating conversation with:', {
+        user1_id: currentUser.id,
+        user2_id: user.id
+      });
+
+      const response = await authAPI().post(messagesApis.createConversation, {
+        user1_id: currentUser.id,
+        user2_id: user.id
+      });
+
+      if (response.data.success) {
+        toast.success("Đã tạo cuộc trò chuyện thành công!");
+        navigate('/recruiter/messages');
+      } else {
+        toast.error(response.data.message || "Không thể tạo cuộc trò chuyện");
+      }
+    } catch (error) {
+      console.error("Error creating conversation:", error);
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Không thể tạo cuộc trò chuyện. Vui lòng thử lại sau.");
+      }
+    } finally {
+      setIsMessageLoading(false);
+    }
+  };
+
   if (!candidate) return <div>Loading...</div>;
 
   return (
@@ -229,6 +288,14 @@ const CandidateDetail = () => {
               onClick={handleViewCV}
             >
               <i className="fas fa-file-alt"></i>Xem CV
+            </button>
+            <button 
+              className={cx('message-btn')} 
+              onClick={handleMessage}
+              disabled={isMessageLoading}
+            >
+              <FaEnvelope />
+              <span>{isMessageLoading ? 'Đang xử lý...' : 'Nhắn tin'}</span>
             </button>
             <button 
               className={cx('contact-btn')} 

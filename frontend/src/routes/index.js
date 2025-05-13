@@ -78,12 +78,21 @@ import CareerCounseling from '~/pages/Tools/AiTools/CareerCounseling/CareerCouns
 import AITools from '~/pages/Tools/AiTools';
 import PersonalBrand from '~/pages/Tools/AiTools/PersonalBrand/PersonalBrand';
 import AiChat from '~/pages/Tools/AiTools/AiChat/AiChat';
+import CVEvaluation from '~/pages/Recruiter/MyServices/Tools/CVEvaluation/CVEvaluation';
+import JobDescription from '~/pages/Recruiter/MyServices/Tools/JobDescription/JobDescription';
+import TrainingPlan from '~/pages/Recruiter/MyServices/Tools/TrainingPlan/TrainingPlan';
+import WriteRecruitmentEmails from '~/pages/Recruiter/MyServices/Tools/WriteRecruitmentEmails/WriteRecruitmentEmails';
+import Messages from '~/pages/Messages';
+import MessagesRecruiter from '~/pages/Messages/MesagesRecruiter/MesagesRecruiter';
+import DashboardB from '~/pages/Admin/DashboardB/DashboardB';
+import CvConsulting from '~/pages/CvConsulting/CvConsulting';
 const publicRoutes = [
     { path: '/', component: Dashboard },
     { path: '/user/verify-email', component: VerifyEmailSuccess, layout: null },
     { path: '/templates/all', component:  AllTemplates},
     { path: '/admin', component: Home, layout: AdminLayout},
     { path: '/admin/dashboarda', component: DashboardA, layout: AdminLayout},
+    { path: '/admin/dashboardb', component: DashboardB, layout: AdminLayout},
     { path: '/admin/users', component: Users, layout: AdminLayout},
     { path: '/admin/models', component: Models, layout: AdminLayout},
     { path: '/admin/payments', component: Payments, layout: AdminLayout},
@@ -111,6 +120,7 @@ const publicRoutes = [
     { path: '/user/create-cv', component: CreateCV },
     { path: '/user/manager-cv', component: ManagerCV },
     { path: '/user/edit-cv', component: EditCV },
+    { path: '/user/cv-consulting', component: CvConsulting },
     { path: '/user/cv-library', component: CvLibrary },
     { path: '/user/see-cv', component: SeeCv, layout: null },
     { path: '/user/job-zone-profile', component: JobZoneProfile },
@@ -135,6 +145,10 @@ const publicRoutes = [
     { path: '/recruiter/post-job', component: PostJob, layout: RecruiterLayout },
     { path: '/recruiter/pricing', component: PricingRecruiter, layout: RecruiterLayout },
     { path: '/recruiter/notifications-manager', component: NotificationsManager, layout: RecruiterLayout },
+    { path: '/recruiter/my-services/tools/cv-evaluation', component: CVEvaluation, layout: RecruiterLayout },
+    { path: '/recruiter/my-services/tools/job-description', component: JobDescription, layout: RecruiterLayout },
+    { path: '/recruiter/my-services/tools/training-plan', component: TrainingPlan, layout: RecruiterLayout },
+    { path: '/recruiter/my-services/tools/write-recruitment-emails', component: WriteRecruitmentEmails, layout: RecruiterLayout },
     { path: '/loading', component: LoadingPage, layout: null },
     { path: '/career-handbook/job-hunting', component: JobHunting },
     { path: '/career-handbook/industry-knowledge', component: IndustryKnowledge },
@@ -156,6 +170,8 @@ const publicRoutes = [
     { path: '/test-template', component: TestTemplate, layout: null },
     { path: '/career-handbook/detail/:id', component: CareerHandbookDetail},
     { path: '/career-handbook/:post_id', component: CareerHandbookDetail},
+    { path: '/messages', component: Messages },
+    { path: '/recruiter/messages', component: MessagesRecruiter, layout: RecruiterLayout },
 ];
 
 const privateRoutes = [];

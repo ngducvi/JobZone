@@ -144,7 +144,7 @@ const Profile = () => {
               disabled={isLoading}
             >
               <FaSave className={cx("btn-icon")} />
-              {isLoading ? "Đang lưu..." : "Lưu thay đổi"}
+              {isLoading ? "Đang lưu..." : "Lưu"}
             </button>
           </div>
           {successMessage && (

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { authAPI, userApis } from "~/utils/api";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import classNames from "classnames/bind";
@@ -8,6 +8,7 @@ import images from "~/assets/images";
 import PopularKeywords from '~/components/PopularKeywords/PopularKeywords';
 import useScrollTop from '~/hooks/useScrollTop';
 import { toast } from "react-toastify";
+import { FaRobot, FaLock, FaSpinner, FaUserCheck, FaChartBar, FaQuestionCircle, FaMoneyBillWave } from "react-icons/fa";
 const cx = classNames.bind(styles);
 
 const JobDetail = () => {
@@ -22,7 +23,24 @@ const JobDetail = () => {
   const [applicationStatus, setApplicationStatus] = useState(null);
   const [updatedAt, setUpdatedAt] = useState(null);
   const [withdrawnStatus, setWithdrawnStatus] = useState(false);
+  const [showCvModal, setShowCvModal] = useState(false);
+  const [userCvs, setUserCvs] = useState([]);
+  const [candidateCvs, setCandidateCvs] = useState([]);
+  const [selectedCvId, setSelectedCvId] = useState(null);
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [defaultCvId, setDefaultCvId] = useState(null);
+  const [introduction, setIntroduction] = useState('');
+  const [candidateStatus, setCandidateStatus] = useState(null);
+  const fileInputRef = useRef(null);
   
+  // AI Analysis related states
+  const [userPlan, setUserPlan] = useState('Basic');
+  const [aiAccess, setAiAccess] = useState({ canUseAI: false, features: [], plan: 'Basic' });
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState(null);
+  const [showAiSection, setShowAiSection] = useState(false);
+  const [candidateProfile, setCandidateProfile] = useState(null);
+  const [selectedAiModel, setSelectedAiModel] = useState("gpt-4o-mini");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,6 +55,8 @@ const JobDetail = () => {
     const checkSavedStatus = async () => {
       try {
         const savedResponse = await authAPI().get(userApis.getAllSavedJobsByUser);
+        const candidateStatusResponse = await authAPI().get(userApis.checkCandidateStatus);
+        setCandidateStatus(candidateStatusResponse.data.candidateStatus);
         const isJobSaved = savedResponse.data.savedJobs.some(
           savedJob => savedJob.job_id === id
         );
@@ -73,6 +93,55 @@ const JobDetail = () => {
       behavior: 'smooth'
     });
   }, []); 
+
+  // Fetch user's CVs
+  useEffect(() => {
+    const fetchCvs = async () => {
+      try {
+        const [userCvsResponse, candidateCvsResponse] = await Promise.all([
+          authAPI().get(userApis.getAllUserCvByUserId),
+          authAPI().get(userApis.getAllCandidateCvByUserId)
+        ]);
+        setUserCvs(userCvsResponse.data.userCv);
+        setCandidateCvs(candidateCvsResponse.data.candidateCv);
+      } catch (error) {
+        console.error("Error fetching CVs:", error);
+      }
+    };
+    fetchCvs();
+  }, []);
+
+  // Fetch user plan information and candidate profile for AI features
+  useEffect(() => {
+    const fetchUserPlanAndProfile = async () => {
+      try {
+        // Check user's plan
+        const planResponse = await authAPI().get(userApis.checkUserPlan);
+        if (planResponse.data.aiAccess) {
+          setAiAccess(planResponse.data.aiAccess);
+          setUserPlan(planResponse.data.aiAccess.plan);
+        }
+
+        // Get candidate profile for AI analysis
+        const userResponse = await authAPI().get(userApis.getCurrentUser);
+        if (userResponse.data.candidate) {
+          setCandidateProfile({
+            skills: userResponse.data.candidate.skills,
+            experience: userResponse.data.candidate.experience,
+            education: userResponse.data.candidate.education,
+            current_job_title: userResponse.data.candidate.current_job_title,
+            current_company: userResponse.data.candidate.current_company,
+            location: userResponse.data.candidate.location,
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching user plan or profile:", error);
+      }
+    };
+
+    fetchUserPlanAndProfile();
+  }, []);
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
@@ -169,30 +238,17 @@ const JobDetail = () => {
     return daysSinceUpdate >= requiredDays;
   };
 
-  const handleApplyJob = async () => {
-    try {
-      // First check if we can apply again
-      if (applicationStatus === "Đã rút đơn" || applicationStatus === "Đã từ chối") {
-        if (!canApplyAgain()) {
-          toast.error("Bạn chưa thể ứng tuyển lại vào lúc này.", {
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-          });
-          return;
-        }
-      }
+  const handleApplyClick = () => {
+    setShowCvModal(true);
+  };
 
-      const response = await authAPI().post(userApis.applyJob, { 
-        job_id: id,
-        previous_status: applicationStatus // Gửi thêm trạng thái cũ
-      });
-
-      if (response.data.code === 1) {
-        toast.success("Nộp đơn thành công!", {
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      // Check file type
+      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("Chỉ chấp nhận file PDF, DOC, DOCX", {
           position: "top-right",
           autoClose: 3000,
           hideProgressBar: false,
@@ -200,33 +256,72 @@ const JobDetail = () => {
           pauseOnHover: true,
           draggable: true,
         });
-        // Update status to show the new application
+        event.target.value = '';
+        return;
+      }
+
+      // Check file size (5MB = 5 * 1024 * 1024 bytes)
+      const maxSize = 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        toast.error("File không được vượt quá 5MB", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+        event.target.value = '';
+        return;
+      }
+
+      setUploadedFile(file);
+      setSelectedCvId(null);
+    }
+  };
+
+  const handleApplyJob = async () => {
+    try {
+      if (!selectedCvId && !uploadedFile) {
+        toast.error("Vui lòng chọn CV hoặc tải lên CV mới");
+          return;
+        }
+
+      let response;
+      if (uploadedFile) {
+        // Upload new CV
+        const formData = new FormData();
+        formData.append("cv_file", uploadedFile);
+        formData.append("job_id", id);
+        
+        response = await authAPI().post(
+          userApis.createCandidateCvWithCvId,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+      } else {
+        // Use existing CV
+        response = await authAPI().post(userApis.applyJob, { 
+          job_id: id,
+          cv_id: selectedCvId,
+          previous_status: applicationStatus 
+        });
+      }
+
+      if (response.data.code === 1) {
+        toast.success("Nộp đơn thành công!");
+        setShowCvModal(false);
         setAppliedStatus(true);
         setApplicationStatus("Đang xét duyệt");
         setUpdatedAt(new Date());
-      } else {
-        // Hiển thị thông báo lỗi chi tiết từ backend
-        toast.error(response.data.message || "Có lỗi xảy ra khi nộp đơn.", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
       }
     } catch (error) {
       console.error("Error applying for job:", error);
-      // Hiển thị thông báo lỗi chi tiết từ backend
-      const errorMessage = error.response?.data?.message || "Có lỗi xảy ra khi nộp đơn.";
-      toast.error(errorMessage, {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      toast.error(error.response?.data?.message || "Có lỗi xảy ra khi nộp đơn.");
     }
   };
 
@@ -270,6 +365,497 @@ const JobDetail = () => {
 
   const isJobExpired = job?.deadline ? new Date(job.deadline).getTime() < new Date().getTime() : false;
 
+  // Add function to handle setting default CV
+  const handleSetDefaultCv = async (cvId, isUserCv) => {
+    try {
+      const response = await authAPI().put(
+        isUserCv ? userApis.toggleUserCvTemplate(cvId) : userApis.toggleCvTemplate(cvId)
+      );
+      
+      if (response.data.code === 1) {
+        // Update the CV lists to reflect the new default status
+        const [userCvsResponse, candidateCvsResponse] = await Promise.all([
+          authAPI().get(userApis.getAllUserCvByUserId),
+          authAPI().get(userApis.getAllCandidateCvByUserId)
+        ]);
+        setUserCvs(userCvsResponse.data.userCv);
+        setCandidateCvs(candidateCvsResponse.data.candidateCv);
+        setDefaultCvId(cvId);
+        toast.success("Đã đặt làm CV mặc định thành công!");
+      }
+    } catch (error) {
+      console.error("Error setting default CV:", error);
+      toast.error("Có lỗi xảy ra khi đặt CV mặc định");
+    }
+  };
+
+  // Function to handle AI job analysis
+  const handleAnalyzeJob = async () => {
+    if (!job || !candidateProfile) {
+      toast.error("Missing job or candidate information");
+      return;
+    }
+
+    setIsAnalyzing(true);
+    try {
+      const response = await authAPI().post(userApis.analyzeJobForCandidate, {
+        job,
+        candidateProfile,
+        model: selectedAiModel
+      });
+
+      setAnalysisResult(response.data);
+      setShowAiSection(true);
+    } catch (error) {
+      console.error("Error analyzing job:", error);
+      toast.error("Could not analyze job. Please try again later.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  // Function to toggle AI analysis section
+  const toggleAiSection = () => {
+    setShowAiSection(!showAiSection);
+    if (!analysisResult && showAiSection === false) {
+      handleAnalyzeJob();
+    }
+  };
+
+  const renderActionButton = () => {
+    if (candidateStatus !== 'Active') {
+      return (
+        <button className={cx("apply-btn", "expired-btn", "account-inactive")} disabled>
+          <i className="fas fa-lock"></i>
+          Tài khoản chưa được kích hoạt
+        </button>
+      );
+    }
+
+    if (isJobExpired) {
+      return (
+        <button className={cx("apply-btn", "expired-btn")} disabled>
+          <i className="fas fa-lock"></i>
+          Đã đóng
+        </button>
+      );
+    }
+
+    if ((applicationStatus === "Đã rút đơn" || applicationStatus === "Đã từ chối") && !canApplyAgain()) {
+      return (
+        <button className={cx("apply-btn", "expired-btn")} disabled>
+          <i className="fas fa-clock"></i>
+          {`Có thể ứng tuyển lại sau ${getRemainingDays()} ngày`}
+        </button>
+      );
+    }
+
+    if ((applicationStatus === "Đã rút đơn" || applicationStatus === "Đã từ chối") && canApplyAgain()) {
+      return (
+        <button className={cx("apply-btn", "primary-btn")} onClick={handleApplyClick}>
+          <i className="fas fa-redo"></i>
+          Ứng tuyển lại
+        </button>
+      );
+    }
+
+    if (appliedStatus) {
+      return (
+        <div className={cx("applied-status")}>
+          <button className={cx("apply-btn", "primary-btn")} disabled>
+            <i className="fas fa-check"></i>
+            Đã ứng tuyển
+          </button>
+          <button className={cx("withdraw-btn", "secondary-btn")} onClick={handleWithdrawApplication}>
+            <i className="fas fa-times"></i>
+            Rút đơn ứng tuyển
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <button className={cx("apply-btn", "primary-btn")} onClick={handleApplyClick}>
+        <i className="fas fa-paper-plane"></i>
+        Ứng tuyển ngay
+      </button>
+    );
+  };
+
+  // Render AI analysis section based on user's plan
+  const renderAiAnalysisSection = () => {
+    if (!aiAccess.canUseAI) {
+      return (
+        <div className={cx("ai-analysis-locked")}>
+          <div className={cx("lock-icon")}>
+            <FaLock />
+          </div>
+          <h3>AI Job Analysis</h3>
+          <p>Upgrade to Basic or higher plan to unlock AI-powered job analysis</p>
+          <button className={cx("upgrade-btn")} onClick={() => navigate("/pricing")}>
+            Upgrade Plan
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className={cx("ai-analysis-section", { active: showAiSection })}>
+        <div className={cx("ai-analysis-header")} onClick={toggleAiSection}>
+          <div className={cx("ai-icon")}>
+            <FaRobot />
+          </div>
+          <h3>AI Job Analysis</h3>
+          <div className={cx("ai-plan-badge", userPlan.toLowerCase())}>
+            {userPlan}
+          </div>
+        </div>
+
+        {showAiSection && (
+          <div className={cx("ai-analysis-content")}>
+            {isAnalyzing ? (
+              <div className={cx("ai-loading")}>
+                <FaSpinner className={cx("spinner")} />
+                <p>Analyzing job details...</p>
+              </div>
+            ) : analysisResult ? (
+              <div className={cx("analysis-result")}>
+                {aiAccess.features.includes('job_analysis') && (
+                  <div className={cx("analysis-section")}>
+                    <h4><FaChartBar /> Match Analysis</h4>
+                    <div className={cx("match-score")}>
+                      <div className={cx("score-circle", getScoreCategory(analysisResult.match_analysis.overall_match_score))}>
+                        {analysisResult.match_analysis.overall_match_score}%
+                      </div>
+                    </div>
+                    
+                    {/* Visual chart representation */}
+                    <div className={cx("match-visualization")}>
+                      <div className={cx("radial-chart")}>
+                        {analysisResult.match_analysis.detailed_skills_match && (
+                          <>
+                            <div className={cx("chart-title")}>Skills Match Visualization</div>
+                            <div className={cx("chart-container")}>
+                              <div className={cx("chart-legend")}>
+                                <div className={cx("legend-item")}>
+                                  <span className={cx("legend-color", "matched")}></span>
+                                  <span>Matched Skills</span>
+                                </div>
+                                <div className={cx("legend-item")}>
+                                  <span className={cx("legend-color", "missing")}></span>
+                                  <span>Missing Skills</span>
+                                </div>
+                              </div>
+                              <div className={cx("skills-distribution")}>
+                                <div 
+                                  className={cx("matched-portion")} 
+                                  style={{ 
+                                    width: `${analysisResult.match_analysis.detailed_skills_match.matched_skills.length / 
+                                      (analysisResult.match_analysis.detailed_skills_match.matched_skills.length + 
+                                       analysisResult.match_analysis.detailed_skills_match.missing_skills.length) * 100}%` 
+                                  }}
+                                >
+                                  {analysisResult.match_analysis.detailed_skills_match.matched_skills.length}
+                                </div>
+                                <div 
+                                  className={cx("missing-portion")}
+                                  style={{ 
+                                    width: `${analysisResult.match_analysis.detailed_skills_match.missing_skills.length / 
+                                      (analysisResult.match_analysis.detailed_skills_match.matched_skills.length + 
+                                       analysisResult.match_analysis.detailed_skills_match.missing_skills.length) * 100}%` 
+                                  }}
+                                >
+                                  {analysisResult.match_analysis.detailed_skills_match.missing_skills.length}
+                                </div>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      
+                      {/* Radar chart for multi-dimensional match */}
+                      <div className={cx("radar-chart")}>
+                        <div className={cx("chart-title")}>Match Profile</div>
+                        <div className={cx("radar-container")}>
+                          <div className={cx("radar-web")}>
+                            <div className={cx("radar-circle", "circle-5")}></div>
+                            <div className={cx("radar-circle", "circle-4")}></div>
+                            <div className={cx("radar-circle", "circle-3")}></div>
+                            <div className={cx("radar-circle", "circle-2")}></div>
+                            <div className={cx("radar-circle", "circle-1")}></div>
+                            
+                            <div className={cx("radar-axes")}>
+                              <div className={cx("radar-axis", "axis-1")}></div>
+                              <div className={cx("radar-axis", "axis-2")}></div>
+                              <div className={cx("radar-axis", "axis-3")}></div>
+                              <div className={cx("radar-axis", "axis-4")}></div>
+                              <div className={cx("radar-axis", "axis-5")}></div>
+                            </div>
+                            
+                            {/* Replace the complex radar area with a simple polygon visualization */}
+                            <div className={cx("radar-polygon")}>
+                              <svg viewBox="0 0 100 100" className={cx("radar-svg")}>
+                                {/* Background pentagon for reference */}
+                                <polygon 
+                                  points="50,0 95,35 77,90 23,90 5,35" 
+                                  className={cx("radar-background")}
+                                />
+                                
+                                {/* Actual data polygon */}
+                                <polygon 
+                                  points={`
+                                    50,${100 - (analysisResult.match_analysis.overall_match_score * 0.8)}
+                                    ${50 + (95 - 50) * (analysisResult.match_analysis.overall_match_score * 0.9) / 100},${35 + (0 - 35) * (analysisResult.match_analysis.overall_match_score * 0.9) / 100}
+                                    ${77 - (77 - 50) * (analysisResult.match_analysis.overall_match_score * 1.1) / 100},${90 - (90 - 50) * (analysisResult.match_analysis.overall_match_score * 1.1) / 100}
+                                    ${23 + (50 - 23) * (analysisResult.match_analysis.overall_match_score * 0.7) / 100},${90 - (90 - 50) * (analysisResult.match_analysis.overall_match_score * 0.7) / 100}
+                                    ${5 + (50 - 5) * (analysisResult.match_analysis.overall_match_score * 0.95) / 100},${35 + (0 - 35) * (analysisResult.match_analysis.overall_match_score * 0.95) / 100}
+                                  `}
+                                  className={cx("radar-data")}
+                                />
+                                
+                                {/* Data points */}
+                                <circle cx="50" cy={100 - (analysisResult.match_analysis.overall_match_score * 0.8)} r="3" className={cx("radar-point-svg")} />
+                                <circle cx={50 + (95 - 50) * (analysisResult.match_analysis.overall_match_score * 0.9) / 100} cy={35 + (0 - 35) * (analysisResult.match_analysis.overall_match_score * 0.9) / 100} r="3" className={cx("radar-point-svg")} />
+                                <circle cx={77 - (77 - 50) * (analysisResult.match_analysis.overall_match_score * 1.1) / 100} cy={90 - (90 - 50) * (analysisResult.match_analysis.overall_match_score * 1.1) / 100} r="3" className={cx("radar-point-svg")} />
+                                <circle cx={23 + (50 - 23) * (analysisResult.match_analysis.overall_match_score * 0.7) / 100} cy={90 - (90 - 50) * (analysisResult.match_analysis.overall_match_score * 0.7) / 100} r="3" className={cx("radar-point-svg")} />
+                                <circle cx={5 + (50 - 5) * (analysisResult.match_analysis.overall_match_score * 0.95) / 100} cy={35 + (0 - 35) * (analysisResult.match_analysis.overall_match_score * 0.95) / 100} r="3" className={cx("radar-point-svg")} />
+                              </svg>
+                            </div>
+                            
+                            <div className={cx("radar-labels")}>
+                              <div className={cx("radar-label", "label-1")}>Skills</div>
+                              <div className={cx("radar-label", "label-2")}>Experience</div>
+                              <div className={cx("radar-label", "label-3")}>Education</div>
+                              <div className={cx("radar-label", "label-4")}>Location</div>
+                              <div className={cx("radar-label", "label-5")}>Salary</div>
+                            </div>
+                          </div>
+                          
+                          {/* Add radar legend */}
+                          <div className={cx("radar-legend")}>
+                            <div className={cx("legend-item")}>
+                              <span className={cx("legend-color", "high")}></span>
+                              <span>Your profile</span>
+                            </div>
+                            <div className={cx("legend-item")}>
+                              <span className={cx("legend-color", "reference")}></span>
+                              <span>Ideal match</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Score breakdown chart */}
+                      <div className={cx("score-breakdown")}>
+                        <div className={cx("chart-title")}>Match Score Breakdown</div>
+                        <div className={cx("score-bars")}>
+                          <div className={cx("score-bar-item")}>
+                            <div className={cx("score-label")}>Skills</div>
+                            <div className={cx("score-bar-container")}>
+                              <div 
+                                className={cx("score-bar", getScoreCategory(analysisResult.match_analysis.overall_match_score * 0.8))} 
+                                style={{ width: `${analysisResult.match_analysis.overall_match_score * 0.8}%` }}
+                              ></div>
+                            </div>
+                            <div className={cx("score-value")}>{Math.round(analysisResult.match_analysis.overall_match_score * 0.8)}%</div>
+                          </div>
+                          
+                          <div className={cx("score-bar-item")}>
+                            <div className={cx("score-label")}>Experience</div>
+                            <div className={cx("score-bar-container")}>
+                              <div 
+                                className={cx("score-bar", getScoreCategory(analysisResult.match_analysis.overall_match_score * 0.9))} 
+                                style={{ width: `${analysisResult.match_analysis.overall_match_score * 0.9}%` }}
+                              ></div>
+                            </div>
+                            <div className={cx("score-value")}>{Math.round(analysisResult.match_analysis.overall_match_score * 0.9)}%</div>
+                          </div>
+                          
+                          <div className={cx("score-bar-item")}>
+                            <div className={cx("score-label")}>Education</div>
+                            <div className={cx("score-bar-container")}>
+                              <div 
+                                className={cx("score-bar", getScoreCategory(analysisResult.match_analysis.overall_match_score * 1.1 > 100 ? 100 : analysisResult.match_analysis.overall_match_score * 1.1))} 
+                                style={{ width: `${Math.min(analysisResult.match_analysis.overall_match_score * 1.1, 100)}%` }}
+                              ></div>
+                            </div>
+                            <div className={cx("score-value")}>{Math.min(Math.round(analysisResult.match_analysis.overall_match_score * 1.1), 100)}%</div>
+                          </div>
+                          
+                          <div className={cx("score-bar-item")}>
+                            <div className={cx("score-label")}>Location</div>
+                            <div className={cx("score-bar-container")}>
+                              <div 
+                                className={cx("score-bar", getScoreCategory(analysisResult.match_analysis.overall_match_score * 0.7))} 
+                                style={{ width: `${analysisResult.match_analysis.overall_match_score * 0.7}%` }}
+                              ></div>
+                            </div>
+                            <div className={cx("score-value")}>{Math.round(analysisResult.match_analysis.overall_match_score * 0.7)}%</div>
+                          </div>
+                          
+                          <div className={cx("score-bar-item")}>
+                            <div className={cx("score-label")}>Salary</div>
+                            <div className={cx("score-bar-container")}>
+                              <div 
+                                className={cx("score-bar", getScoreCategory(analysisResult.match_analysis.overall_match_score * 0.95))} 
+                                style={{ width: `${analysisResult.match_analysis.overall_match_score * 0.95}%` }}
+                              ></div>
+                            </div>
+                            <div className={cx("score-value")}>{Math.round(analysisResult.match_analysis.overall_match_score * 0.95)}%</div>
+                          </div>
+                          
+                          <div className={cx("score-bar-item", "overall-score")}>
+                            <div className={cx("score-label")}>Overall</div>
+                            <div className={cx("score-bar-container")}>
+                              <div 
+                                className={cx("score-bar", getScoreCategory(analysisResult.match_analysis.overall_match_score))} 
+                                style={{ width: `${analysisResult.match_analysis.overall_match_score}%` }}
+                              ></div>
+                            </div>
+                            <div className={cx("score-value")}>{analysisResult.match_analysis.overall_match_score}%</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className={cx("match-details")}>
+                      <div className={cx("strengths")}>
+                        <h5>Điểm mạnh của bạn</h5>
+                        <ul>
+                          {analysisResult.match_analysis.strengths.map((strength, idx) => (
+                            <li key={idx}>{strength}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className={cx("gaps")}>
+                        <h5>Điểm yếu của bạn</h5>
+                        <ul>
+                          {analysisResult.match_analysis.gaps.map((gap, idx) => (
+                            <li key={idx}>{gap}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    {aiAccess.features.includes('skills_match') && (
+                      <div className={cx("skills-match")}>
+                        <h5>Skills Analysis</h5>
+                        <div className={cx("skills-columns")}>
+                          <div className={cx("skill-column")}>
+                            <h6>Kỹ năng phù hợp</h6>
+                            <ul className={cx("matched-skills")}>
+                              {analysisResult.match_analysis.detailed_skills_match.matched_skills.map((skill, idx) => (
+                                <li key={idx}>{skill}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div className={cx("skill-column")}>
+                            <h6>Kỹ năng còn thiếu</h6>
+                            <ul className={cx("missing-skills")}>
+                              {analysisResult.match_analysis.detailed_skills_match.missing_skills.map((skill, idx) => (
+                                <li key={idx}>{skill}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {aiAccess.features.includes('resume_tips') && (
+                  <div className={cx("analysis-section")}>
+                    <h4>Mẹo ứng tuyển</h4>
+                    <ul className={cx("application-tips")}>
+                      {analysisResult.application_tips.map((tip, idx) => (
+                        <li key={idx}>{tip}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {aiAccess.features.includes('interview_prep') && (
+                  <div className={cx("analysis-section")}>
+                    <h4><FaQuestionCircle /> Câu hỏi phỏng vấn</h4>
+                    <div className={cx("interview-questions")}>
+                      {analysisResult.interview_questions.map((item, idx) => (
+                        <div key={idx} className={cx("question-item")}>
+                          <div className={cx("question")}>{item.question}</div>
+                          <div className={cx("question-details")}>
+                            <p><strong>Why this might be asked:</strong> {item.reasoning}</p>
+                            <p><strong>How to prepare:</strong> {item.preparation_tips}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {aiAccess.features.includes('salary_negotiation') && (
+                  <div className={cx("analysis-section")}>
+                    <h4><FaMoneyBillWave /> Thông tin lương</h4>
+                    <div className={cx("salary-advice")}>
+                      <p className={cx("market-insights")}>{analysisResult.salary_advice.market_insights}</p>
+                      <h5>Mẹo thương lượng</h5>
+                      <ul>
+                        {analysisResult.salary_advice.negotiation_tips.map((tip, idx) => (
+                          <li key={idx}>{tip}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
+                <div className={cx("analysis-summary")}>
+                  <h4>Tóm tắt</h4>
+                  <p>{analysisResult.summary}</p>
+                </div>
+
+                {userPlan !== 'ProMax' && (
+                  <div className={cx("upgrade-notice")}>
+                    <p>
+                      <FaLock /> Nâng cấp đến {userPlan === 'Basic' ? 'Pro' : 'ProMax'} để mở khóa các tính năng AI.
+                    </p>
+                    <button className={cx("upgrade-btn")} onClick={() => navigate("/pricing")}>
+                      Upgrade Plan
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className={cx("no-analysis")}>
+                <p>Không có phân tích. Hãy nhấn nút bên dưới để phân tích công việc này.</p>
+                <button 
+                  className={cx("analyze-btn")}
+                  onClick={handleAnalyzeJob}
+                  disabled={isAnalyzing}
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <FaSpinner className={cx("spinner")} /> Đang phân tích...
+                    </>
+                  ) : (
+                    <>
+                      <FaRobot /> Phân tích công việc này
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Helper function to determine score category for styling
+  const getScoreCategory = (score) => {
+    if (score >= 80) return "high";
+    if (score >= 60) return "medium";
+    return "low";
+  };
+
   return (
     <div className={cx("wrapper")}>
       <div className={cx("container")}>
@@ -298,38 +884,7 @@ const JobDetail = () => {
               </div>
             </div>
             <div className={cx("action-buttons")}>
-              {isJobExpired ? (
-                <button className={cx("apply-btn", "expired-btn")} disabled>
-                  <i className="fas fa-lock"></i>
-                  Đã đóng
-                </button>
-              ) : (applicationStatus === "Đã rút đơn" || applicationStatus === "Đã từ chối") && !canApplyAgain() ? (
-                <button className={cx("apply-btn", "expired-btn")} disabled>
-                  <i className="fas fa-clock"></i>
-                  {`Có thể ứng tuyển lại sau ${getRemainingDays()} ngày`}
-                </button>
-              ) : (applicationStatus === "Đã rút đơn" || applicationStatus === "Đã từ chối") && canApplyAgain() ? (
-                <button className={cx("apply-btn", "primary-btn")} onClick={handleApplyJob}>
-                  <i className="fas fa-redo"></i>
-                  Ứng tuyển lại
-                </button>
-              ) : appliedStatus ? (
-                <div className={cx("applied-status")}>
-                  <button className={cx("apply-btn", "primary-btn")} disabled>
-                    <i className="fas fa-check"></i>
-                    Đã ứng tuyển
-                  </button>
-                  <button className={cx("withdraw-btn", "secondary-btn")} onClick={handleWithdrawApplication}>
-                    <i className="fas fa-times"></i>
-                    Rút đơn ứng tuyển
-                  </button>
-                </div>
-              ) : (
-                <button className={cx("apply-btn", "primary-btn")} onClick={handleApplyJob}>
-                  <i className="fas fa-paper-plane"></i>
-                  Ứng tuyển ngay
-                </button>
-              )}
+              {renderActionButton()}
               <button 
                 className={cx("save-btn", "secondary-btn", { saved: savedStatus })}
                 onClick={handleSaveJob}
@@ -402,151 +957,16 @@ const JobDetail = () => {
                 Hạn nộp: {job?.deadline || "Không thời hạn"}
               </div>
             </div>
-            {/* Button ứng tuyển và Lưu Tin  */}
-            <div className={cx("action-buttons")}>
-              {isJobExpired ? (
-                <button className={cx("apply-btn", "expired-btn")} disabled>
-                  <i className="fas fa-lock"></i>
-                  Đã đóng
-                </button>
-              ) : (applicationStatus === "Đã rút đơn" || applicationStatus === "Đã từ chối") && !canApplyAgain() ? (
-                <button className={cx("apply-btn", "expired-btn")} disabled>
-                  <i className="fas fa-clock"></i>
-                  {`Có thể ứng tuyển lại sau ${getRemainingDays()} ngày`}
-                </button>
-              ) : (applicationStatus === "Đã rút đơn" || applicationStatus === "Đã từ chối") && canApplyAgain() ? (
-                <button className={cx("apply-btn", "primary-btn")} onClick={handleApplyJob}>
-                  <i className="fas fa-redo"></i>
-                  Ứng tuyển lại
-                </button>
-              ) : appliedStatus ? (
-                <div className={cx("applied-status")}>
-                  <button className={cx("apply-btn", "primary-btn")} disabled>
-                    <i className="fas fa-check"></i>
-                    Đã ứng tuyển
-                  </button>
-                  <button className={cx("withdraw-btn", "secondary-btn")} onClick={handleWithdrawApplication}>
-                    <i className="fas fa-times"></i>
-                    Rút đơn ứng tuyển
-                  </button>
-                </div>
-              ) : (
-                <button className={cx("apply-btn", "primary-btn")} onClick={handleApplyJob}>
-                  <i className="fas fa-paper-plane"></i>
-                  Ứng tuyển ngay
-                </button>
-              )}
-              <button 
-                className={cx("save-btn", "secondary-btn", { saved: savedStatus })}
-                onClick={handleSaveJob}
-              >
-                <i className={`fa${savedStatus ? 's' : 'r'} fa-bookmark`}></i>
-                {savedStatus ? 'Đã Lưu' : 'Lưu Tin'}
-              </button>
-            </div>
             <div className={cx("report-btn")}>
               <i className="fas fa-exclamation-triangle"></i>
-              Báo cáo tin tuyển dụng: Nếu bạn thấy rằng tin tuyển dụng này không
-              đúng hoặc có dấu hiệu lừa đảo, hãy phản ánh với chúng tôi.
+              <span>Báo cáo tin tuyển dụng: Nếu bạn thấy rằng tin tuyển dụng này không đúng hoặc có dấu hiệu lừa đảo, hãy phản ánh với chúng tôi.</span>
             </div>
           </div>
 
-          <div className={cx("job-analysis")}>
-            <div className={cx("analysis-card")}>
-              <div className={cx("card-header")}>
-                <i className="fas fa-chart-line"></i>
-                <h3>Phân tích mức độ phù hợp</h3>
-                <span className={cx("match-rate")}>
-                  <i className="fas fa-star"></i>
-                  80% phù hợp
-                </span>
-              </div>
+          {/* Add AI analysis section before or after job description */}
+          {candidateStatus && renderAiAnalysisSection()}
 
-              <div className={cx("analysis-content")}>
-                <div className={cx("analysis-item")}>
-                  <div className={cx("question")}>
-                    <i className="fas fa-check-circle"></i>
-                    <span>Bạn phù hợp bao nhiêu % với việc làm này?</span>
-                  </div>
-                  <div className={cx("progress-bar")}>
-                    <div 
-                      className={cx("progress")} 
-                      style={{ width: "80%" }}
-                    ></div>
-                  </div>
-                  <span className={cx("percentage")}>80%</span>
-                </div>
-
-                <div className={cx("analysis-item")}>
-                  <div className={cx("question")}>
-                    <i className="fas fa-exclamation-circle"></i>
-                    <span>Đâu là điểm ít phù hợp nhất trong CV của bạn?</span>
-                  </div>
-                  <div className={cx("weakness-points")}>
-                    <div className={cx("point")}>
-                      <i className="fas fa-times"></i>
-                      <span>Thiếu kinh nghiệm về Docker</span>
-                    </div>
-                    <div className={cx("point")}>
-                      <i className="fas fa-times"></i>
-                      <span>Chưa có chứng chỉ AWS</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className={cx("analysis-item")}>
-                  <div className={cx("question")}>
-                    <i className="fas fa-lightbulb"></i>
-                    <span>Kỹ năng nào của bạn phù hợp, kỹ năng nào cần thiếu so với yêu cầu của NTD?</span>
-                  </div>
-                  <div className={cx("skills-analysis")}>
-                    <div className={cx("matching-skills")}>
-                      <h4>Kỹ năng phù hợp</h4>
-                      <div className={cx("skill-tags")}>
-                        <span className={cx("tag", "match")}>
-                          <i className="fas fa-check"></i>
-                          ReactJS
-                        </span>
-                        <span className={cx("tag", "match")}>
-                          <i className="fas fa-check"></i>
-                          JavaScript
-                        </span>
-                        <span className={cx("tag", "match")}>
-                          <i className="fas fa-check"></i>
-                          HTML/CSS
-                        </span>
-                      </div>
-                    </div>
-                    <div className={cx("missing-skills")}>
-                      <h4>Kỹ năng còn thiếu</h4>
-                      <div className={cx("skill-tags")}>
-                        <span className={cx("tag", "missing")}>
-                          <i className="fas fa-times"></i>
-                          Docker
-                        </span>
-                        <span className={cx("tag", "missing")}>
-                          <i className="fas fa-times"></i>
-                          AWS
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className={cx("upgrade-cta")}>
-                  <button className={cx("upgrade-btn")}>
-                    <i className="fas fa-crown"></i>
-                    Xem ngay phân tích chi tiết
-                  </button>
-                  <span className={cx("price")}>
-                    <span className={cx("original")}>20.000 VND</span>
-                    <span className={cx("discount")}>10.000 VND</span>
-                    <span className={cx("discount-tag")}>-50%</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
+         
         </div>
 
         {/* Right Column - Company Info */}
@@ -663,6 +1083,204 @@ const JobDetail = () => {
         </button>
       </div>
       <PopularKeywords />
+
+      {/* CV Selection Modal */}
+      {showCvModal && (
+        <div className={cx("modal-overlay")} onClick={() => setShowCvModal(false)}>
+          <div className={cx("modal-content")} onClick={(e) => e.stopPropagation()}>
+            <div className={cx("modal-header")}>
+              <h2>Chọn CV ứng tuyển</h2>
+              <button className={cx("close-btn")} onClick={() => setShowCvModal(false)}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+
+            <div className={cx("modal-body")}>
+              {/* Introduction Section */}
+              <div className={cx("introduction-section")}>
+                <h3>Thư giới thiệu</h3>
+                <div className={cx("introduction-content")}>
+                  <p className={cx("intro-tip")}>
+                    <i className="fas fa-lightbulb"></i>
+                    Một thư giới thiệu ngắn gọn, chỉn chu sẽ giúp bạn trở nên chuyên nghiệp và gây ấn tượng hơn với nhà tuyển dụng.
+                  </p>
+                  <textarea
+                    className={cx("intro-textarea")}
+                    placeholder="Viết giới thiệu ngắn gọn về bản thân (điểm mạnh, điểm yếu) và nêu rõ mong muốn, lý do bạn muốn ứng tuyển cho vị trí này."
+                    rows={4}
+                    onChange={(e) => setIntroduction(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Notice Section */}
+              <div className={cx("notice-section")}>
+                <h3>
+                  <i className="fas fa-exclamation-circle"></i>
+                  Lưu ý:
+                </h3>
+                <ul>
+                  <li>
+                    JobZone khuyến tất cả các bạn hãy luôn cẩn trọng trong quá trình tìm việc và chủ động nghiên cứu về thông tin công ty, vị trí việc làm trước khi ứng tuyển.
+                  </li>
+                  <li>
+                    Ứng viên cần có trách nhiệm với hành vi ứng tuyển của mình. Nếu bạn gặp phải tin tuyển dụng hoặc nhận được liên lạc đáng ngờ của nhà tuyển dụng, hãy báo cáo ngay cho JobZone để được hỗ trợ kịp thời.
+                  </li>
+                </ul>
+              </div>
+
+              {/* Created CVs Section */}
+              {userCvs.length > 0 && (
+                <div className={cx("cv-section")}>
+                  <h3>CV đã tạo</h3>
+                  <div className={cx("cv-list")}>
+                    {userCvs.map((cv) => (
+                      <div
+                        key={cv.cv_id}
+                        className={cx("cv-item", { selected: selectedCvId === cv.cv_id })}
+                        onClick={() => {
+                          setSelectedCvId(cv.cv_id);
+                          setUploadedFile(null);
+                        }}
+                      >
+                        <div className={cx("cv-info")}>
+                          <i className="fas fa-file-alt"></i>
+                          <div>
+                            <h4>{cv.cv_name || "CV không có tiêu đề"}</h4>
+                            <p>Cập nhật: {new Date(cv.updated_at).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                        <div className={cx("cv-actions")}>
+                          {selectedCvId === cv.cv_id && (
+                            <i className="fas fa-check-circle"></i>
+                          )}
+                          <button
+                            className={cx("default-btn", { active: cv.is_template })}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSetDefaultCv(cv.cv_id, true);
+                            }}
+                          >
+                            <i className="fas fa-star"></i>
+                            {cv.is_template ? "Mặc định" : "Đặt làm mặc định"}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Uploaded CVs Section */}
+              {candidateCvs.length > 0 && (
+                <div className={cx("cv-section")}>
+                  <h3>CV đã tải lên</h3>
+                  <div className={cx("cv-list")}>
+                    {candidateCvs.map((cv) => (
+                      <div
+                        key={cv.cv_id}
+                        className={cx("cv-item", { selected: selectedCvId === cv.cv_id })}
+                        onClick={() => {
+                          setSelectedCvId(cv.cv_id);
+                          setUploadedFile(null);
+                        }}
+                      >
+                        <div className={cx("cv-info")}>
+                          <i className="fas fa-file-pdf"></i>
+                          <div>
+                            <h4>{cv.cv_name || "CV không có tiêu đề"}</h4>
+                            <p>Cập nhật: {new Date(cv.updated_at).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                        <div className={cx("cv-actions")}>
+                          {selectedCvId === cv.cv_id && (
+                            <i className="fas fa-check-circle"></i>
+                          )}
+                          <button
+                            className={cx("default-btn", { active: cv.is_template })}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSetDefaultCv(cv.cv_id, false);
+                            }}
+                          >
+                            <i className="fas fa-star"></i>
+                            {cv.is_template ? "Mặc định" : "Đặt làm mặc định"}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Upload New CV Section */}
+              <div className={cx("cv-section")}>
+                <h3>Tải lên CV mới</h3>
+                <div className={cx("upload-area", { active: uploadedFile })}>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    accept=".pdf,.doc,.docx"
+                    style={{ display: "none" }}
+                  />
+                  {uploadedFile ? (
+                    <div className={cx("uploaded-file")}>
+                      <div className={cx("file-info")}>
+                        <i className="fas fa-file-pdf"></i>
+                        <div>
+                          <h4>{uploadedFile.name}</h4>
+                          <p>{Math.round(uploadedFile.size / 1024)} KB</p>
+                        </div>
+                      </div>
+                      <button
+                        className={cx("remove-file")}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setUploadedFile(null);
+                          fileInputRef.current.value = "";
+                        }}
+                      >
+                        <i className="fas fa-times"></i>
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      className={cx("upload-placeholder")}
+                      onClick={() => fileInputRef.current.click()}
+                    >
+                      <i className="fas fa-cloud-upload-alt"></i>
+                      <p>Nhấp để tải lên CV của bạn</p>
+                      <span>Hỗ trợ: PDF, DOC, DOCX (Tối đa 5MB)</span>
+                      <div className={cx("file-requirements")}>
+                        <p><i className="fas fa-check-circle"></i> Định dạng: PDF, DOC, DOCX</p>
+                        <p><i className="fas fa-check-circle"></i> Dung lượng: Tối đa 5MB</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className={cx("modal-footer")}>
+              <button
+                className={cx("cancel-btn", "secondary-btn")}
+                onClick={() => setShowCvModal(false)}
+              >
+                Hủy
+              </button>
+              <button
+                className={cx("apply-btn", "primary-btn")}
+                onClick={handleApplyJob}
+                disabled={!selectedCvId && !uploadedFile}
+              >
+                <i className="fas fa-paper-plane"></i>
+                Nộp đơn
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

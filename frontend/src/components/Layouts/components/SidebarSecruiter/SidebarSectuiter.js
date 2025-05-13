@@ -3,6 +3,8 @@ import classNames from "classnames/bind";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import toast from 'react-hot-toast';
 import { faStar, faCrown, faGem } from "@fortawesome/free-solid-svg-icons";
+import { useNotification } from '~/context/NotificationContext';
+import socketService from '~/utils/socket';
 
 import styles from "./SidebarSectuiter.module.scss";
 import { DashboardIcon } from "~/components/Icons";
@@ -32,6 +34,19 @@ const sidebarIcons = [
     minPlan: "Basic"
   },
   {
+    icon: <i className="fa-solid fa-message"></i>,
+    title: "Tin nhắn",
+    to: "/recruiter/messages",
+    minPlan: "Basic"
+  },
+  // đăng tin tuyển dụng
+  {
+    icon: <i className="fa-solid fa-bullhorn"></i>,
+    title: "Đăng tin tuyển dụng",
+    to: "/recruiter/post-job",
+    minPlan: "Basic"
+  },
+  {
     icon: <i className="fa-solid fa-magnifying-glass"></i>,
     title: "Tìm kiếm ứng viên",
     to: "/recruiter/search-candidate",
@@ -44,18 +59,13 @@ const sidebarIcons = [
     minPlan: "ProMax",
     comingSoon: true,
   },
-  {
-    icon: <i className="fa-solid fa-file-lines"></i>,
-    title: "CV đề xuất",
-    to: "/recruiter/suggested-cvs",
-    minPlan: "Pro"
-  },
-  {
-    icon: <i className="fa-solid fa-bullhorn"></i>,
-    title: "Chiến dịch tuyển dụng",
-    to: "/recruiter/campaigns",
-    minPlan: "Pro"
-  },
+  // {
+  //   icon: <i className="fa-solid fa-bullhorn"></i>,
+  //   title: "Chiến dịch tuyển dụng",
+  //   to: "/recruiter/campaigns",
+  //   minPlan: "Pro",
+  //   disabled: true,
+  // },
   {
     icon: <i className="fa-solid fa-briefcase"></i>,
     title: "Tin tuyển dụng",
@@ -80,7 +90,7 @@ const sidebarIcons = [
     title: "Báo cáo tuyển dụng",
     to: "/recruiter/reports",
     minPlan: "Pro",
-    disabled: true,
+    // disabled: true,
   },
   {
     icon: <i className="fa-solid fa-cart-shopping"></i>,
@@ -105,11 +115,7 @@ const sidebarIcons = [
     title: "Cài đặt tài khoản",
     to: "/recruiter/settings",
   },
-  {
-    icon: <i className="fa-solid fa-file-lines"></i>,
-    title: "Tạo bài viết SEO",
-    to: "/templates/create-seo-blog",
-  },
+
   // {
   //   icon: <i className="fa-solid fa-bell"></i>,
   //   title: "Thông báo hệ thống",
@@ -133,9 +139,9 @@ const SidebarSectuiter = () => {
   const { modalType, setModalType } = useContext(ModalTypeContext);
   const { isOpenSidebar, setIsOpenSidebar } = useContext(SidebarContext);
   const { user, setUser } = useContext(UserContext);
+  const { unreadCount, updateUnreadCount } = useNotification();
   const navigate = useNavigate();
   const [currentPlan, setCurrentPlan] = useState('Basic');
-  const [showMobile, setShowMobile] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   const token = localStorage.getItem("token");
@@ -178,13 +184,53 @@ const SidebarSectuiter = () => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
       if (window.innerWidth > 768) {
-        setShowMobile(false);
+        setIsOpenSidebar(true);
       }
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [setIsOpenSidebar]);
+
+  useEffect(() => {
+    const setupSocket = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!socketService.socket) {
+          socketService.connect(token);
+        }
+        socketService.joinUserRoom(user?.id);
+        
+        // Lắng nghe thông báo mới và cập nhật số lượng
+        socketService.onNewNotification(() => {
+          // Gọi API để lấy số lượng thông báo chưa đọc mới nhất
+          const fetchUnreadCount = async () => {
+            try {
+              const response = await authAPI().get(recruiterApis.getUnreadNotificationsCount);
+              if (response.data.success) {
+                updateUnreadCount(response.data.count);
+              }
+            } catch (error) {
+              console.error('Error fetching unread notifications count:', error);
+            }
+          };
+          fetchUnreadCount();
+        });
+      } catch (error) {
+        console.error('Error setting up socket:', error);
+      }
+    };
+
+    if (token && user?.id) {
+      setupSocket();
+    }
+
+    return () => {
+      if (socketService.socket) {
+        socketService.socket.off('new_notification');
+      }
+    };
+  }, [token, user?.id, updateUnreadCount]);
 
   const canAccessFeature = (minPlan) => {
     if (!minPlan) return true; // Nếu không có minPlan thì cho phép truy cập
@@ -205,9 +251,12 @@ const SidebarSectuiter = () => {
   };
 
   const handleToggleSidebar = () => {
+    if (isMobile) {
+      setIsOpenSidebar(true);
+    } else {
     setIsOpenSidebar(!isOpenSidebar);
-    // Lưu trạng thái vào localStorage để giữ nguyên khi refresh
     localStorage.setItem("sidebarOpen", !isOpenSidebar);
+    }
   };
 
   // Thêm useEffect để lấy trạng thái sidebar từ localStorage khi component mount
@@ -218,25 +267,25 @@ const SidebarSectuiter = () => {
     }
   }, []);
 
-  const toggleMobileMenu = () => {
-    setShowMobile(!showMobile);
-  };
-
   const closeMobileMenu = () => {
-    setShowMobile(false);
+    if (isMobile) setIsOpenSidebar(false);
   };
 
   return (
     <>
       <div className={cx("wrapper", { 
-        collapsed: !isOpenSidebar,
-        show: showMobile 
+        collapsed: !isOpenSidebar && !isMobile,
+        show: isOpenSidebar && isMobile
       })}>
         <div className={cx("header")}>
           <Avatar src={images.logo} fontsize={"5px"} alt={"Logo"} />
+          {/* nhà tuyển dụng */}
           <div className={cx("toggle-buttons")}>
             <i
-              className={isOpenSidebar ? "fa-solid fa-bars" : "fa-solid fa-bars"}
+              className={`fa-solid ${isOpenSidebar ? 'fa-xmark' : 'fa-bars'}`}
+              style={{
+                color: isOpenSidebar && isMobile ? '#fff' : '#013a74'
+              }}
               onClick={handleToggleSidebar}
             ></i>
           </div>
@@ -273,6 +322,9 @@ const SidebarSectuiter = () => {
                   {item.title}
                   {item.comingSoon && <small className={cx("coming-soon")}> (Sắp ra mắt)</small>}
                 </span>
+                {item.title === "Quản lý thông báo" && unreadCount > 0 && (
+                  <span className={cx("notification-badge")}>{unreadCount}</span>
+                )}
                 {item.minPlan && !canAccessFeature(item.minPlan) && (
                   <span className={cx("plan-badge", `plan-${item.minPlan.toLowerCase()}`)}>{item.minPlan}</span>
                 )}
@@ -327,17 +379,9 @@ const SidebarSectuiter = () => {
 
       {/* Overlay cho mobile */}
       <div 
-        className={cx("sidebar-overlay", { show: showMobile })}
+        className={cx("sidebar-overlay", { show: isOpenSidebar && isMobile })}
         onClick={closeMobileMenu}
       />
-
-      {/* Nút menu cho mobile */}
-      <button 
-        className={cx("mobile-menu-button")}
-        onClick={toggleMobileMenu}
-      >
-        <i className={`fa-solid ${showMobile ? 'fa-times' : 'fa-bars'}`}></i>
-      </button>
     </>
   );
 };

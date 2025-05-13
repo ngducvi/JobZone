@@ -1,39 +1,51 @@
 const express = require('express');
 const userController = require('../controllers/UserController');
 const jwtMiddleware = require('../middleware/JWTMiddleware');
+const checkPlanExpiredMiddleware = require('../middleware/CheckPlanExpiredMiddleware');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
+// Public routes (no authentication required)
+// Authentication routes
 router.post('/register', userController.registerUser.bind(userController));
 router.post('/login', userController.login.bind(userController));
 router.get('/verify-email', userController.verifyEmail.bind(userController));
 router.get('/reset-password', userController.resetPassword.bind(userController));
 router.post('/forget-password', userController.forgetPassword.bind(userController));
 router.post('/change-password', userController.changePassword.bind(userController));
+
+// Public job search routes
+router.get("/jobs", userController.getAllJobs.bind(userController));
+router.get("/jobs/filter", userController.filterJobs.bind(userController));
+router.get("/categories", userController.getAllCategories.bind(userController));
+router.get("/companies", userController.getAllCompany.bind(userController));
+router.get("/company-detail/:company_id", userController.getCompanyDetailByCompanyId.bind(userController));
+router.get("/job-detail/:job_id", userController.getJobDetailByJobId.bind(userController));
 router.get("/top-company", userController.getAllTopCompany.bind(userController));
 router.get("/top-company-pro", userController.getAllTopCompanyPro.bind(userController));
 router.get("/reviews/:company_id", userController.getAllReviewsByCompanyId.bind(userController));
 router.get("/career-handbook/:category_id", userController.getCareerHandbookByCategoryId.bind(userController));
 router.get("/career-handbook/post/:post_id", userController.getCareerHandbookByPostId.bind(userController));
 
+// Authentication required routes
 router.use(jwtMiddleware(["user", "admin","recruiter"]));
+router.use(checkPlanExpiredMiddleware());
+
+// Protected routes
 router.get('/current-user', userController.getCurrentUser.bind(userController));
 router.get('/check-candidate', userController.checkCandidate.bind(userController));
+router.get('/check-user-plan', userController.checkUserPlan.bind(userController));
 router.patch('/current-user', userController.updateUser.bind(userController));
 router.get('/check-balance', userController.checkBalance.bind(userController));
 router.get('/logout', userController.logout.bind(userController));
 router.patch('/update-password', userController.updatePassword.bind(userController));
-router.get("/conversation/all", userController.getAllConversations.bind(userController));
-router.get("/conversation/most-recent", userController.getMostRecentConversations.bind(userController));
-router.get("/conversation-detail/:id", userController.getConversationDetail.bind(userController));
-router.get("/usage-history", userController.getUsageHistory.bind(userController));
+
 router.get("/candidate-profile", userController.getAllCandidateProfile.bind(userController));
 router.get("/candidate-profile/:id", userController.getCandidateProfile.bind(userController));
 router.get("/categories-post", userController.getAllCategoriesPost.bind(userController));
 router.get("/career-handbook", userController.getAllCareerHandbook.bind(userController));
 router.get("/career-handbook/featured", userController.getAllFeaturedCareerHandbook.bind(userController));
-router.get("/jobs", userController.getAllJobs.bind(userController));
 router.get("/jobs/experience", userController.getJobsByExperience.bind(userController));
 router.get("/jobs/working-time", userController.getJobsByWorkingTime.bind(userController));
 router.get("/jobs/salary", userController.getJobsBySalary.bind(userController));
@@ -46,9 +58,6 @@ router.get("/cv-templates", userController.getAllCvTemplates.bind(userController
 router.get("/user-cvs", userController.getAllUserCvByUserId.bind(userController));
 router.get("/candidate-cvs", userController.getAllCandidateCvByUserId.bind(userController));
 router.get("/suitable-jobs", userController.getAllSuitableJobsByUser.bind(userController));
-router.get("/job-detail/:job_id", userController.getJobDetailByJobId.bind(userController));
-router.get("/companies", userController.getAllCompany.bind(userController));
-router.get("/company-detail/:company_id", userController.getCompanyDetailByCompanyId.bind(userController));
 router.get("/template-fields/:template_id", userController.getAllTemplateFieldsByTemplateId.bind(userController));
 router.get("/cv-field-values/:cv_id", userController.getAllCvFieldValuesByCvId.bind(userController));
 router.get("/cv-templates/:template_id", userController.getTemplateById.bind(userController));
@@ -81,7 +90,6 @@ router.delete('/candidate-projects/:id', userController.deleteCandidateProjectsB
 router.put('/candidate/edit/:id', userController.editCandidate.bind(userController));
 router.put('/candidate/is-searchable-and-is-actively-searching/:id', userController.editIsSearchableAndIsActivelySearching.bind(userController));
 router.get('/categories', userController.getAllCategories.bind(userController));
-router.get("/jobs/filter", userController.filterJobs.bind(userController));
 // lưu job
 router.post('/jobs/save/:job_id', userController.saveJob.bind(userController));
 // bỏ lưu job
@@ -112,6 +120,7 @@ router.put('/toggle-cv-template/:cv_id', userController.toggleCvTemplate.bind(us
 router.put('/cancel-cv-template/:cv_id', userController.cancelCvTemplate.bind(userController));
 router.put('/toggle-user-cv-template/:cv_id', userController.toggleUserCvTemplate.bind(userController));
 router.put('/cancel-user-cv-template/:cv_id', userController.cancelUserCvTemplate.bind(userController));
+router.delete('/delete-user-cv-template/:cv_id', userController.deleteUserCvTemplate.bind(userController));
 router.post('/create-cv', userController.createNewCV.bind(userController));
 // Thêm route update CV
 router.put('/update-cv/:cv_id', userController.updateCV.bind(userController));
@@ -133,4 +142,7 @@ router.delete('/notifications/read/all', userController.deleteAllReadNotificatio
 router.get('/reviews', userController.getAllReviewsByUserId.bind(userController));
 router.put('/reviews/edit', userController.editReviewByUserId.bind(userController));
 router.delete('/reviews/:review_id', userController.deleteReviewByReviewId.bind(userController));
+router.get('/check-candidate-status', userController.checkCandidateStatus.bind(userController));
+router.get('/conversations', userController.getAllConversations.bind(userController));
+router.get('/recruiter-company', userController.getRecruiterCompanyByUserId.bind(userController));
 module.exports = router;

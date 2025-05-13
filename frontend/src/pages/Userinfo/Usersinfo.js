@@ -49,8 +49,8 @@ const menuItems = [
   {
     to: "/user/change-password",
     icon: "fa-solid fa-shield-halved",
-    title: "Bảo mật",
-    description: "Cài đặt bảo mật và quyền riêng tư",
+    title: "Đổi mật khẩu",
+    description: "Đổi mật khẩu tài khoản của bạn",
     bgColor: "rgba(239, 68, 68, 0.1)",
     color: "#ef4444"
   },

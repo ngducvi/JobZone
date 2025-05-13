@@ -95,13 +95,13 @@ const CreateEmail = () => {
     setStreamError(null);
     setCompletionStatus('');
     setEmailContent("");
-
+    
     const token = localStorage.getItem("token");
     if (!token) {
-      setModalType("loginEmail");
-      setLoading(false);
-      setIsStreaming(false);
-      return;
+        setModalType("loginEmail");
+        setLoading(false);
+        setIsStreaming(false);
+        return;
     }
 
     let eventSource;
@@ -141,58 +141,58 @@ const CreateEmail = () => {
          - Kết thúc email với thông tin liên hệ đầy đủ
 
       Hãy tạo một email hoàn chỉnh, chuyên nghiệp và phù hợp với tất cả các yêu cầu trên.`;
-
-      eventSource = new EventSourcePolyfill(
-        `${process.env.REACT_APP_API_URL}/openai/chat-stream?prompt=${encodeURIComponent(prompt)}&model=${encodeURIComponent(model)}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Accept': 'text/event-stream',
-          },
-          withCredentials: false,
-          heartbeatTimeout: 60000,
-        }
-      );
+        
+        eventSource = new EventSourcePolyfill(
+            `${process.env.REACT_APP_API_URL}/openai/chat-stream?prompt=${encodeURIComponent(prompt)}&model=${encodeURIComponent(model)}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Accept': 'text/event-stream',
+                },
+                withCredentials: false,
+                heartbeatTimeout: 60000,
+            }
+        );
 
       eventSource.onopen = () => {
-        setStreamError(null);
-      };
+            setStreamError(null);
+        };
 
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
+        eventSource.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
           setEmailContent((prev) => prev + data);
-        } catch (error) {
-          console.error('Error parsing event data:', error);
-          setStreamError('Lỗi khi xử lý dữ liệu nhận được');
-        }
-      };
+            } catch (error) {
+                console.error('Error parsing event data:', error);
+                setStreamError('Lỗi khi xử lý dữ liệu nhận được');
+            }
+        };
 
-      eventSource.onerror = (error) => {
-        console.error('EventSource error:', error);
-        if (eventSource.readyState === EventSourcePolyfill.CLOSED) {
-          setIsStreaming(false);
+        eventSource.onerror = (error) => {
+            console.error('EventSource error:', error);
+            if (eventSource.readyState === EventSourcePolyfill.CLOSED) {
+                setIsStreaming(false);
           if (emailContent) {
-            setCompletionStatus('Đã hoàn thành! Bạn có thể sao chép nội dung.');
-          } else {
-            setStreamError('Kết nối bị đóng trước khi nhận được nội dung');
-          }
-        }
-        eventSource.close();
-        setLoading(false);
-      };
+                    setCompletionStatus('Đã hoàn thành! Bạn có thể sao chép nội dung.');
+                } else {
+                    setStreamError('Kết nối bị đóng trước khi nhận được nội dung');
+                }
+            }
+            eventSource.close();
+            setLoading(false);
+        };
 
     } catch (error) {
       console.error('Error creating email:', error);
       setStreamError('Lỗi khi tạo email');
-      setLoading(false);
-      setIsStreaming(false);
+        setLoading(false);
+        setIsStreaming(false);
     }
 
     return () => {
-      if (eventSource) {
-        eventSource.close();
-      }
+        if (eventSource) {
+            eventSource.close();
+        }
     };
   };
 
@@ -298,10 +298,10 @@ const CreateEmail = () => {
                     />
                   </div>
 
-                  <div className={cx("inputGroup")}>
+                <div className={cx("inputGroup")}>
                     <label>Chức vụ người gửi</label>
-                    <input
-                      type="text"
+                  <input
+                    type="text"
                       name="senderRole"
                       placeholder="VD: Ứng viên"
                       value={formData.senderRole}

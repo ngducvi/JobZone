@@ -11,7 +11,7 @@ const UsageRoute = require('./src/routes/UsageRoute');
 const GiftCodeRoute = require('./src/routes/GiftCodeRoute');
 const AdminRoute = require('./src/routes/AdminRoute');
 const Recruiter = require('./src/routes/RecruiterRoute');
-
+const MessagesRoute = require('./src/routes/MessagesRoute');
 async function createDatabase() {
   try {
       // Sync all models defined in sequelize
@@ -66,7 +66,7 @@ app.use('/api/v1/user', UserRoute);
 app.use('/api/v1/vnpay', VnPayRoute);
 app.use('/api/v1/admin', AdminRoute);
 app.use('/api/v1/recruiter', Recruiter);
-
+app.use('/api/v1/messages', MessagesRoute);
 const PORT = process.env.PORT || 8080;
 httpServer.listen(PORT, () => {
   createDatabase();
