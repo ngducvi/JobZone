@@ -1,21 +1,21 @@
 {
   "development": {
     "username": "root",
-    "password": "12345678",
-    "database": "dbtest",
+    "password": "123456",
+    "database": "dbts",
     "host": "localhost",
     "dialect": "mysql"
   },
   "test": {
     "username": "root",
-    "password": "12345678",
-    "database": "dbtest",
+    "password": "123456",
+    "database": "dbts",
     "host": "127.0.0.1",
     "dialect": "mysql"
   },
   "production": {
     "username": "root",
-    "password": "12345678",
+    "password": "123456",
     "database": "dbtest",
     "host": "127.0.0.1",
     "dialect": "mysql"

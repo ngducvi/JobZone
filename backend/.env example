@@ -2,6 +2,7 @@ DB_HOST = 127.0.0.1
 DB_USERNAME = root
 DB_PASSWORD = 12345678
 DB_NAME = dbts
+
 DB_PORT = 3306
 FE_URL = http://localhost:3000
 LOGO_URL = https://res.cloudinary.com/dh5cevmhm/image/upload/v1741407574/logo_gbm1hg.jpg
