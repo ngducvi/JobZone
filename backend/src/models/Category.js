@@ -28,7 +28,17 @@ Category.init({
     version: {
         type: DataTypes.INTEGER,
         defaultValue: 1
-    }
+    },
+    parent_category_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: null,
+    },
+    level: {
+        type: DataTypes.INTEGER,
+        defaultValue: 1
+
+    }  
 }, {
     sequelize,
     modelName: 'Category',

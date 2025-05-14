@@ -45,6 +45,11 @@ JobApplication.init({
         type: DataTypes.DATE,
         allowNull: true,
     },
+    resume_type: {
+        type: DataTypes.ENUM('uploaded', 'created'),
+        allowNull: true,
+        defaultValue: null,
+    },
 }, {
     sequelize,
     modelName: 'JobApplication',

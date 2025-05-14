@@ -51,7 +51,6 @@ import SavingCalculator from '~/pages/Tools/SavingCalculator/SavingCalculator';
 import TestDisc from '~/pages/Tools/TestDisc/TestDisc';
 import UseTemplates from '~/pages/Resume/CreateCV/UseTemplates/UseTemplates';
 import SeeCv from '~/pages/Resume/SeeCv/SeeCv';
-import TestTemplate from '~/pages/TestTemplate/TestTemplate';
 import CvLibrary from '~/pages/CvLibrary/CvLibrary';
 import RecruiterCVManagement from '~/pages/Recruiter/CVManagement/RecruiterCVManagement';
 import RecruiterCampaigns from '~/pages/Recruiter/Campaigns/RecruiterCampaigns';
@@ -86,6 +85,7 @@ import Messages from '~/pages/Messages';
 import MessagesRecruiter from '~/pages/Messages/MesagesRecruiter/MesagesRecruiter';
 import DashboardB from '~/pages/Admin/DashboardB/DashboardB';
 import CvConsulting from '~/pages/CvConsulting/CvConsulting';
+import CompanyReviews from '~/pages/Recruiter/CompanyReviews/CompanyReviews';
 const publicRoutes = [
     { path: '/', component: Dashboard },
     { path: '/user/verify-email', component: VerifyEmailSuccess, layout: null },
@@ -138,6 +138,7 @@ const publicRoutes = [
     { path: '/recruiter/campaigns', component: RecruiterCampaigns , layout: RecruiterLayout},
     { path: '/recruiter/jobs', component: RecruiterJobs , layout: RecruiterLayout},
     { path: '/recruiter/reports', component: RecruiterReports , layout: RecruiterLayout},
+    { path: '/recruiter/company-reviews', component: CompanyReviews , layout: RecruiterLayout},
     { path: '/recruiter/my-services', component: RecruiterMyServices , layout: RecruiterLayout},
     { path: '/recruiter/settings', component: RecruiterSettings , layout: RecruiterLayout},
     { path: '/recruiter/search-candidate', component: SearchCandidate , layout: RecruiterLayout},
@@ -167,7 +168,6 @@ const publicRoutes = [
     { path: '/tools/ai', component: AITools },
     { path: '/tools/ai-chat', component: AiChat },
     { path: '/tools/personal-brand', component: PersonalBrand },
-    { path: '/test-template', component: TestTemplate, layout: null },
     { path: '/career-handbook/detail/:id', component: CareerHandbookDetail},
     { path: '/career-handbook/:post_id', component: CareerHandbookDetail},
     { path: '/messages', component: Messages },

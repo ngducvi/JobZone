@@ -654,6 +654,43 @@ class UserController {
     }
   }
 
+  // get categories by parent_id
+  async getCategoriesByParentId(req, res) {
+    try {
+      const { parent_id } = req.params;
+      console.log("getCategoriesByParentId called with parent_id:", parent_id);
+      
+      let whereClause = {};
+      
+      if (parent_id === 'root') {
+        // If root is requested, get level 1 categories (without parent)
+        whereClause = { 
+          level: 1,
+          parent_category_id: null 
+        };
+      } else {
+        // Otherwise get categories with the specified parent_id
+        whereClause = { parent_category_id: parent_id };
+      }
+      
+      const categories = await Category.findAll({
+        where: whereClause,
+        order: [['category_name', 'ASC']]
+      });
+      
+      return res.status(200).send({
+        message: "Categories retrieved successfully",
+        code: 1,
+        categories
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1
+      });
+    }
+  }
+
   async getAllPaymentTransactions(req, res) {
     const { page = 1, limit = 10 } = req.query;
     const offset = (page - 1) * limit;
@@ -1346,6 +1383,7 @@ class UserController {
   async createCandidateCvWithCvId(req, res) {
     try {
       const { user_id, cv_name } = req.body;
+      const userId = user_id || req.user.id;
 
       if (!req.file) {
         return res.status(400).send({ message: "No file uploaded", code: -1 });
@@ -1356,8 +1394,8 @@ class UserController {
 
       const candidateCv = await CandidateCv.create({
         cv_id: this.generateCandidateCvId(),
-        user_id,
-        cv_name,
+        user_id: userId,
+        cv_name: cv_name || req.file.originalname || 'Uploaded CV',
         cv_link: uploadResult.secure_url,
         created_at: new Date(),
       });
@@ -1386,12 +1424,12 @@ class UserController {
         whereClause.rating = parseInt(rating);
       }
       
-      const reviews = await Reviews.findAll({
+    const reviews = await Reviews.findAll({
         where: whereClause,
-        order: [["review_date", "DESC"]],
-      });
+      order: [["review_date", "DESC"]],
+    });
       
-      return res.json({ reviews });
+    return res.json({ reviews });
     } catch (error) {
       console.error('Error getting reviews by company ID:', error);
       return res.status(500).json({ message: 'Lỗi khi lấy đánh giá', error: error.message });
@@ -1760,13 +1798,9 @@ class UserController {
         });
       }
 
-      let filename = req.file.filename;
-      filename = filename.split(".");
-      filename = filename[0] + uuid() + "." + filename[1];
-
       try {
         // Upload vào folder "profile_pictures" trong cloudinary
-        const result = await cloudinary.uploader.upload(req.file.path, {
+        const result = await cloudinary.uploader.upload(req.file.path || `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`, {
           resource_type: "image",
           folder: "profile_pictures", // Chỉ định folder để lưu trữ
           public_id: `user_${req.params.candidate_id}_${Date.now()}`, // Tạo tên file duy nhất
@@ -2302,7 +2336,25 @@ class UserController {
 
       // Filter by category
       if (category_id && category_id !== "all") {
-        whereClause.category_id = category_id;
+        // Kiểm tra xem category_id thuộc cấp nào
+        const selectedCategory = await Category.findByPk(category_id);
+        if (selectedCategory && selectedCategory.level === 2) {
+          // Nếu là danh mục cấp 2, tìm tất cả danh mục con cấp 3
+          const childCategories = await Category.findAll({
+            where: { parent_category_id: category_id }
+          });
+          
+          // Lấy tất cả ID của danh mục cấp 3 con
+          const childCategoryIds = childCategories.map(cat => cat.category_id);
+          
+          // Thêm cả danh mục cấp 2 và các danh mục con cấp 3 vào điều kiện lọc
+          whereClause.category_id = {
+            [Op.or]: [category_id, ...childCategoryIds]
+          };
+        } else {
+          // Nếu không phải danh mục cấp 2 (hoặc không tìm thấy), lọc theo chính danh mục đó
+          whereClause.category_id = category_id;
+        }
       }
 
       // Filter by experience
@@ -2681,7 +2733,7 @@ class UserController {
 
   // Thêm vào UserController
   async applyForJob(req, res) {
-    const { job_id, cv_id, previous_status } = req.body;
+    const { job_id, cv_id, cv_type, resume_url, previous_status } = req.body;
     const userId = req.user.id;
 
     try {
@@ -2739,7 +2791,9 @@ class UserController {
           // Nếu đã qua thời gian chờ, cập nhật trạng thái của đơn ứng tuyển
           await existingApplication.update({
             status: "Đang xét duyệt",
-            updated_at: new Date()
+            updated_at: new Date(),
+            resume: cv_id || resume_url || existingApplication.resume,
+            resume_type: cv_type || existingApplication.resume_type
           });
           
           // Trả về thành công
@@ -2774,6 +2828,8 @@ class UserController {
         application = existingApplication;
         application.status = "Đang xét duyệt";
         application.updated_at = new Date();
+        application.resume = cv_id || resume_url || application.resume;
+        application.resume_type = cv_type || application.resume_type;
         await application.save();
       } else {
         application = await JobApplication.create({
@@ -2782,6 +2838,8 @@ class UserController {
           job_id: job_id,
           applied_at: new Date(),
           status: "Đang xét duyệt",
+          resume: cv_id || resume_url,
+          resume_type: cv_type || (cv_id ? 'created' : 'uploaded')
         });
       }
 

@@ -1,5 +1,5 @@
 // SeeCv
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import classNames from "classnames/bind";
 import styles from "./SeeCv.module.scss";
 import { useLocation } from "react-router-dom";
@@ -11,7 +11,7 @@ const cx = classNames.bind(styles);
 
 const SeeCv = () => {
   const location = useLocation();
-  const { cv_id, template_id } = location.state || {};
+  const { cv_id, template_id, is_recruiter_view, download_mode } = location.state || {};
   const [loading, setLoading] = useState(true);
   const [templateFields, setTemplateFields] = useState([]);
   const [templateHtml, setTemplateHtml] = useState('');
@@ -19,6 +19,7 @@ const SeeCv = () => {
   const [fieldValues, setFieldValues] = useState({});
   const [selectedColor, setSelectedColor] = useState('#013a74'); // Default primary color
   const [bgColor, setBgColor] = useState('rgba(240, 247, 255, 0.5)'); // Default background color
+  const downloadButtonRef = useRef(null);
 
   useEffect(() => {
     window.scrollTo({
@@ -26,6 +27,21 @@ const SeeCv = () => {
       behavior: 'smooth'
     });
   }, []); 
+
+  // Focus on download button if download_mode is true
+  useEffect(() => {
+    if (download_mode && downloadButtonRef.current) {
+      downloadButtonRef.current.focus();
+      // Optional: Highlight the button visually
+      downloadButtonRef.current.classList.add(cx("highlight-button"));
+      // Remove highlight after 2 seconds
+      setTimeout(() => {
+        if (downloadButtonRef.current) {
+          downloadButtonRef.current.classList.remove(cx("highlight-button"));
+        }
+      }, 2000);
+    }
+  }, [download_mode, loading]);
 
   useEffect(() => {
     if (!cv_id || !template_id) {
@@ -115,6 +131,15 @@ const SeeCv = () => {
     );
   };
 
+  // Add handleDownloadPdf function
+  const handleDownloadPdf = () => {
+    // Implement PDF download logic here
+    // This could be a call to a backend endpoint or a client-side PDF generation
+    toast.success("Đang chuẩn bị tải xuống CV...");
+    // For now, just show a message
+    toast.info("Tính năng đang được phát triển");
+  };
+
   if (loading) {
     return <div className={cx("loading")}>Loading...</div>;
   }
@@ -131,7 +156,12 @@ const SeeCv = () => {
         </div>
         
         <div className={cx("header-actions")}>
-          <button className={cx("action-btn", "pdf")} title="Tải CV dưới dạng PDF">
+          <button 
+            ref={downloadButtonRef}
+            className={cx("action-btn", "pdf", { "highlight": download_mode })} 
+            title="Tải CV dưới dạng PDF"
+            onClick={handleDownloadPdf}
+          >
             <div className={cx("btn-icon")}>
               <FaFilePdf />
             </div>

@@ -7,6 +7,7 @@ import { authAPI, userApis } from "~/utils/api";
 import UserContext from "~/context/UserContext";
 import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaGraduationCap, FaBriefcase, FaCode, FaFileAlt, FaImage, FaAward, FaCloudUploadAlt, FaTrophy, FaGlobe, FaEdit, FaTimes, FaTrash } from "react-icons/fa";
 import { toast } from 'react-hot-toast';
+import images from '~/assets/images';
 
 // Import các component con
 import BasicInfoTab from './components/BasicInfoTab';
@@ -30,6 +31,7 @@ const JobZoneProfile = () => {
     const [candidateProjects, setCandidateProjects] = useState([]);
     const [candidateLanguages, setCandidateLanguages] = useState([]);
     const [selectedFile, setSelectedFile] = useState(null);
+    const [isMobile, setIsMobile] = useState(false);
 
     const menuItems = [
         { id: 'basic', icon: <FaUser />, label: 'Thông tin cơ bản' },
@@ -39,6 +41,20 @@ const JobZoneProfile = () => {
         { id: 'certifications', icon: <FaAward />, label: 'Chứng chỉ' },
         { id: 'projects', icon: <FaCode />, label: 'Dự án' },
     ];
+
+    // Check if device is mobile
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+        
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        
+        return () => {
+            window.removeEventListener('resize', checkMobile);
+        };
+    }, []);
 
     useEffect(() => {
         const fetchCandidateProfile = async () => {
@@ -75,7 +91,6 @@ const JobZoneProfile = () => {
                 ]);
 
                 setCandidateProfile(profileRes.data.candidate);
-                console.log("profileRes.data.candidate",profileRes.data.candidate);
                 setCandidateEducation(educationRes.data.candidateEducation);
                 setCandidateExperiences(experiencesRes.data.candidateExperiences);
                 setCandidateCertifications(certificationsRes.data.candidateCertifications);
@@ -160,6 +175,14 @@ const JobZoneProfile = () => {
         );
     }
 
+    if (loading) {
+        return (
+            <div className={cx('wrapper')}>
+                <div className={cx('loading')}>Đang tải thông tin hồ sơ...</div>
+            </div>
+        );
+    }
+
     return (
         <div className={cx('wrapper')}>
             <div className={cx('profile-container')}>
@@ -168,7 +191,7 @@ const JobZoneProfile = () => {
                         <div className={cx('avatar-section')}>
                             <div className={cx('avatar', { uploading: isUploading })}>
                                 <img 
-                                    src={selectedFile || candidateProfile?.profile_picture || "https://via.placeholder.com/150"} 
+                                    src={selectedFile || candidateProfile?.profile_picture || images.avatar} 
                                     alt="Profile" 
                                 />
                                 {isUploading && <div className={cx('loading-overlay')}>
@@ -184,7 +207,7 @@ const JobZoneProfile = () => {
                             />
                             <label htmlFor="file-upload" className={cx('upload-btn')}>
                                 <FaCloudUploadAlt />
-                                Tải ảnh lên
+                                {!isMobile ? 'Tải ảnh lên' : 'Tải ảnh'}
                             </label>
                         </div>
                         
@@ -215,46 +238,53 @@ const JobZoneProfile = () => {
                                 key={item.id}
                                 className={cx('menu-item', { active: activeTab === item.id })}
                                 onClick={() => setActiveTab(item.id)}
+                                aria-label={`Tab ${item.label}`}
+                                role="button"
                             >
                                 <span className={cx('menu-icon')}>{item.icon}</span>
-                                <span className={cx('menu-label')}>{item.label}</span>
+                                <span className={cx('menu-label')}>{isMobile && window.innerWidth <= 480 ? '' : item.label}</span>
                             </div>
                         ))}
                     </div>
 
                     <div className={cx('content-section')}>
                         {activeTab === 'basic' && (
-                            <BasicInfoTab userDetails={user} candidateProfile={candidateProfile} />
+                            <BasicInfoTab userDetails={user} candidateProfile={candidateProfile} isMobile={isMobile} />
                         )}
                         {activeTab === 'education' && (
                             <EducationTab 
                                 education={candidateEducation} 
                                 candidateProfile={candidateProfile}
                                 onUpdateEducation={handleUpdateEducation}
+                                isMobile={isMobile}
                             />
                         )}
                         {activeTab === 'experience' && (
                             <ExperienceTab 
                                 experiences={candidateExperiences} 
                                 candidateProfile={candidateProfile}
+                                isMobile={isMobile}
                             />
                         )}
                         {activeTab === 'languages' && (
                             <LanguagesTab 
                                 languages={candidateLanguages} 
                                 candidateProfile={candidateProfile}
+                                isMobile={isMobile}
                             />
                         )}
                         {activeTab === 'certifications' && (
                             <CertificationsTab 
                                 certifications={candidateCertifications} 
                                 candidateProfile={candidateProfile}
+                                isMobile={isMobile}
                             />
                         )}
                         {activeTab === 'projects' && (
                             <ProjectsTab 
                                 projects={candidateProjects} 
                                 candidateProfile={candidateProfile}
+                                isMobile={isMobile}
                             />
                         )}
                     </div>

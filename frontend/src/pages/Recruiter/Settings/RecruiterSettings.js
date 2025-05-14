@@ -406,6 +406,70 @@ const RecruiterSettings = () => {
       const formDataToSend = new FormData();
       formDataToSend.append("business_license_file", licenseFile);
 
+      if (isCreatingLicense || !businessLicense) {
+        // Nếu đang tạo mới, tạo giấy phép trước rồi mới cập nhật file
+        try {
+          // Tạo object licenseData chứa các field cần thiết
+          const licenseData = {
+            tax_id: licenseForm.tax_id || '',
+            registration_number: licenseForm.registration_number || '',
+            license_issue_date: licenseForm.license_issue_date || '',
+            license_expiry_date: licenseForm.license_expiry_date || '',
+            contact_email: licenseForm.contact_email || '',
+            contact_phone: licenseForm.contact_phone || '',
+            industry: licenseForm.industry || '',
+            founded_year: licenseForm.founded_year || '',
+          };
+
+          // Gọi API tạo mới giấy phép
+          const createResponse = await authAPI().post(
+            recruiterApis.createBusinessLicense(companyInfo.company_id),
+            licenseData
+          );
+
+          if (createResponse.data.businessLicense) {
+            setBusinessLicense(createResponse.data.businessLicense);
+            setIsCreatingLicense(false);
+            
+            // Sau khi tạo xong, tiếp tục tải file lên với license_id mới
+            const uploadResponse = await authAPI().put(
+              recruiterApis.updateBusinessLicenseFile(createResponse.data.businessLicense.license_id),
+              formDataToSend,
+              {
+                headers: {
+                  "Content-Type": "multipart/form-data",
+                },
+              }
+            );
+
+            toast.success("🎉 Tạo giấy phép và tải file lên thành công!", {
+              position: "top-right",
+              autoClose: 3000,
+            });
+
+            // Cập nhật state
+            setLicenseForm(prev => ({
+              ...prev,
+              business_license_file: uploadResponse.data.businessLicense.business_license_file
+            }));
+            
+            // Refresh data sau khi upload thành công
+            const responseLicense = await authAPI().get(
+              recruiterApis.getBusinessLicensesByCompanyId(companyInfo.company_id)
+            );
+            
+            if (responseLicense.data.businessLicenses.length > 0) {
+              setBusinessLicense(responseLicense.data.businessLicenses[0]);
+            }
+          }
+        } catch (error) {
+          console.error("Error creating business license:", error);
+          toast.error("Có lỗi xảy ra khi tạo giấy phép kinh doanh. Vui lòng điền đầy đủ thông tin trước khi tải file lên.");
+          setIsLoading(false);
+          return;
+        }
+      } else {
+        // Trường hợp đã có giấy phép, chỉ cập nhật file
       await authAPI().put(
         recruiterApis.updateBusinessLicenseFile(businessLicense.license_id),
         formDataToSend,
@@ -419,14 +483,9 @@ const RecruiterSettings = () => {
       toast.success("🎉 Cập nhật file giấy phép thành công!", {
         position: "top-right",
         autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
       });
 
-      // Refresh data after successful upload
+        // Refresh data sau khi upload thành công
       const responseLicense = await authAPI().get(
         recruiterApis.getBusinessLicensesByCompanyId(companyInfo.company_id)
       );
@@ -438,17 +497,12 @@ const RecruiterSettings = () => {
           business_license_file: responseLicense.data.businessLicenses[0].business_license_file
         }));
       }
-
+      }
     } catch (error) {
       console.error("Error updating file giấy phép:", error);
       toast.error("❌ Không thể cập nhật file giấy phép", {
         position: "top-right",
         autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
       });
     } finally {
       setIsLoading(false);
@@ -505,6 +559,15 @@ const RecruiterSettings = () => {
         return;
       }
     }
+
+    // Kiểm tra xem thông tin bắt buộc đã được nhập đầy đủ chưa
+    if (isCreatingLicense && (!licenseForm.tax_id || !licenseForm.registration_number || !licenseForm.license_issue_date || !licenseForm.license_expiry_date)) {
+      toast.warning("Vui lòng điền đầy đủ thông tin bắt buộc (mã số thuế, số đăng ký, ngày cấp, ngày hết hạn)", {
+        position: "top-right",
+        autoClose: 3000
+      });
+      return;
+    }
     
     setIsSubmitting(true);
 
@@ -513,7 +576,9 @@ const RecruiterSettings = () => {
 
       // Thêm các trường dữ liệu vào FormData
       Object.keys(licenseForm).forEach(key => {
+        if (key !== 'business_license_file') {
         formDataToSend.append(key, licenseForm[key]);
+        }
       });
       
       // Nếu giấy phép đã hết hạn, tự động đặt lại trạng thái là pending
@@ -529,12 +594,12 @@ const RecruiterSettings = () => {
           formDataToSend,
           {
             headers: {
-              'Content-Type': 'multipart/form-data'
+              'Content-Type': 'application/json'
             }
           }
         );
 
-        if (response.data.code === 1) {
+        if (response.data.businessLicense) {
           setBusinessLicense(response.data.businessLicense);
           setIsCreatingLicense(false);
           
@@ -1233,13 +1298,15 @@ const RecruiterSettings = () => {
                             ) : (
                               <>
                                 <i className="fa-solid fa-cloud-arrow-up"></i>
-                                Tải lên file giấy phép
+                                {isCreatingLicense ? "Tạo giấy phép và tải file lên" : "Tải lên file giấy phép"}
                               </>
                             )}
                           </button>
                         )}
                         <p className={cx("license-hint")}>
-                          Khuyến nghị: File PDF hoặc hình ảnh JPG, PNG với kích thước tối thiểu 800x600px
+                          {isCreatingLicense ? 
+                            "Lưu ý: Khi bạn tải file lên, hệ thống sẽ tự động tạo giấy phép với thông tin đã nhập. Vui lòng điền đầy đủ thông tin trước khi tải lên." :
+                            "Khuyến nghị: File PDF hoặc hình ảnh JPG, PNG với kích thước tối thiểu 800x600px"}
                         </p>
                       </div>
                     )}

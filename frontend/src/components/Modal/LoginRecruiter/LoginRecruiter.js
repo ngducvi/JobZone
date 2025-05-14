@@ -4,11 +4,13 @@ import styles from "./LoginRecruiter.module.scss";
 import InputWrapper from "~/components/InputWrapper";
 import { handleInputBlur } from "~/utils/handleInputBlur";
 import { ErrorIcon } from "~/components/Icons";
-import api, { userApis } from "~/utils/api";
+import api, { userApis, recruiterApis, authAPI } from "~/utils/api";
 import Spinner from "~/components/Spinner";
 import { toast } from "react-toastify";
 import UserContext from '~/context/UserContext';
+import axios from "axios";
 
+const HOST = process.env.REACT_APP_API_URL;
 const cx = classNames.bind(styles);
 
 function Login() {
@@ -24,6 +26,34 @@ function Login() {
 
   const handleChange = (setter) => (e) => {
     setter({ value: e.target.value, error: "" });
+  };
+
+  const createRecruiterCompanyAfterLogin = async (token) => {
+    try {
+      // Create axios instance with the new token
+      const instance = axios.create({
+        baseURL: HOST,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        withCredentials: true,
+      });
+      
+      // Call createRecruiterCompany API to check if company exists and create if not
+      await instance.post(recruiterApis.createRecruiterCompany, {
+        name: "Công ty của bạn", // Default name - will be updated later
+        address: "",
+        website: "",
+        description: "",
+        logo: null,
+        banner: null,
+        size: "Nhỏ hơn 20",
+        company_emp: 10
+      });
+    } catch (error) {
+      console.error("Error creating recruiter company:", error);
+      // Don't block the login process if this fails
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -48,6 +78,10 @@ function Login() {
       localStorage.setItem("user", JSON.stringify(response.data.user));
 
       const user = response.data.user;
+      
+      // Call createRecruiterCompany after successful login
+      await createRecruiterCompanyAfterLogin(response.data.token);
+
       toast.success(`Chào mừng ${user.name || user.account} đã quay trở lại!`, {
         position: "top-right",
         hideProgressBar: false,
@@ -61,7 +95,7 @@ function Login() {
         progressStyle: {
           background: "#00875A",
         },
-        icon: "��",
+        icon: "",
       });
 
       window.location.reload();

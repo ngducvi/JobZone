@@ -292,9 +292,11 @@ const JobDetail = () => {
         // Upload new CV
         const formData = new FormData();
         formData.append("cv_file", uploadedFile);
-        formData.append("job_id", id);
+        formData.append("user_id", localStorage.getItem("userId"));
+        formData.append("cv_name", uploadedFile.name);
         
-        response = await authAPI().post(
+        // First upload the CV file
+        const uploadResponse = await authAPI().post(
           userApis.createCandidateCvWithCvId,
           formData,
           {
@@ -303,11 +305,30 @@ const JobDetail = () => {
             },
           }
         );
+        
+        if (uploadResponse.data.code === 1) {
+          // Then apply for the job with the uploaded CV URL
+          const cvLink = uploadResponse.data.candidateCv.cv_link;
+          const cvId = uploadResponse.data.candidateCv.cv_id;
+          
+          response = await authAPI().post(userApis.applyJob, { 
+            job_id: id,
+            resume_url: cvLink,
+            cv_id: cvId,
+            cv_type: 'uploaded',
+            previous_status: applicationStatus 
+          });
       } else {
-        // Use existing CV
+          throw new Error("Failed to upload CV");
+        }
+      } else {
+        // Use existing CV - determine if it's a user-created CV or an uploaded one
+        const isUserCreatedCv = userCvs.some(cv => cv.cv_id === selectedCvId);
+        
         response = await authAPI().post(userApis.applyJob, { 
           job_id: id,
           cv_id: selectedCvId,
+          cv_type: isUserCreatedCv ? 'created' : 'uploaded',
           previous_status: applicationStatus 
         });
       }

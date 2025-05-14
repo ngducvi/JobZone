@@ -67,6 +67,27 @@ class RecruiterController {
     this.generateBusinessLicenseId = () => {
       return "bl-" + Math.random().toString(36).substr(2, 9);
     };
+    this.generateReviewId = () => {
+      return "rev-" + Math.random().toString(36).substr(2, 9);
+    };
+    this.generateCandidateId = () => {
+      return "cand-" + Math.random().toString(36).substr(2, 9);
+    };
+    this.generateCandidateCvId = () => {
+      return "cand-cv-" + Math.random().toString(36).substr(2, 9);
+    };
+    this.generateUserCvId = () => {
+      return "user-cv-" + Math.random().toString(36).substr(2, 9);
+    };
+    this.generateValueId = () => {
+      return "val-" + Math.random().toString(36).substr(2, 9);
+    };
+    this.generateCompanyId = () => {
+      return "comp-" + Math.random().toString(36).substr(2, 9);
+    };
+    this.generateRecruiterId = () => {
+      return "recruiter-" + Math.random().toString(36).substr(2, 9);
+    };
   }
   async verifyEmail(req, res) {
     const token = req.query.token;
@@ -306,7 +327,15 @@ class RecruiterController {
           .send({ message: "Mật khẩu không khớp", code: -1 });
       }
       const token = Common.generateToken();
-      const user = new User({ username, email, password, phone, name });
+      // Tạo user với role là recruiter
+      const user = new User({ 
+        username, 
+        email, 
+        password, 
+        phone, 
+        name, 
+        role: 'recruiter' 
+      });
       const { message, isValid } = Common.checkValidUserInfo(user);
       if (!isValid) {
         return res.status(400).send({
@@ -316,14 +345,236 @@ class RecruiterController {
       }
       user.password = await bcrypt.hash(password, 8);
       cacheService.set(token, user);
+
       mailerService.sendMail(
         user.email,
-        "Xác minh email của bạn",
+        "Xác Minh Tài Khoản Nhà Tuyển Dụng JobZone",
         `
-                    <p>Chào ${user.name},</p>
-                    <p> Bạn có 5 phút để xác minh email của mình.</p>
-                    <p>Nhấp vào <a href="${process.env.BASE_URL}/user/verify-email?token=${token}&status=success">đây</a> để xác minh email của bạn.</p>
-                    <p>Nếu bạn không yêu cầu điều này, vui lòng bỏ qua email này.</p>`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Xác Minh Tài Khoản Nhà Tuyển Dụng JobZone</title>
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Inter', sans-serif; background-color: #f5f7fa; color: #333333;">
+          <!-- Preheader text (hidden) -->
+          <div style="display: none; max-height: 0px; overflow: hidden;">
+            Xác minh tài khoản nhà tuyển dụng JobZone của bạn để bắt đầu đăng tin tuyển dụng.
+          </div>
+          
+          <!-- Main Container -->
+          <table border="0" cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+              <td style="padding: 30px 0;">
+                <!-- Email Container -->
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 5px 30px rgba(0, 0, 0, 0.08);">
+                  
+                  <!-- Header with Logo -->
+                  <tr>
+                    <td style="padding: 0;">
+                      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td style="padding: 40px 0; text-align: center; background: linear-gradient(135deg, #013a74 0%, #02a346 100%);">
+                            <img src="${process.env.LOGO_URL ||
+                              "https://your-logo-url.com"
+                            }" alt="JobZone" style="max-width: 180px; height: auto; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));">
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  
+                  <!-- Main Content -->
+                  <tr>
+                    <td style="padding: 0;">
+                      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <!-- Welcome Section -->
+                        <tr>
+                          <td style="padding: 50px 50px 30px;">
+                            <h1 style="margin: 0 0 20px; font-size: 28px; font-weight: 700; color: #013a74; text-align: center; letter-spacing: -0.5px;">Xác Minh Email Nhà Tuyển Dụng</h1>
+                            
+                            <p style="margin: 0 0 25px; font-size: 16px; line-height: 1.6; color: #4b5563;">
+                              Xin chào <span style="font-weight: 600; color: #013a74;">${user.name
+                              }</span>,
+                            </p>
+                            
+                            <p style="margin: 0 0 25px; font-size: 16px; line-height: 1.6; color: #4b5563;">
+                              Cảm ơn bạn đã đăng ký tài khoản nhà tuyển dụng tại <span style="font-weight: 600; color: #013a74;">JobZone</span>. Chúng tôi rất vui mừng được đồng hành cùng bạn trong hành trình tìm kiếm ứng viên tài năng.
+                            </p>
+                          </td>
+                        </tr>
+                        
+                        <!-- Verification Box -->
+                        <tr>
+                          <td style="padding: 0 50px 40px;">
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(to right, rgba(1, 58, 116, 0.03), rgba(2, 163, 70, 0.03)); border-radius: 12px; overflow: hidden;">
+                              <tr>
+                                <td style="padding: 30px; border-left: 4px solid #02a346;">
+                                  <p style="margin: 0 0 15px; font-size: 16px; line-height: 1.6; color: #4b5563;">
+                                    Để hoàn tất quá trình đăng ký, vui lòng xác minh địa chỉ email của bạn trong vòng:
+                                  </p>
+                                  
+                                  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                    <tr>
+                                      <td style="padding: 15px 0; text-align: center;">
+                                        <p style="margin: 0; font-size: 24px; font-weight: 700; color: #013a74;">5 phút</p>
+                                      </td>
+                                    </tr>
+                                  </table>
+                                  
+                                  <p style="margin: 15px 0 0; font-size: 14px; line-height: 1.5; color: #6b7280; text-align: center;">
+                                    Liên kết xác minh sẽ hết hạn sau thời gian trên
+                                  </p>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                        
+                        <!-- CTA Button -->
+                        <tr>
+                          <td style="padding: 0 50px 40px; text-align: center;">
+                            <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                              <tr>
+                                <td style="background: linear-gradient(135deg, #013a74 0%, #02a346 100%); border-radius: 8px; box-shadow: 0 4px 12px rgba(1, 58, 116, 0.2);">
+                                  <a href="${process.env.BASE_URL
+                                    }/user/verify-email?token=${token}&status=success" 
+                                     style="display: inline-block; padding: 16px 40px; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none;">
+                                    Xác Minh Email Ngay
+                                  </a>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                        
+                        <!-- Security Notice -->
+                        <tr>
+                          <td style="padding: 0 50px 50px;">
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+                              <tr>
+                                <td style="padding: 20px; background-color: #f9fafb;">
+                                  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                    <tr>
+                                      <td width="24" style="vertical-align: top; padding-right: 15px;">
+                                        <img src="https://cdn-icons-png.flaticon.com/512/1161/1161388.png" alt="Security" width="24" height="24">
+                                      </td>
+                                      <td>
+                                        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #4b5563;">
+                                          Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này hoặc liên hệ với bộ phận hỗ trợ của chúng tôi.
+                                        </p>
+                                      </td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  
+                  <!-- Divider -->
+                  <tr>
+                    <td style="padding: 0 50px;">
+                      <div style="height: 1px; background-color: #e5e7eb;"></div>
+                    </td>
+                  </tr>
+                  
+                  <!-- Benefits Section -->
+                  <tr>
+                    <td style="padding: 40px 50px 30px;">
+                      <h3 style="margin: 0 0 25px; font-size: 18px; font-weight: 600; color: #013a74; text-align: center;">
+                        Tại sao chọn JobZone cho nhà tuyển dụng?
+                      </h3>
+                      
+                      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td width="33%" style="padding: 0 10px; vertical-align: top; text-align: center;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/2910/2910791.png" alt="Ứng viên chất lượng" width="40" height="40" style="margin-bottom: 10px;">
+                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: #4b5563;">Ứng viên chất lượng</p>
+                          </td>
+                          <td width="33%" style="padding: 0 10px; vertical-align: top; text-align: center;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/1584/1584892.png" alt="Đăng tin hiệu quả" width="40" height="40" style="margin-bottom: 10px;">
+                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: #4b5563;">Đăng tin hiệu quả</p>
+                          </td>
+                          <td width="33%" style="padding: 0 10px; vertical-align: top; text-align: center;">
+                            <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Quản lý ứng viên" width="40" height="40" style="margin-bottom: 10px;">
+                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: #4b5563;">Quản lý ứng viên</p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  
+                  <!-- Footer -->
+                  <tr>
+                    <td style="padding: 0;">
+                      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb;">
+                        <tr>
+                          <td style="padding: 40px 50px; text-align: center;">
+                            <p style="margin: 0 0 15px; font-size: 14px; color: #6b7280;">Trân trọng,</p>
+                            <p style="margin: 0 0 25px; font-size: 16px; font-weight: 700; color: #013a74;">Đội ngũ JobZone</p>
+                            
+                            <!-- Social Media -->
+                            <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 25px;">
+                              <tr>
+                                <td style="padding: 0 8px;">
+                                  <a href="#" style="display: inline-block;">
+                                    <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" alt="Facebook" width="24" height="24">
+                                  </a>
+                                </td>
+                                <td style="padding: 0 8px;">
+                                  <a href="#" style="display: inline-block;">
+                                    <img src="https://cdn-icons-png.flaticon.com/512/733/733579.png" alt="Twitter" width="24" height="24">
+                                  </a>
+                                </td>
+                                <td style="padding: 0 8px;">
+                                  <a href="#" style="display: inline-block;">
+                                    <img src="https://cdn-icons-png.flaticon.com/512/733/733558.png" alt="LinkedIn" width="24" height="24">
+                                  </a>
+                                </td>
+                                <td style="padding: 0 8px;">
+                                  <a href="#" style="display: inline-block;">
+                                    <img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" alt="Instagram" width="24" height="24">
+                                  </a>
+                                </td>
+                              </tr>
+                            </table>
+                            
+                            <p style="margin: 0 0 5px; font-size: 12px; color: #6b7280;">Email này được gửi tự động, vui lòng không trả lời.</p>
+                            <p style="margin: 0; font-size: 12px; color: #6b7280;">Copyright © ${new Date().getFullYear()} JobZone. All rights reserved.</p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+                
+                <!-- Footer Address -->
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto;">
+                  <tr>
+                    <td style="padding: 20px 0; text-align: center;">
+                      <p style="margin: 0 0 5px; font-size: 12px; color: #9ca3af;">
+                        JobZone, Inc. • Tầng 16, Tòa nhà Vietcombank, 198 Trần Quang Khải, Hoàn Kiếm, Hà Nội
+                      </p>
+                      <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+                        <a href="#" style="color: #6b7280; text-decoration: none;">Chính sách bảo mật</a> • 
+                        <a href="#" style="color: #6b7280; text-decoration: none;">Điều khoản sử dụng</a> • 
+                        <a href="#" style="color: #6b7280; text-decoration: none;">Hủy đăng ký</a>
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+        `
       );
       res.status(201).send({
         message: "Vui lòng xác minh email của bạn",
@@ -459,21 +710,85 @@ class RecruiterController {
         where: { user_id: { [Op.in]: userIds } },
       });
 
+      // Collect all resume IDs for batch fetching
+      const createdCvIds = [];
+      const uploadedCvIds = [];
+      
+      jobApplications.forEach(app => {
+        if (app.resume_type === 'created' && app.resume) {
+          createdCvIds.push(app.resume);
+        } else if (app.resume_type === 'uploaded' && app.resume) {
+          uploadedCvIds.push(app.resume);
+        }
+      });
+      
+      // Batch fetch CV details
+      const userCvs = createdCvIds.length > 0 ? 
+        await UserCv.findAll({ where: { cv_id: { [Op.in]: createdCvIds } } }) : [];
+      
+      const candidateCvs = uploadedCvIds.length > 0 ? 
+        await CandidateCv.findAll({ where: { cv_id: { [Op.in]: uploadedCvIds } } }) : [];
+
       // Kết hợp thông tin người dùng và ứng viên vào jobApplications
       const applicationsWithDetails = jobApplications.map((application) => {
         const user = users.find((u) => u.id === application.user_id);
         const candidate = candidates.find(
           (c) => c.user_id === application.user_id
         );
+        
+        // Get CV information based on resume_type
+        let cvInfo = {};
+        
+        if (application.resume_type === 'created') {
+          // For created CVs, find details from userCvs
+          const userCv = userCvs.find(cv => cv.cv_id === application.resume);
+          if (userCv) {
+            cvInfo = {
+              cv_id: application.resume,
+              cv_type: 'created',
+              cv_name: userCv.cv_name,
+              created_at: userCv.created_at,
+              updated_at: userCv.updated_at
+            };
+          } else {
+            cvInfo = {
+              cv_id: application.resume,
+              cv_type: 'created',
+              cv_name: 'CV không tìm thấy'
+            };
+          }
+        } else if (application.resume_type === 'uploaded') {
+          // For uploaded CVs, find details from candidateCvs
+          const candidateCv = candidateCvs.find(cv => cv.cv_id === application.resume);
+          if (candidateCv) {
+            cvInfo = {
+              cv_id: application.resume,
+              cv_type: 'uploaded',
+              cv_link: candidateCv.cv_link,
+              cv_name: candidateCv.cv_name,
+              created_at: candidateCv.created_at
+            };
+          } else if (application.resume && application.resume.startsWith('http')) {
+            // Direct URL case
+            cvInfo = {
+              cv_link: application.resume,
+              cv_type: 'uploaded',
+              cv_name: 'CV tải lên'
+            };
+          }
+        }
+        
         return {
           ...application.get({ plain: true }),
           user: user || null, // Thêm thông tin người dùng vào kết quả
           candidate: candidate || null, // Thêm thông tin ứng viên vào kết quả
+          cv_info: cvInfo
         };
       });
 
       return res.json({ jobApplications: applicationsWithDetails });
     } catch (error) {
+      console.error("Error in getAllJobApplicationsByJobId:", error);
       res.status(400).send(error);
     }
   }
@@ -1919,6 +2234,161 @@ class RecruiterController {
       console.error("Error in getNewJobApplicationsStats:", error);
       return res.status(500).json({
         message: "Lỗi khi lấy thống kê CV ứng tuyển mới",
+        error: error.message,
+        code: -1
+      });
+    }
+  }
+  // get all user cv by cv_id
+  async getAllUserCvByCvId(req, res) {
+    try {
+      const userCv = await UserCv.findOne({ where: { cv_id: req.params.cv_id } });
+      return res.json({ userCv });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message, 
+        code: -1,
+      });
+    }
+  }
+  // check xem ở trong bảng recruiter_companies có user_id này chưa nếu chưa thì tạo mới company và recruiter_companies
+  async createRecruiterCompany(req, res) {
+    try {
+      const recruiterCompany = await RecruiterCompanies.findOne({ where: { user_id: req.user.id } });
+      if (!recruiterCompany) {
+        const company = await Company.create({
+          company_id: this.generateCompanyId(),
+          company_name: req.body.name,
+          address: req.body.address,
+          website: req.body.website,
+          description: req.body.description,
+          logo: req.body.logo,
+          banner: req.body.banner,
+          plan: 'Basic',
+          plan_expired_at: null,
+          size: req.body.size,
+          company_emp: req.body.company_emp,
+          version: 1,
+          last_modified_by: req.user.id,
+          created_at: new Date(),
+        });
+        const recruiterCompany = await RecruiterCompanies.create({
+          recruiter_id: this.generateRecruiterId(),
+          user_id: req.user.id,
+          company_id: company.company_id,
+          status: 'pending',
+        });
+
+      }
+      
+      return res.status(200).json({
+        message: "Có thông tin công ty",
+        code: 1,
+        recruiterCompany,
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
+
+  // get all candidate cv by cv_id
+  async getAllCandidateCvByCvId(req, res) {
+    try {
+      const candidateCv = await CandidateCv.findOne({
+        where: { cv_id: req.params.cv_id },
+      });
+      return res.json({ candidateCv });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1,
+      });
+    }
+  }
+
+  // Lấy đánh giá công ty theo company_id
+  async getCompanyReviewsByCompanyId(req, res) {
+    try {
+      const { company_id } = req.params;
+      const { rating } = req.query;
+      
+      // Kiểm tra xem nhà tuyển dụng có quyền xem đánh giá của công ty này không
+      const recruiterCompany = await RecruiterCompanies.findOne({
+        where: { 
+          user_id: req.user.id,
+          company_id: company_id
+        }
+      });
+      
+      if (!recruiterCompany) {
+        return res.status(403).json({
+          message: "Bạn không có quyền xem đánh giá của công ty này",
+          code: -1
+        });
+      }
+      
+      // Xây dựng điều kiện tìm kiếm
+      const whereClause = { company_id };
+      
+      // Thêm điều kiện lọc theo số sao nếu có
+      if (rating) {
+        whereClause.rating = parseInt(rating);
+      }
+      
+      // Lấy tất cả đánh giá của công ty
+      const Reviews = require('../models/Reviews');
+      const User = require('../models/User');
+      
+      const reviews = await Reviews.findAll({
+        where: whereClause,
+        order: [["review_date", "DESC"]],
+        include: [{
+          model: User,
+          as: 'user',
+          attributes: ['id', 'name', 'email'] // Chỉ lấy một số thông tin cần thiết
+        }]
+      });
+      
+      // Tính toán số lượng đánh giá theo mỗi mức sao
+      const ratingCounts = await Reviews.findAll({
+        attributes: [
+          'rating',
+          [sequelize.fn('COUNT', sequelize.col('review_id')), 'count']
+        ],
+        where: { company_id },
+        group: ['rating'],
+        raw: true
+      });
+      
+      // Tính trung bình số sao
+      const totalReviews = reviews.length;
+      const avgRating = totalReviews > 0
+        ? (reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews).toFixed(1)
+        : 0;
+      
+      // Format kết quả đếm theo mức sao
+      const ratingDistribution = [1, 2, 3, 4, 5].map(star => {
+        const found = ratingCounts.find(r => r.rating === star);
+        return {
+          rating: star,
+          count: found ? parseInt(found.count) : 0
+        };
+      });
+      
+      return res.json({
+        reviews,
+        totalReviews,
+        avgRating,
+        ratingDistribution
+      });
+      
+    } catch (error) {
+      console.error('Error getting company reviews:', error);
+      return res.status(500).json({
+        message: "Lỗi khi lấy đánh giá công ty",
         error: error.message,
         code: -1
       });

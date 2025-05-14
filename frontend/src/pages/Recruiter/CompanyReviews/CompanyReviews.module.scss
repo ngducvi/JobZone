@@ -1,0 +1,750 @@
+.recruiter-company-reviews {
+    background-color: #f8fafc;
+    min-height: 100vh;
+
+    .container {
+        display: flex;
+        width: 100%;
+        padding-top: 60px;
+        gap: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 80px 16px 40px;
+
+        @media (max-width: 992px) {
+            padding: 80px 12px 30px;
+        }
+
+        @media (max-width: 768px) {
+            flex-direction: column;
+            padding: 70px 12px 24px;
+        }
+
+        @media (max-width: 576px) {
+            padding: 60px 10px 20px;
+        }
+
+        .content {
+            flex: 1;
+            margin-left: 220px;
+
+            @media (max-width: 992px) {
+                margin-left: 200px;
+            }
+
+            @media (max-width: 768px) {
+                margin-left: 0;
+                margin-top: 16px;
+            }
+
+            .page-header {
+                margin-bottom: 24px;
+                padding-bottom: 16px;
+                border-bottom: 1px solid #e2e8f0;
+
+                @media (max-width: 576px) {
+                    margin-bottom: 16px;
+                    padding-bottom: 12px;
+                }
+
+                h1 {
+                    font-size: 28px;
+                    font-weight: 600;
+                    color: #1e293b;
+                    margin-bottom: 8px;
+
+                    @media (max-width: 768px) {
+                        font-size: 24px;
+                    }
+
+                    @media (max-width: 576px) {
+                        font-size: 20px;
+                    }
+                }
+
+                h2 {
+                    font-size: 18px;
+                    color: #64748b;
+                    font-weight: 500;
+
+                    @media (max-width: 576px) {
+                        font-size: 16px;
+                    }
+                }
+            }
+
+            .loading {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 40px 0;
+
+                p {
+                    margin-top: 16px;
+                    color: #64748b;
+                    font-size: 16px;
+                }
+                
+                .loading-spinner {
+                    width: 40px;
+                    height: 40px;
+                    border: 3px solid rgba(0, 0, 0, 0.1);
+                    border-radius: 50%;
+                    border-top-color: #013a74;
+                    animation: spin 1s linear infinite;
+                }
+            }
+
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+            .bar-container {
+                flex: 1;
+                height: 8px;
+                background-color: #e9ecef;
+                border-radius: 4px;
+                overflow: hidden;
+                
+                .progress-bar {
+                    height: 100%;
+                    background-color: #00a651;
+                    border-radius: 4px;
+                    transition: width 0.3s ease;
+                }
+            }
+
+            .reviews-container {
+                background-color: #fff;
+                border-radius: 16px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+
+                @media (max-width: 576px) {
+                    border-radius: 12px;
+                }
+
+                .reviews-summary {
+                    padding: 24px;
+                    border-bottom: 1px solid #e2e8f0;
+
+                    @media (max-width: 768px) {
+                        padding: 20px;
+                    }
+
+                    @media (max-width: 576px) {
+                        padding: 16px;
+                    }
+
+                    .rating-overview {
+                        display: flex;
+                        align-items: flex-start;
+                        gap: 40px;
+
+                        @media (max-width: 768px) {
+                            flex-direction: column;
+                            gap: 24px;
+                        }
+
+                        .avg-rating {
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            padding-right: 40px;
+                            border-right: 1px solid #e2e8f0;
+
+                            @media (max-width: 768px) {
+                                border-right: none;
+                                border-bottom: 1px solid #e2e8f0;
+                                padding-right: 0;
+                                padding-bottom: 20px;
+                                width: 100%;
+                            }
+
+                            .rating-number {
+                                font-size: 48px;
+                                font-weight: 700;
+                                color: #013a74;
+                                line-height: 1;
+                                margin-bottom: 8px;
+
+                                @media (max-width: 576px) {
+                                    font-size: 40px;
+                                }
+                            }
+
+                            .stars {
+                                display: flex;
+                                gap: 4px;
+                                margin-bottom: 8px;
+
+                                i {
+                                    font-size: 20px;
+                                    color: #cbd5e1;
+
+                                    &.active {
+                                        color: #fbbf24;
+                                    }
+
+                                    @media (max-width: 576px) {
+                                        font-size: 18px;
+                                    }
+                                }
+                            }
+
+                            .review-count {
+                                font-size: 14px;
+                                color: #64748b;
+                                margin-top: 4px;
+                            }
+                        }
+
+                        .rating-bars {
+                            flex: 1;
+                            padding-left: 10px;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 12px;
+
+                            @media (max-width: 768px) {
+                                width: 100%;
+                                padding-left: 0;
+                            }
+
+                            @media (max-width: 576px) {
+                                gap: 8px;
+                            }
+
+                            .rating-bar {
+                                display: flex;
+                                align-items: center;
+                                gap: 12px;
+                                cursor: pointer;
+                                padding: 6px 12px;
+                                border-radius: 8px;
+                                transition: background-color 0.2s;
+
+                                @media (max-width: 576px) {
+                                    padding: 5px 8px;
+                                    gap: 8px;
+                                }
+
+                                &:hover, &.selected {
+                                    background-color: #f1f5f9;
+                                }
+
+                                &.selected {
+                                    .stars-label {
+                                        i {
+                                            color: #fbbf24;
+                                        }
+                                    }
+                                }
+
+                                .stars-label {
+                                    display: flex;
+                                    align-items: center;
+                                    width: 36px;
+                                    gap: 4px;
+                                    font-weight: 500;
+                                    color: #475569;
+
+                                    @media (max-width: 576px) {
+                                        width: 30px;
+                                        font-size: 13px;
+                                    }
+
+                                    i {
+                                        color: #cbd5e1;
+                                        font-size: 14px;
+
+                                        @media (max-width: 576px) {
+                                            font-size: 12px;
+                                        }
+                                    }
+                                }
+
+                                .bar-container {
+                                    flex: 1;
+                                    height: 8px;
+
+                                    @media (max-width: 576px) {
+                                        height: 6px;
+                                    }
+                                }
+
+                                .count-label {
+                                    width: 36px;
+                                    text-align: right;
+                                    font-size: 14px;
+                                    color: #64748b;
+
+                                    @media (max-width: 576px) {
+                                        width: 30px;
+                                        font-size: 13px;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    .active-filter {
+                        margin-top: 16px;
+                        padding: 12px;
+                        background-color: #f1f5f9;
+                        border-radius: 8px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+
+                        @media (max-width: 576px) {
+                            padding: 10px;
+                            margin-top: 12px;
+                            flex-direction: column;
+                            align-items: flex-start;
+                            gap: 8px;
+                        }
+
+                        p {
+                            font-size: 14px;
+                            color: #475569;
+
+                            strong {
+                                color: #013a74;
+                            }
+
+                            @media (max-width: 576px) {
+                                font-size: 13px;
+                            }
+                        }
+
+                        button {
+                            background-color: transparent;
+                            border: none;
+                            color: #64748b;
+                            font-size: 14px;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            gap: 6px;
+                            padding: 4px 8px;
+                            border-radius: 4px;
+                            transition: background-color 0.2s;
+
+                            @media (max-width: 576px) {
+                                font-size: 13px;
+                                width: 100%;
+                                justify-content: center;
+                                padding: 6px;
+                                background-color: #e2e8f0;
+                            }
+
+                            &:hover {
+                                background-color: #e2e8f0;
+                                color: #475569;
+                            }
+
+                            i {
+                                font-size: 12px;
+                            }
+                        }
+                    }
+                }
+
+                .reviews-list {
+                    padding: 24px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 20px;
+
+                    @media (max-width: 768px) {
+                        padding: 20px;
+                    }
+
+                    @media (max-width: 576px) {
+                        padding: 16px;
+                        gap: 16px;
+                    }
+
+                    .review-card {
+                        padding: 20px;
+                        border-radius: 12px;
+                        border: 1px solid #e2e8f0;
+                        transition: box-shadow 0.3s;
+
+                        @media (max-width: 576px) {
+                            padding: 16px;
+                            border-radius: 10px;
+                        }
+
+                        &:hover {
+                            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                        }
+
+                        .review-header {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: flex-start;
+                            margin-bottom: 16px;
+
+                            @media (max-width: 576px) {
+                                flex-direction: column;
+                                gap: 10px;
+                                margin-bottom: 12px;
+                            }
+
+                            .reviewer-info {
+                                display: flex;
+                                align-items: center;
+                                gap: 12px;
+
+                                @media (max-width: 576px) {
+                                    gap: 10px;
+                                }
+
+                                .avatar {
+                                    width: 40px;
+                                    height: 40px;
+                                    border-radius: 50%;
+                                    background: linear-gradient(45deg, #013a74, #00a651);
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    color: white;
+                                    font-weight: 500;
+                                    font-size: 18px;
+
+                                    @media (max-width: 576px) {
+                                        width: 36px;
+                                        height: 36px;
+                                        font-size: 16px;
+                                    }
+                                }
+
+                                .name-date {
+                                    h3 {
+                                        font-size: 16px;
+                                        font-weight: 500;
+                                        color: #1e293b;
+                                        margin: 0;
+
+                                        @media (max-width: 576px) {
+                                            font-size: 15px;
+                                        }
+                                    }
+
+                                    .date {
+                                        font-size: 13px;
+                                        color: #64748b;
+                                        margin: 2px 0 0;
+
+                                        @media (max-width: 576px) {
+                                            font-size: 12px;
+                                        }
+                                    }
+                                }
+                            }
+
+                            .review-rating {
+                                display: flex;
+                                gap: 4px;
+
+                                i {
+                                    font-size: 14px;
+                                    color: #cbd5e1;
+
+                                    &.active {
+                                        color: #fbbf24;
+                                    }
+
+                                    @media (max-width: 576px) {
+                                        font-size: 13px;
+                                    }
+                                }
+                            }
+                        }
+
+                        .review-content {
+                            p {
+                                font-size: 15px;
+                                line-height: 1.6;
+                                color: #334155;
+                                margin: 0 0 16px;
+
+                                @media (max-width: 576px) {
+                                    font-size: 14px;
+                                    line-height: 1.5;
+                                    margin: 0 0 12px;
+                                }
+                            }
+                        }
+
+                        .review-footer {
+                            display: flex;
+                            justify-content: flex-end;
+                            margin-top: 12px;
+                            padding-top: 12px;
+                            border-top: 1px solid #f1f5f9;
+                            
+                            @media (max-width: 576px) {
+                                margin-top: 10px;
+                                padding-top: 10px;
+                            }
+
+                            .helpful {
+                                span {
+                                    font-size: 14px;
+                                    color: #64748b;
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 6px;
+                                    
+                                    @media (max-width: 576px) {
+                                        font-size: 13px;
+                                        gap: 4px;
+                                    }
+
+                                    i {
+                                        color: #94a3b8;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                .empty-reviews {
+                    text-align: center;
+                    padding: 60px 24px;
+                    
+                    @media (max-width: 768px) {
+                        padding: 40px 20px;
+                    }
+
+                    @media (max-width: 576px) {
+                        padding: 30px 16px;
+                    }
+                    
+                    i {
+                        font-size: 48px;
+                        color: #cbd5e1;
+                        margin-bottom: 16px;
+
+                        @media (max-width: 576px) {
+                            font-size: 40px;
+                            margin-bottom: 12px;
+                        }
+                    }
+                    
+                    h3 {
+                        font-size: 20px;
+                        font-weight: 600;
+                        color: #475569;
+                        margin-bottom: 8px;
+
+                        @media (max-width: 576px) {
+                            font-size: 18px;
+                        }
+                    }
+                    
+                    p {
+                        font-size: 15px;
+                        color: #64748b;
+                        max-width: 500px;
+                        margin: 0 auto 24px;
+                        line-height: 1.6;
+
+                        @media (max-width: 576px) {
+                            font-size: 14px;
+                            margin: 0 auto 20px;
+                            line-height: 1.5;
+                        }
+                    }
+                    
+                    .clear-filter {
+                        padding: 10px 20px;
+                        background: linear-gradient(90deg, #013a74, #00a651);
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        font-size: 15px;
+                        font-weight: 500;
+                        cursor: pointer;
+                        transition: opacity 0.2s;
+                        
+                        @media (max-width: 576px) {
+                            padding: 8px 16px;
+                            font-size: 14px;
+                            width: 100%;
+                            max-width: 200px;
+                        }
+
+                        &:hover {
+                            opacity: 0.9;
+                        }
+                    }
+                }
+            }
+
+            .no-company {
+                text-align: center;
+                padding: 60px 24px;
+                background-color: #fff;
+                border-radius: 16px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                
+                @media (max-width: 768px) {
+                    padding: 40px 20px;
+                }
+
+                @media (max-width: 576px) {
+                    padding: 30px 16px;
+                    border-radius: 12px;
+                }
+                
+                i {
+                    font-size: 48px;
+                    color: #cbd5e1;
+                    margin-bottom: 16px;
+
+                    @media (max-width: 576px) {
+                        font-size: 40px;
+                        margin-bottom: 12px;
+                    }
+                }
+                
+                h3 {
+                    font-size: 20px;
+                    font-weight: 600;
+                    color: #475569;
+                    margin-bottom: 8px;
+
+                    @media (max-width: 576px) {
+                        font-size: 18px;
+                    }
+                }
+                
+                p {
+                    font-size: 15px;
+                    color: #64748b;
+                    max-width: 500px;
+                    margin: 0 auto;
+                    line-height: 1.6;
+
+                    @media (max-width: 576px) {
+                        font-size: 14px;
+                        line-height: 1.5;
+                    }
+                }
+            }
+        }
+    }
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 32px;
+    padding: 16px 0;
+    
+    @media (max-width: 768px) {
+        margin-top: 24px;
+    }
+
+    @media (max-width: 576px) {
+        margin-top: 20px;
+        padding: 12px 0;
+        gap: 6px;
+    }
+    
+    .pagination-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 1px solid #e2e8f0;
+        background-color: white;
+        color: #475569;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        
+        @media (max-width: 576px) {
+            width: 32px;
+            height: 32px;
+            font-size: 12px;
+        }
+        
+        &:hover:not(.disabled) {
+            background-color: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+        
+        &.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+    }
+    
+    .page-numbers {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        
+        @media (max-width: 576px) {
+            gap: 6px;
+        }
+        
+        .page-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid #e2e8f0;
+            background-color: white;
+            color: #475569;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            
+            @media (max-width: 576px) {
+                width: 32px;
+                height: 32px;
+                font-size: 12px;
+            }
+            
+            &:hover:not(.active) {
+                background-color: #f1f5f9;
+                border-color: #cbd5e1;
+            }
+            
+            &.active {
+                background: linear-gradient(45deg, #013a74, #02a346);
+                color: white;
+                border: none;
+                font-weight: 600;
+            }
+        }
+        
+        .ellipsis {
+            color: #64748b;
+            font-size: 14px;
+            padding: 0 4px;
+            
+            @media (max-width: 576px) {
+                font-size: 12px;
+                padding: 0 2px;
+            }
+        }
+    }
+}

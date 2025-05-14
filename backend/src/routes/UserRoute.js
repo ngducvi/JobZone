@@ -19,6 +19,7 @@ router.post('/change-password', userController.changePassword.bind(userControlle
 router.get("/jobs", userController.getAllJobs.bind(userController));
 router.get("/jobs/filter", userController.filterJobs.bind(userController));
 router.get("/categories", userController.getAllCategories.bind(userController));
+router.get("/categories/:parent_id", userController.getCategoriesByParentId.bind(userController));
 router.get("/companies", userController.getAllCompany.bind(userController));
 router.get("/company-detail/:company_id", userController.getCompanyDetailByCompanyId.bind(userController));
 router.get("/job-detail/:job_id", userController.getJobDetailByJobId.bind(userController));
@@ -114,14 +115,12 @@ router.put('/candidate/edit-profile-picture-cloudinary/:candidate_id', upload.si
 router.post('/company/review', userController.createReviewCompany.bind(userController));
 router.put('/company/review/:review_id', userController.updateReviewCompany.bind(userController));
 router.delete('/company/review/:review_id', userController.deleteReviewCompany.bind(userController));
-router.post('/candidate-cv/cv-id', userController.createCandidateCvWithCvId.bind(userController));
 router.post('/create-cv', userController.createNewCV.bind(userController));
 router.put('/toggle-cv-template/:cv_id', userController.toggleCvTemplate.bind(userController));
 router.put('/cancel-cv-template/:cv_id', userController.cancelCvTemplate.bind(userController));
 router.put('/toggle-user-cv-template/:cv_id', userController.toggleUserCvTemplate.bind(userController));
 router.put('/cancel-user-cv-template/:cv_id', userController.cancelUserCvTemplate.bind(userController));
 router.delete('/delete-user-cv-template/:cv_id', userController.deleteUserCvTemplate.bind(userController));
-router.post('/create-cv', userController.createNewCV.bind(userController));
 // Thêm route update CV
 router.put('/update-cv/:cv_id', userController.updateCV.bind(userController));
 

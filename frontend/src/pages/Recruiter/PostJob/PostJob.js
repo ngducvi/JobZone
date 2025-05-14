@@ -12,32 +12,6 @@ import ModelAI from "~/components/ModelAI";
 
 const cx = classNames.bind(styles);
 
-const categories = [
-  { value: "1f25fd8e-ce9e-11ef-9430-2cf05db24bc7", name: "Retail" },
-  { value: "1f25fc2b-ce9e-11ef-9430-2cf05db24bc7", name: "Operations" },
-  { value: "1f25fb0c-ce9e-11ef-9430-2cf05db24bc7", name: "Engineering" },
-  { value: "1f25f98c-ce9e-11ef-9430-2cf05db24bc7", name: "Legal" },
-  { value: "1f25f861-ce9e-11ef-9430-2cf05db24bc7", name: "Healthcare" },
-  { value: "1f25f6f2-ce9e-11ef-9430-2cf05db24bc7", name: "Education" },
-  { value: "1f25f441-ce9e-11ef-9430-2cf05db24bc7", name: "Consulting" },
-  { value: "1f25f23d-ce9e-11ef-9430-2cf05db24bc7", name: "Finance" },
-  { value: "1f25f189-ce9e-11ef-9430-2cf05db24bc7", name: "Business Analyst" },
-  { value: "1f25f0db-ce9e-11ef-9430-2cf05db24bc7", name: "Cybersecurity" },
-  { value: "1f25f02b-ce9e-11ef-9430-2cf05db24bc7", name: "Mobile Development" },
-  { value: "1f25ef7a-ce9e-11ef-9430-2cf05db24bc7", name: "Web Development" },
-  { value: "1f25eec3-ce9e-11ef-9430-2cf05db24bc7", name: "Customer Support" },
-  { value: "1f25ee06-ce9e-11ef-9430-2cf05db24bc7", name: "Human Resources" },
-  { value: "1f25ed2a-ce9e-11ef-9430-2cf05db24bc7", name: "Sales" },
-  { value: "1f25ec4e-ce9e-11ef-9430-2cf05db24bc7", name: "Graphic Design" },
-  { value: "1f25eb8c-ce9e-11ef-9430-2cf05db24bc7", name: "Marketing" },
-  { value: "1f25ea73-ce9e-11ef-9430-2cf05db24bc7", name: "Project Management" },
-  { value: "1f25e912-ce9e-11ef-9430-2cf05db24bc7", name: "Data Science" },
-  {
-    value: "1f25e3ee-ce9e-11ef-9430-2cf05db24bc7",
-    name: "Software Engineering",
-  },
-];
-
 // Preview Modal Component
 const PreviewJobModal = ({ isOpen, onClose, jobDetails, companyInfo }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -321,6 +295,115 @@ function PostJob() {
   const locationRef = useRef(null);
   const navigate = useNavigate();
 
+  // State for hierarchical categories
+  const [categories, setCategories] = useState([]);
+  const [currentCategoryLevel, setCurrentCategoryLevel] = useState(1);
+  const [currentParentId, setCurrentParentId] = useState('root');
+  const [categoryPath, setCategoryPath] = useState([{ id: 'root', name: 'Tất cả' }]);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [categoryName, setCategoryName] = useState("Chọn danh mục nghề");
+
+  // Fetch categories by parent_id
+  const fetchCategoriesByParentId = async (parentId) => {
+    try {
+      console.log("Fetching categories for parent_id:", parentId);
+      const apiUrl = userApis.getCategoriesByParentId(parentId);
+      console.log("API URL:", apiUrl);
+      
+      const response = await authAPI().get(apiUrl);
+      console.log("API Response:", response.data);
+      
+      const fetchedCategories = response.data.categories;
+      console.log("Fetched Categories:", fetchedCategories);
+
+      // Process categories to add has_children flag
+      const processedCategories = fetchedCategories.map(category => ({
+        ...category,
+        has_children: category.level < 3 // Assume categories with level < 3 have children
+      }));
+      console.log("Processed Categories:", processedCategories);
+
+      setCategories(processedCategories);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      setCategories([]);
+    }
+  };
+
+  // Handle category selection and navigation between levels
+  const handleCategorySelect = async (category) => {    
+    // If we're at level 3 or this category doesn't have children, select it as final choice
+    if (category.level === 3 || !category.has_children) {
+      setCategoryId(category.category_id);
+      setCategoryName(category.category_name);
+      setShowCategoryModal(false);
+      
+      // Update the category path for display
+      if (!categoryPath.find(item => item.id === category.category_id)) {
+        setCategoryPath(prev => [
+          ...prev.slice(0, currentCategoryLevel),
+          { id: category.category_id, name: category.category_name }
+        ]);
+      }
+      return;
+    }
+    
+    // Otherwise, navigate to next level
+    const nextLevel = currentCategoryLevel + 1;
+    setCurrentCategoryLevel(nextLevel);
+    setCurrentParentId(category.category_id);
+    
+    // Update the category path, ensuring we don't add duplicates
+    setCategoryPath(prev => {
+      // If we already have this category in our path at the current position, just trim the array
+      if (prev[currentCategoryLevel-1]?.id === category.category_id) {
+        return prev.slice(0, currentCategoryLevel);
+      }
+      
+      // Otherwise append it, trimming any existing entries beyond the current level
+      return [
+        ...prev.slice(0, currentCategoryLevel),
+        { id: category.category_id, name: category.category_name }
+      ];
+    });
+    
+    // Fetch subcategories for the selected category
+    await fetchCategoriesByParentId(category.category_id);
+  };
+
+  // Handle confirm button in category modal
+  const handleConfirmCategory = () => {
+    // Nếu đã chọn một danh mục (danh mục nằm ở level cuối cùng trong đường dẫn)
+    if (categoryPath.length > 1) {
+      const selectedCategory = categoryPath[categoryPath.length - 1];
+      setCategoryId(selectedCategory.id);
+      setCategoryName(selectedCategory.name);
+    }
+    setShowCategoryModal(false);
+  };
+
+  // Navigate back to a previous level in the hierarchy
+  const handleCategoryPathClick = async (index) => {
+    // If clicking the current level, do nothing
+    if (index === currentCategoryLevel - 1) {
+      return;
+    }
+    
+    // Get the parent ID at the clicked index
+    const parentId = categoryPath[index].id;
+    const newLevel = index + 1;
+    
+    // Update state
+    setCurrentParentId(parentId);
+    setCurrentCategoryLevel(newLevel);
+    
+    // Trim the path to this level
+    setCategoryPath(prev => prev.slice(0, newLevel));
+    
+    // Fetch categories for the selected level
+    await fetchCategoriesByParentId(parentId);
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -332,6 +415,9 @@ function PostJob() {
         setUsername(response.data.user.username);
         setRecruiter(response.data.user.username);
         setCompanyInfo(responseCompany.data.companies[0]);
+        
+        // Initial fetch of top-level categories
+        await fetchCategoriesByParentId('root');
       } catch (error) {
         setError("Không thể tải thông tin người dùng.");
       }
@@ -497,6 +583,17 @@ function PostJob() {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    // Kiểm tra xem danh mục đã được chọn chưa
+    if (!categoryId) {
+      setError("Vui lòng chọn danh mục nghề trước khi đăng tin.");
+      // Cuộn trang đến vị trí phần tử input danh mục
+      const categoryInput = document.querySelector(`.${cx("category-input")}`);
+      if (categoryInput) {
+        categoryInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
 
     console.log("Submitting job data:", {
       jobTitle,
@@ -872,19 +969,15 @@ function PostJob() {
         </div>
         <div className={cx("form-group")}>
           <label htmlFor="categoryId">Danh mục</label>
-          <select
-            id="categoryId"
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-            required
+          <div 
+            className={cx("category-input", { selected: categoryId !== "" })} 
+            onClick={() => setShowCategoryModal(true)}
           >
-            <option value="">Chọn danh mục</option>
-            {categories.map((category) => (
-              <option key={category.value} value={category.value}>
-                {category.name}
-              </option>
-            ))}
-          </select>
+            <i className="fa-solid fa-list-ul"></i>
+            <span className={cx("category-text")}>{categoryName}</span>
+            <i className="fa-solid fa-chevron-right"></i>
+          </div>
+          {categoryId === "" && <div className={cx("error-hint")}>Vui lòng chọn một danh mục nghề</div>}
         </div>
         <div className={cx("button-group")}>
           <button type="submit" className={cx("submit-btn")}>
@@ -899,6 +992,71 @@ function PostJob() {
           </button>
         </div>
       </form>
+
+      {/* Category Selection Modal */}
+      {showCategoryModal && (
+        <div className={cx("modal-overlay")}>
+          <div className={cx("modal-content", "category-modal")}>
+            <div className={cx("modal-header")}>
+              <h3>Chọn danh mục nghề</h3>
+              <button className={cx("close-btn")} onClick={() => setShowCategoryModal(false)}>
+                <i className="fa-solid fa-times"></i>
+              </button>
+            </div>
+
+            <div className={cx("modal-body")}>
+              {/* Category navigation path */}
+              {categoryPath.length > 1 && (
+                <div className={cx("category-path")}>
+                  {categoryPath.map((item, index) => (
+                    <span key={item.id}>
+                      <button 
+                        className={cx("path-item", { active: index === categoryPath.length - 1 })}
+                        onClick={() => handleCategoryPathClick(index)}
+                      >
+                        {item.name}
+                      </button>
+                      {index < categoryPath.length - 1 && <i className="fas fa-chevron-right"></i>}
+                    </span>
+                  ))}
+                </div>
+              )}
+              
+              <div className={cx("categories-list")}>
+                {categories.map((category) => (
+                  <div
+                    key={category.category_id}
+                    className={cx("category-item", {
+                      "has-children": category.level < 3,
+                      "active": categoryId === category.category_id || 
+                              categoryPath.some(item => item.id === category.category_id)
+                    })}
+                    onClick={() => handleCategorySelect(category)}
+                  >
+                    <div className={cx("category-content")}>
+                      <span className={cx("category-name")}>{category.category_name}</span>
+                      {category.level < 3 && (
+                        <i className="fas fa-chevron-right"></i>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className={cx("modal-footer")}>
+              <button className={cx("cancel-btn")} onClick={() => setShowCategoryModal(false)}>
+                Hủy
+              </button>
+              <button className={cx("confirm-btn")} onClick={handleConfirmCategory}>
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PreviewJobModal component */}
       <PreviewJobModal
         isOpen={isPreviewModalOpen}
         onClose={() => setIsPreviewModalOpen(false)}

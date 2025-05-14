@@ -1020,11 +1020,264 @@
 @media (max-width: 768px) {
   .container {
     grid-template-columns: 1fr;
+    padding: 0 16px;
+    gap: 16px;
   }
 
   .cv-section {
     height: auto;
-    max-height: calc(100vh - 98px);
+    max-height: none;
+  }
+
+  .header-section {
+    padding: 40px 0 80px;
+    margin-bottom: -50px;
+    
+    .header-content {
+      padding: 0 16px;
+      
+      .header-icon {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 16px;
+        
+        i {
+          font-size: 24px;
+        }
+      }
+      
+      h1 {
+        font-size: 24px;
+        margin-bottom: 12px;
+      }
+      
+      p {
+        font-size: 16px;
+      }
+    }
+  }
+
+  .cv-list {
+    padding: 16px;
+    
+    .cv-item {
+      height: auto;
+      
+      .cv-preview {
+        height: 240px;
+        padding: 16px;
+      }
+      
+      .cv-actions {
+        .action-btn {
+          padding: 8px 12px;
+          font-size: 13px;
+        }
+      }
+      
+      .cv-info {
+        padding: 12px;
+        
+        .cv-meta {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+          
+          .cv-stats {
+            width: 100%;
+            justify-content: space-between;
+          }
+        }
+      }
+      
+      &.is-template {
+        &::before {
+          top: 8px;
+          right: 8px;
+          padding: 4px 8px;
+          font-size: 10px;
+        }
+      }
+    }
+  }
+
+  .profile-section {
+    .profile-card {
+      padding: 20px;
+      
+      .profile-header {
+        .avatar-wrapper {
+          .avatar {
+            width: 100px;
+            height: 100px;
+          }
+        }
+        
+        .user-info {
+          h2 {
+            font-size: 20px;
+          }
+        }
+      }
+      
+      .profile-stats {
+        gap: 10px;
+        padding: 16px 0;
+        
+        .stat-item {
+          padding: 12px 8px;
+          
+          .stat-value {
+            font-size: 22px;
+          }
+          
+          .stat-label {
+            font-size: 12px;
+          }
+        }
+      }
+      
+      .profile-settings {
+        .setting-item {
+          padding: 12px;
+          margin-bottom: 16px;
+          
+          .setting-header {
+            margin-bottom: 8px;
+          }
+        }
+      }
+      
+      .profile-actions {
+        gap: 10px;
+        
+        .action-btn {
+          padding: 12px;
+          font-size: 14px;
+        }
+      }
+    }
+  }
+  
+  .modal {
+    width: 95%;
+    padding: 20px;
+    
+    .modal-icon {
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
+    }
+    
+    h3 {
+      font-size: 18px;
+    }
+    
+    p {
+      font-size: 14px;
+    }
+    
+    .modal-actions {
+      .modal-btn {
+        padding: 10px 16px;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .header-section {
+    padding: 30px 0 70px;
+    
+    .header-content {
+      h1 {
+        font-size: 22px;
+      }
+      
+      p {
+        font-size: 14px;
+      }
+    }
+  }
+  
+  .cv-section {
+    .cv-header {
+      .tabs {
+        .tab {
+          padding: 12px 8px;
+          font-size: 14px;
+        }
+      }
+    }
+  }
+  
+  .cv-list {
+    padding: 12px;
+    
+    .cv-item {
+      .cv-preview {
+        height: 200px;
+        padding: 12px;
+      }
+      
+      .cv-actions {
+        flex-wrap: wrap;
+        justify-content: center;
+        
+        .action-btn {
+          padding: 8px;
+          font-size: 12px;
+          min-width: 80px;
+        }
+      }
+      
+      .cv-info {
+        h3 {
+          font-size: 15px;
+        }
+      }
+    }
+  }
+  
+  .profile-section {
+    .profile-card {
+      padding: 16px;
+      
+      .profile-stats {
+        grid-template-columns: 1fr;
+      }
+    }
+  }
+}
+
+// Touch-friendly improvements for mobile
+@media (max-width: 768px) {
+  .cv-actions {
+    .action-btn {
+      min-height: 44px;
+      min-width: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+  
+  .setting-header {
+    .switch {
+      transform: scale(1.2);
+    }
+  }
+  
+  input[type="file"] + label {
+    padding: 12px 16px;
+    display: inline-block;
+  }
+  
+  .modal-actions {
+    .modal-btn {
+      min-height: 44px;
+      min-width: 100px;
+    }
   }
 }
 

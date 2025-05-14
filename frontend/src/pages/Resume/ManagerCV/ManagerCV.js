@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import classNames from "classnames/bind";
 import styles from "./ManagerCV.module.scss";
-import { FaUpload, FaEdit, FaEye, FaTrash, FaDownload, FaCheck, FaExclamationTriangle } from "react-icons/fa";
+import { FaUpload, FaEdit, FaEye, FaTrash, FaDownload, FaCheck, FaExclamationTriangle, FaPlus } from "react-icons/fa";
 import { authAPI, userApis } from "~/utils/api";
 import Suitablejob from "~/components/Suitablejob/Suitablejob";
 import { useNavigate } from "react-router-dom";
@@ -23,7 +23,22 @@ const ManagerCV = () => {
   const [userId, setUserId] = useState(null);
   const [showJobSearchConfirm, setShowJobSearchConfirm] = useState(false);
   const [showProfileVisibilityConfirm, setShowProfileVisibilityConfirm] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
+
+  // Check if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -291,14 +306,14 @@ const ManagerCV = () => {
                 onClick={() => setActiveTab("created")}
               >
                 <i className="fa-solid fa-pen-to-square"></i>
-                CV đã tạo
+                {isMobile ? "Đã tạo" : "CV đã tạo"}
               </button>
               <button
                 className={cx("tab", { active: activeTab === "uploaded" })}
                 onClick={() => setActiveTab("uploaded")}
               >
                 <i className="fa-solid fa-cloud-upload-alt"></i>
-                CV đã tải lên
+                {isMobile ? "Đã tải lên" : "CV đã tải lên"}
               </button>
             </div>
           </div>
@@ -314,7 +329,7 @@ const ManagerCV = () => {
                       <div className={cx("cv-image")}>
                         <img
                           src={images.coverletter}
-                          // alt="CV Preview"
+                          alt="CV Preview"
                         />
                       </div>
                       <div className={cx("cv-actions")}>
@@ -328,8 +343,9 @@ const ManagerCV = () => {
                               },
                             })
                           }
+                          aria-label="Xem CV"
                         >
-                          <FaEye /> Xem
+                          <FaEye /> {!isMobile && "Xem"}
                         </button>
                         <button
                           className={cx("action-btn")}
@@ -341,30 +357,33 @@ const ManagerCV = () => {
                               },
                             })
                           }
+                          aria-label="Chỉnh sửa CV"
                         >
-                          <FaEdit /> Chỉnh sửa
+                          <FaEdit /> {!isMobile && "Chỉnh sửa"}
                         </button>
                         <button
                           className={cx("action-btn", "template-btn", {
                             "active": cv.is_template
                           })}
                           onClick={() => handleToggleUserCvTemplate(cv)}
+                          aria-label={cv.is_template ? "Hủy mặc định" : "Cài làm mặc định"}
                         >
                           {cv.is_template ? (
                             <>
-                              <FaCheck /> Hủy mặc định
+                              <FaCheck /> {!isMobile && "Hủy mặc định"}
                             </>
                           ) : (
                             <>
-                              <FaCheck /> Cài làm mặc định
+                              <FaCheck /> {!isMobile && "Cài làm mặc định"}
                             </>
                           )}
                         </button>
                         <button
                           className={cx("action-btn", "delete-btn")}
                           onClick={() => handleDeleteUserCv(cv)}
+                          aria-label="Xóa CV"
                         >
-                          <FaTrash /> Xóa
+                          <FaTrash /> {!isMobile && "Xóa"}
                         </button>
                       </div>
                     </div>
@@ -373,18 +392,18 @@ const ManagerCV = () => {
                       <h3>{cv.cv_name}</h3>
                       <div className={cx("cv-meta")}>
                         <span>
-                          Cập nhật lần cuối:{" "}
-                          {new Date(cv.updated_at).toLocaleString()}
+                          {isMobile ? "Cập nhật: " : "Cập nhật lần cuối: "}
+                          {new Date(cv.updated_at).toLocaleDateString()}
                         </span>
                         <div className={cx("template-badge", { "show": cv.is_template })}>
                           {cv.is_template ? "Template" : "Nháp"}
                         </div>
                         <div className={cx("cv-stats")}>
                           <span>
-                            <FaEye /> {cv.views || 0} lượt xem
+                            <FaEye /> {cv.views || 0}
                           </span>
                           <span>
-                            <FaDownload /> {cv.downloads || 0} lượt tải
+                            <FaDownload /> {cv.downloads || 0}
                           </span>
                         </div>
                       </div>
@@ -395,9 +414,12 @@ const ManagerCV = () => {
                 <div className={cx("cv-item", "empty")}>
                   <div className={cx("empty-content")}>
                     <FaUpload className={cx("upload-icon")} />
-                    <p>Bạn chưa tải lên CV nào</p>
-                    <button className={cx("upload-btn")}>
-                      <FaUpload /> Tải CV lên
+                    <p>Bạn chưa tạo CV nào</p>
+                    <button 
+                      className={cx("upload-btn")}
+                      onClick={() => navigate("/user/create-cv")}
+                    >
+                      <FaPlus /> Tạo CV mới
                     </button>
                   </div>
                 </div>
@@ -427,36 +449,40 @@ const ManagerCV = () => {
                               toast.error('Không thể xem CV này');
                             }
                           }}
+                          aria-label="Xem CV"
                         >
-                          <FaEye /> Xem
+                          <FaEye /> {!isMobile && "Xem"}
                         </button>
                         <button
                           className={cx("action-btn")}
                           onClick={() => handleDownloadCV(cv)}
+                          aria-label="Tải xuống CV"
                         >
-                          <FaDownload /> Tải xuống
+                          <FaDownload /> {!isMobile && "Tải xuống"}
                         </button>
                         <button
                           className={cx("action-btn", "template-btn", {
                             "active": cv.is_template
                           })}
                           onClick={() => handleToggleTemplate(cv)}
+                          aria-label={cv.is_template ? "Hủy mặc định" : "Cài làm mặc định"}
                         >
                           {cv.is_template ? (
                             <>
-                              <FaCheck /> Hủy mặc định
+                              <FaCheck /> {!isMobile && "Hủy mặc định"}
                             </>
                           ) : (
                             <>
-                              <FaCheck /> Cài làm mặc định
+                              <FaCheck /> {!isMobile && "Cài làm mặc định"}
                             </>
                           )}
                         </button>
                         <button
                           className={cx("action-btn", "delete-btn")}
                           onClick={() => handleDeleteCV(cv)}
+                          aria-label="Xóa CV"
                         >
-                          <FaTrash /> Xóa
+                          <FaTrash /> {!isMobile && "Xóa"}
                         </button>
                       </div>
                     </div>
@@ -464,17 +490,18 @@ const ManagerCV = () => {
                       <h3>{cv.cv_name || "CV của tôi"}</h3>
                       <div className={cx("cv-meta")}>
                         <span>
-                          Tải lên: {new Date(cv.created_at).toLocaleString()}
+                          {isMobile ? "Tải lên: " : "Tải lên: "}
+                          {new Date(cv.created_at).toLocaleDateString()}
                         </span>
                         <div className={cx("template-badge", { "show": cv.is_template })}>
                           {cv.is_template ? "Template" : "Nháp"}
                         </div>
                         <div className={cx("cv-stats")}>
                           <span>
-                            <FaEye /> {cv.views || 0} lượt xem
+                            <FaEye /> {cv.views || 0}
                           </span>
                           <span>
-                            <FaDownload /> {cv.downloads || 0} lượt tải
+                            <FaDownload /> {cv.downloads || 0}
                           </span>
                         </div>
                       </div>
@@ -509,13 +536,12 @@ const ManagerCV = () => {
             <div className={cx("profile-header")}>
               <div className={cx("avatar-wrapper")}>
                 <div className={cx("avatar")}>
-                  <img src={candidateProfile?.profile_picture} />
+                  <img src={candidateProfile?.profile_picture || images.avatar} alt="Profile" />
                   <div className={cx("status-badge")}></div>
                 </div>
               </div>
               <div className={cx("user-info")}>
                 <h2>{currentUser?.name || "Loading..."}</h2>
-                {/* <span className={cx("job-title")}>Frontend Developer</span> */}
                 <div className={cx("status")}>
                   <span className={cx("status-dot", {
                     "active": candidateProfile?.is_actively_searching
@@ -585,15 +611,11 @@ const ManagerCV = () => {
                 <i className="fa-solid fa-pen"></i>
                 Chỉnh sửa hồ sơ
               </button>
-              {/* <button className={cx("action-btn", "secondary")} onClick={() => handleCandidateClick(candidateProfile?.candidate_id)}>
-                <i className="fa-solid fa-eye"></i>
-                Xem hồ sơ
-              </button> */}
             </div>
           </div>
         </div>
       </div>
-      <Suitablejob />
+      {!isMobile && <Suitablejob />}
 
       {/* Confirmation Modals */}
       {showJobSearchConfirm && (

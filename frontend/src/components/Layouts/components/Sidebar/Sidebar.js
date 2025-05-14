@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useRef } from "react";
 import classNames from "classnames/bind";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import styles from "./Sidebar.module.scss";
@@ -10,7 +10,7 @@ import SidebarContext from "~/context/SidebarContext";
 import UserContext from "~/context/UserContext";
 import { authAPI, userApis } from "~/utils/api";
 import Modal from "~/components/Modal/Modal";
-import { FaBell, FaEnvelope } from "react-icons/fa";
+import { FaBell, FaEnvelope, FaBars, FaTimes, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import socketService from "~/utils/socket";
 import { useNotification } from '~/context/NotificationContext';
 import { FaFacebookMessenger } from "react-icons/fa";
@@ -103,11 +103,6 @@ const sidebarIcons = [
         to: "/user/job-zone-profile",
         authRequired: true
       },
-      {
-        title: "Test Template",
-        to: "/test-template",
-        authRequired: false
-      },
     ]
   },
   // career handbook
@@ -196,8 +191,12 @@ const Sidebar = () => {
   const { user, setUser } = useContext(UserContext);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [expandedItems, setExpandedItems] = useState({});
   const [candidate, setCandidate] = useState(null);
   const { unreadCount, updateUnreadCount } = useNotification();
+  const [isMobile, setIsMobile] = useState(false);
+  const navContainerRef = useRef(null);
+  
   const userSidebarIcons =
     user?.role === "admin"
       ? [
@@ -224,6 +223,54 @@ const Sidebar = () => {
   const closeModal = () => {
     setModalType(null);
   };
+
+  // Check if device is mobile
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth <= 908);
+    };
+    
+    checkIfMobile();
+    window.addEventListener('resize', checkIfMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkIfMobile);
+    };
+  }, []);
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isMobileMenuOpen && navContainerRef.current && !navContainerRef.current.contains(event.target) && !event.target.closest(`.${cx('menu-toggle')}`)) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMobileMenuOpen]);
+
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+    // Reset expanded items when route changes
+    setExpandedItems({});
+  }, [location.pathname]);
+
+  // Disable body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileMenuOpen]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -296,6 +343,27 @@ const Sidebar = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
+  // Toggle submenu visibility on mobile
+  const toggleSubmenu = (index) => {
+    if (isMobile) {
+      setExpandedItems(prev => ({
+        ...prev,
+        [index]: !prev[index]
+      }));
+    }
+  };
+
+  // Check if submenu is expanded
+  const isSubmenuExpanded = (index) => {
+    return expandedItems[index] || false;
+  };
+
+  // Check if current route is in submenu
+  const isRouteInSubmenu = (item) => {
+    if (!item.subMenu) return false;
+    return item.subMenu.some(sub => sub.to === location.pathname);
+  };
+
   return (
     <>
       <div className={cx("wrapper")}>
@@ -308,11 +376,13 @@ const Sidebar = () => {
           <div 
             className={cx("menu-toggle", { active: isMobileMenuOpen })}
             onClick={toggleMobileMenu}
+            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
           >
-            <i
-              className={`fa-solid ${isMobileMenuOpen ? 'fa-xmark' : 'fa-bars'} menu-toggle__icon`}
-              style={{ color: isMobileMenuOpen ? '#fff' : '#013a74', fontSize: 24 }}
-            ></i>
+            {isMobileMenuOpen ? (
+              <FaTimes className={cx("menu-toggle__icon")} />
+            ) : (
+              <FaBars className={cx("menu-toggle__icon")} />
+            )}
           </div>
 
           <div className={cx("search-container")}>
@@ -324,40 +394,78 @@ const Sidebar = () => {
             <i className="fa-solid fa-search"></i>
           </div>
 
-          <div className={cx("nav-container", { active: isMobileMenuOpen })}>
+          <div 
+            ref={navContainerRef}
+            className={cx("nav-container", { active: isMobileMenuOpen })}
+          >
             <ul className={cx("nav-list")}>
               {userSidebarIcons.map((item, index) => (
                 (!item.authRequired || (item.authRequired && user?.role === 'user')) && (
                   <li key={index}>
-                    <Link
-                      to={item.to}
-                      className={cx("nav-item", {
-                        active: item.to === location.pathname || 
-                               (item.subMenu && item.subMenu.some(sub => sub.to === location.pathname)),
-                      })}
-                    >
-                      {/* {item.icon} */}
-                      <span className={cx("item-title")}>{item.title}</span>
-                      {item.subMenu && (
-                        <div className={cx("submenu")}>
-                          {item.subMenu
-                            .filter(subItem => !subItem.authRequired || token)
-                            .map((subItem, subIndex) => (
-                              <Link
-                                key={subIndex}
-                                to={subItem.to}
-                                className={cx("submenu-item", {
-                                  active: subItem.to === location.pathname
-                                })}
-                              >
-                                <span>{subItem.title}</span>
-                                {subItem.badge && <span className={cx("submenu-badge")}>{subItem.badge}</span>}
-                                {subItem.icon && <span className={cx("submenu-icon")}>{subItem.icon}</span>}
-                              </Link>
-                            ))}
+                    {isMobile && item.subMenu ? (
+                      <div className={cx("nav-item-wrapper")}>
+                        <div 
+                          className={cx("nav-item", {
+                            active: item.to === location.pathname || isRouteInSubmenu(item),
+                          })}
+                          onClick={() => toggleSubmenu(index)}
+                        >
+                          <span className={cx("item-title")}>{item.title}</span>
+                          {isSubmenuExpanded(index) ? (
+                            <FaChevronUp className={cx("submenu-toggle")} />
+                          ) : (
+                            <FaChevronDown className={cx("submenu-toggle")} />
+                          )}
                         </div>
-                      )}
-                    </Link>
+                        {(isSubmenuExpanded(index) || isRouteInSubmenu(item)) && (
+                          <div className={cx("submenu", "mobile-submenu")}>
+                            {item.subMenu
+                              .filter(subItem => !subItem.authRequired || token)
+                              .map((subItem, subIndex) => (
+                                <Link
+                                  key={subIndex}
+                                  to={subItem.to}
+                                  className={cx("submenu-item", {
+                                    active: subItem.to === location.pathname
+                                  })}
+                                >
+                                  <span>{subItem.title}</span>
+                                  {subItem.badge && <span className={cx("submenu-badge")}>{subItem.badge}</span>}
+                                  {subItem.icon && <span className={cx("submenu-icon")}>{subItem.icon}</span>}
+                                </Link>
+                              ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <Link
+                        to={item.to}
+                        className={cx("nav-item", {
+                          active: item.to === location.pathname || isRouteInSubmenu(item),
+                        })}
+                      >
+                        <span className={cx("item-title")}>{item.title}</span>
+                        {item.subMenu && (
+                          <div className={cx("submenu")}>
+                            {item.subMenu
+                              .filter(subItem => !subItem.authRequired || token)
+                              .map((subItem, subIndex) => (
+                                <Link
+                                  key={subIndex}
+                                  to={subItem.to}
+                                  className={cx("submenu-item", {
+                                    active: subItem.to === location.pathname
+                                  })}
+                                >
+                                  <span>{subItem.title}</span>
+                                  {subItem.badge && <span className={cx("submenu-badge")}>{subItem.badge}</span>}
+                                  {subItem.icon && <span className={cx("submenu-icon")}>{subItem.icon}</span>}
+                                </Link>
+                              ))}
+                          </div>
+                        )}
+                      </Link>
+                    )}
                   </li>
                 )
               ))}
@@ -393,25 +501,10 @@ const Sidebar = () => {
                           <span>Cài đặt thông tin cá nhân</span>
                         </Link>
                         
-                        <Link to="/vip" className={cx("dropdown-item")}>
+                        <Link to="/pricing" className={cx("dropdown-item")}>
                           <i className="fa-solid fa-crown"></i>
                           <span>Nâng cấp tài khoản VIP</span>
                         </Link>
-                        
-                        {/* <Link to="/gifts" className={cx("dropdown-item")}>
-                          <i className="fa-solid fa-gift"></i>
-                          <span>Kích hoạt quà tặng</span>
-                        </Link> */}
-                        
-                        {/* <Link to="/cv" className={cx("dropdown-item")}>
-                          <i className="fa-regular fa-eye"></i>
-                          <span>Nhà tuyển dụng xem hồ sơ</span>
-                        </Link> */}
-                        
-                        {/* <Link to="/job-alert" className={cx("dropdown-item")}>
-                          <i className="fa-regular fa-bell"></i>
-                          <span>Cài đặt gợi ý việc làm</span>
-                        </Link> */}
                         
                         <Link to="/tai-khoan/notifications" className={cx("dropdown-item")}>
                           <i className="fa-solid fa-bell"></i>
