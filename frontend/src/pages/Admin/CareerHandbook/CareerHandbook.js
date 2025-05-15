@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import classNames from "classnames/bind";
 import styles from "./CareerHandbook.module.scss";
 import { adminApis, authAPI } from "~/utils/api";
@@ -36,7 +36,7 @@ function CareerHandbook() {
     { id: '6', name: 'Thị trường và xu hướng tuyển dụng', description: 'Phân tích xu hướng tuyển dụng và thị trường lao động.' }
   ];
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const result = await authAPI().get(adminApis.getAllCareerHandbooks, {
@@ -49,11 +49,11 @@ function CareerHandbook() {
       console.error("Error fetching data:", error);
       setLoading(false);
     }
-  };
+  }, [activePage]);
 
   useEffect(() => {
     fetchData();
-  }, [activePage]);
+  }, [fetchData]);
 
   useEffect(() => {
     if (!searchTerm.trim()) {

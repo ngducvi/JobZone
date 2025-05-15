@@ -40,6 +40,7 @@ const Reviews = require("../models/Reviews");
 const fileService = require('../services/FileService');
 const NotificationController = require("./NotificationController");
 const { getIO, notifyNewJobApplication } = require("../config/socket");
+const sequelize = require("../config/database");
 
 class UserController {
   constructor() {
@@ -2353,7 +2354,7 @@ class UserController {
           };
         } else {
           // Nếu không phải danh mục cấp 2 (hoặc không tìm thấy), lọc theo chính danh mục đó
-          whereClause.category_id = category_id;
+        whereClause.category_id = category_id;
         }
       }
 
@@ -3609,27 +3610,51 @@ class UserController {
   }
   // delete user cv template
   async deleteUserCvTemplate(req, res) {
+    let transaction;
     try {
       const { cv_id } = req.params;
       const user_id = req.user.id;
+      
+      // Start a transaction
+      transaction = await sequelize.transaction();
+      
+      // Find the CV first
       const cv = await UserCv.findOne({
         where: {
           cv_id: cv_id,
           user_id: user_id
-        }
+        },
+        transaction
       });
+
       if (!cv) {
+        await transaction.rollback();
         return res.status(404).json({
           code: 0,
           message: "CV not found"
         });
       }
-      await cv.destroy();
+
+      // First delete all related field values
+      await CvFieldValues.destroy({
+        where: { cv_id: cv_id },
+        transaction
+      });
+
+      // Then delete the CV itself
+      await cv.destroy({ transaction });
+      
+      // Commit the transaction
+      await transaction.commit();
+      
       return res.status(200).json({
         code: 1,
         message: "CV template deleted successfully"
       });
     } catch (error) {
+      // Rollback in case of error
+      if (transaction) await transaction.rollback();
+      
       console.error("Error in deleteUserCvTemplate:", error);
       return res.status(500).json({
         code: 0,
@@ -3901,20 +3926,26 @@ class UserController {
   }
 
   async updateCV(req, res) {
+    let transaction;
     try {
       const { cv_id } = req.params;
       const { name, fieldValues } = req.body;
       const user_id = req.user.id;
+
+      // Start a transaction for all database operations
+      transaction = await sequelize.transaction();
 
       // 1. Kiểm tra CV có tồn tại và thuộc về user không
       const existingCV = await UserCv.findOne({
         where: {
           cv_id,
           user_id
-        }
+        },
+        transaction
       });
 
       if (!existingCV) {
+        await transaction.rollback();
         return res.status(404).json({
           message: 'CV không tồn tại hoặc không có quyền chỉnh sửa',
           code: -1
@@ -3925,29 +3956,41 @@ class UserController {
       await existingCV.update({
         cv_name: name,
         updated_at: new Date()
-      });
+      }, { transaction });
 
-      // 3. Cập nhật các field values
+      // 3. Cập nhật các field values - sequential approach to avoid deadlocks
       if (fieldValues && Array.isArray(fieldValues)) {
-        const updatePromises = fieldValues.map(async field => {
-          const { field_id, field_value } = field;
-
-          // Tìm và cập nhật field value
-          await CvFieldValues.update(
-            { field_value },
-            {
-              where: {
-                cv_id,
-                field_id
-              }
-            }
-          );
+        // Instead of updating each field value individually with many queries,
+        // fetch all existing fields first and then process updates in memory
+        const existingFieldValues = await CvFieldValues.findAll({
+          where: { cv_id },
+          transaction
         });
 
-        await Promise.all(updatePromises);
+        for (const field of fieldValues) {
+          const { field_id, field_value } = field;
+          const existingField = existingFieldValues.find(f => f.field_id === field_id);
+          
+          if (existingField) {
+            // Update existing field
+            existingField.field_value = field_value;
+            await existingField.save({ transaction });
+          } else {
+            // Create new field if it doesn't exist (unlikely in update scenario)
+            await CvFieldValues.create({
+              value_id: this.generateValueId(),
+                cv_id,
+              field_id,
+              field_value
+            }, { transaction });
+              }
+            }
       }
 
-      // 4. Lấy thông tin CV đã cập nhật để trả về
+      // Commit the transaction
+      await transaction.commit();
+
+      // 4. Lấy thông tin CV đã cập nhật để trả về (outside transaction)
       const updatedCV = await UserCv.findByPk(cv_id);
       const template = await CvTemplates.findByPk(updatedCV.template_id);
       const updatedFieldValues = await CvFieldValues.findAll({
@@ -3965,6 +4008,9 @@ class UserController {
       });
 
     } catch (error) {
+      // Rollback the transaction if an error occurred
+      if (transaction) await transaction.rollback();
+
       console.error('Error updating CV:', error);
       return res.status(500).json({
         message: error.message,

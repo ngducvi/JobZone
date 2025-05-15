@@ -5,6 +5,7 @@ import { authAPI, userApis } from "~/utils/api";
 import ModalTypeContext from "~/context/ModalTypeContext";
 import { FaCheck, FaTimes, FaCrown, FaUserAlt, FaCheckCircle, FaInfoCircle } from "react-icons/fa";
 import { toast } from "react-hot-toast";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const cx = classNames.bind(styles);
 
@@ -15,9 +16,11 @@ function Pricing() {
   const [userPlan, setUserPlan] = useState(null);
   const [planExpiry, setPlanExpiry] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
   
-  // Fetch user's current plan
-  useEffect(() => {
+  // Function to fetch user's current plan
     const fetchUserPlan = async () => {
       if (!token) return;
       
@@ -41,8 +44,32 @@ function Pricing() {
       }
     };
     
+  // Fetch user's current plan on component mount
+  useEffect(() => {
     fetchUserPlan();
   }, [token]);
+  
+  // Handle VNPay payment return
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const data = queryParams.get('data');
+    const isValid = queryParams.get('is_valid');
+    
+    if (data && isValid) {
+      const dataArray = data.split('|');
+      const responseCode = dataArray[0];
+      
+      if (isValid === 'true' && responseCode === '00') {
+        toast.success('Thanh toán thành công! Gói của bạn đã được nâng cấp.');
+        fetchUserPlan();
+      } else {
+        toast.error('Thanh toán thất bại. Vui lòng thử lại sau.');
+      }
+      
+      // Clear the URL parameters after processing
+      navigate('/pricing', { replace: true });
+    }
+  }, [location, navigate, fetchUserPlan]);
   
   const formatExpiryDate = (dateString) => {
     if (!dateString) return null;
@@ -57,7 +84,7 @@ function Pricing() {
   
   const handleRegister = async (amount, plan) => {
     // If user is already on this plan, show a toast and return
-    if (userPlan === plan) {
+    if (userPlan === plan && plan === 'Basic') {
       toast.error(`Bạn đã đăng ký gói ${plan} rồi!`);
       return;
     }
@@ -78,18 +105,33 @@ function Pricing() {
       return;
     }
     
+    // Handle plan extension or upgrade
+    const actionType = userPlan === plan ? 'extension' : 'upgrade';
+    
     try {
+      setPaymentProcessing(true);
       const response = await authAPI().post(userApis.createPaymentUrl, {
         amount: amount,
-        orderInfo: isYearly ? `${plan} Plan - Yearly` : `${plan} Plan - Monthly`
+        bankCode: "",
+        language: "vn",
+        actionType: actionType  // Pass the action type to the backend
       });
       
-      if(response.data && response.data.paymentUrl) {
+      if(response.data && response.data.status === 'success' && response.data.paymentUrl) {
+        // Redirect to VNPay payment page
         window.location.href = response.data.paymentUrl;
+      } else {
+        toast.error("Không thể tạo đường dẫn thanh toán!");
       }
     } catch (error) {
-      console.log(error);
+      console.error("Payment error:", error);
+      if (error.response && error.response.data && error.response.data.message) {
+        toast.error(error.response.data.message);
+      } else {
       toast.error("Có lỗi xảy ra khi xử lý thanh toán!");
+      }
+    } finally {
+      setPaymentProcessing(false);
     }
   };
 
@@ -155,7 +197,7 @@ function Pricing() {
           <button 
             className={cx("btn", "btn-basic", { 'current-plan-btn': userPlan === 'Basic' })} 
             onClick={() => handleRegister(0, 'Basic')}
-            disabled={userPlan === 'Basic' || loading}
+            disabled={userPlan === 'Basic' || loading || paymentProcessing}
           >
             {userPlan === 'Basic' ? 'Gói hiện tại của bạn' : 'Bắt đầu miễn phí'}
           </button>
@@ -164,6 +206,7 @@ function Pricing() {
         <div className={cx("pricing-card", "pro-plan", { 'current-plan': userPlan === 'Pro' })}>
           {userPlan !== 'Pro' && <div className={cx("popular-badge")}>Phổ biến</div>}
           {userPlan === 'Pro' && <div className={cx("current-plan-marker")}>Gói hiện tại</div>}
+          {userPlan === 'Pro' && <div className={cx("extension-tag")}>Gia hạn +{isYearly ? '365' : '30'} ngày</div>}
           <div className={cx("card-header")}>
             <FaCrown className={cx("plan-icon")} />
             <h3 className={cx("plan-title")}>Gói Pro</h3>
@@ -187,9 +230,9 @@ function Pricing() {
           <button 
             className={cx("btn", "btn-pro", { 'current-plan-btn': userPlan === 'Pro' })} 
             onClick={() => handleRegister(proPrice, 'Pro')}
-            disabled={userPlan === 'Pro' || loading}
+            disabled={loading || paymentProcessing}
           >
-            {userPlan === 'Pro' ? 'Gói hiện tại của bạn' : 'Nâng cấp ngay'}
+            {paymentProcessing ? 'Đang xử lý...' : userPlan === 'Pro' ? 'Gia hạn gói Pro' : 'Nâng cấp ngay'}
           </button>
         </div>
       </div>
@@ -252,13 +295,40 @@ function Pricing() {
       <div className={cx("notes-section")}>
         <div className={cx("note")}>
           <h4>Nếu chưa hết thời hạn sử dụng</h4>
-          <p>Mua thêm gói sẽ được cộng dồn thời hạn và các quyền lợi</p>
+          <p>Mua thêm gói sẽ được cộng dồn thời hạn và các quyền lợi. Gói năm sẽ cộng dồn 365 ngày, gói tháng sẽ cộng dồn 30 ngày vào thời hạn hiện tại.</p>
         </div>
         <div className={cx("note")}>
           <h4>Đảm bảo hoàn tiền</h4>
           <p>
             Hoàn tiền 100% trong vòng 7 ngày nếu bạn không hài lòng với dịch vụ
           </p>
+        </div>
+      </div>
+      
+      <div className={cx("extension-info")}>
+        <h3>Cách thức gia hạn gói</h3>
+        <div className={cx("extension-grid")}>
+          <div className={cx("extension-item")}>
+            <div className={cx("extension-icon")}>
+              <FaCheckCircle />
+            </div>
+            <h4>Gia hạn gói Pro</h4>
+            <p>Khi bạn gia hạn gói Pro hàng tháng, thời hạn sử dụng sẽ được tự động cộng thêm 30 ngày vào ngày hết hạn hiện tại.</p>
+          </div>
+          <div className={cx("extension-item")}>
+            <div className={cx("extension-icon")}>
+              <FaCrown />
+            </div>
+            <h4>Gia hạn gói ProMax</h4>
+            <p>Khi bạn nâng cấp hoặc gia hạn gói ProMax hàng năm, thời hạn sử dụng sẽ được tự động cộng thêm 365 ngày vào ngày hết hạn hiện tại.</p>
+          </div>
+          <div className={cx("extension-item")}>
+            <div className={cx("extension-icon")}>
+              <FaInfoCircle />
+            </div>
+            <h4>Nâng cấp từ Pro lên ProMax</h4>
+            <p>Bạn có thể nâng cấp từ gói Pro lên ProMax bất cứ lúc nào. Thời gian sử dụng còn lại của gói Pro sẽ được giữ nguyên và cộng thêm 365 ngày.</p>
+          </div>
         </div>
       </div>
       
@@ -271,6 +341,14 @@ function Pricing() {
         <div className={cx("faq-item")}>
           <h4>Làm thế nào để nâng cấp từ gói Basic lên Pro?</h4>
           <p>Bạn có thể dễ dàng nâng cấp lên gói Pro bằng cách nhấp vào nút "Nâng cấp ngay" và hoàn thành quy trình thanh toán.</p>
+        </div>
+        <div className={cx("faq-item")}>
+          <h4>Tôi hiện đang dùng gói Pro, tôi có thể gia hạn trước khi hết hạn không?</h4>
+          <p>Có, bạn có thể gia hạn gói Pro bất cứ lúc nào bằng cách nhấp vào nút "Gia hạn gói Pro". Khi gia hạn, thời gian sẽ được cộng dồn vào thời hạn hiện tại mà không bị mất bất kỳ ngày nào.</p>
+        </div>
+        <div className={cx("faq-item")}>
+          <h4>Chuyện gì sẽ xảy ra nếu tôi chuyển từ gói Pro lên ProMax?</h4>
+          <p>Khi bạn nâng cấp từ gói Pro lên ProMax, bạn sẽ được cộng thêm 365 ngày vào thời hạn sử dụng hiện tại và nhận ngay các tính năng cao cấp của gói ProMax.</p>
         </div>
         <div className={cx("faq-item")}>
           <h4>Có cần thẻ tín dụng để đăng ký gói miễn phí không?</h4>

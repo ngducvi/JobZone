@@ -15,9 +15,7 @@ const ManagerCV = () => {
   const [userCv, setUserCv] = useState([]);
   const [candidateCv, setCandidateCv] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
   const [appliedJobs, setAppliedJobs] = useState([]);
-  const [savedJobs, setSavedJobs] = useState([]);
   const [currentUser, setCurrentUser] = useState([]);
   const [candidateProfile, setCandidateProfile] = useState([]);
   const [userId, setUserId] = useState(null);
@@ -63,7 +61,7 @@ const ManagerCV = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [userId]);
 
   const handleUploadCV = async (file) => {
     if (!file) return;
@@ -72,7 +70,7 @@ const ManagerCV = () => {
     formData.append("cv", file);
 
     try {
-      const response = await authAPI().post(
+      await authAPI().post(
         userApis.uploadCandidateCv,
         formData,
         {
@@ -102,17 +100,15 @@ const ManagerCV = () => {
       if (!token) return;
 
       const [
-        userResponse,
+        ,
         appliedJobsResponse,
-        savedJobsResponse,
+        ,
       ] = await Promise.all([
         authAPI().get(userApis.getCurrentUser),
         authAPI().get(userApis.getAllAppliedJobsByUser),
         authAPI().get(userApis.getAllSavedJobsByUser),
       ]);
-      setUser(userResponse.data.user);
       setAppliedJobs(appliedJobsResponse.data.appliedJobs);
-      setSavedJobs(savedJobsResponse.data.savedJobs);
     };
     fetchData();
   }, []);
@@ -247,11 +243,6 @@ const ManagerCV = () => {
     }
   };
 
-  const handleCandidateClick = (candidateId) => {
-    console.log("Clicking candidate with ID:", candidateId);
-    navigate(`/recruiter/candidate-detail/${candidateId}`);
-  };
-
   const handleDeleteCV = async (cv) => {
     try {
       const response = await authAPI().delete(`${userApis.deleteCandidateCv(cv.cv_id)}`);
@@ -269,18 +260,57 @@ const ManagerCV = () => {
   };
 
   const handleDeleteUserCv = async (cv) => {
+    // Ask for confirmation before deleting
+    if (!window.confirm("Bạn có chắc chắn muốn xóa CV này không? Thao tác này không thể hoàn tác.")) {
+      return;
+    }
+    
     try {
+      toast.loading('Đang xóa CV...');
+      
       const response = await authAPI().delete(`${userApis.deleteUserCvTemplate(cv.cv_id)}`);
 
+      toast.dismiss();
+      
       if (response.data.code === 1) {
         // Refresh the CV list
         const userCvResponse = await authAPI().get(userApis.getAllUserCvByUserId);
         setUserCv(userCvResponse.data.userCv);
         toast.success('Đã xóa CV thành công');
+      } else {
+        toast.error(response.data.message || 'Có lỗi xảy ra khi xóa CV');
       }
     } catch (error) {
+      toast.dismiss();
       console.error('Error deleting CV:', error);
-      toast.error('Có lỗi xảy ra khi xóa CV');
+      
+      // Check specific error cases
+      if (error.response) {
+        const status = error.response.status;
+        const errorMessage = error.response.data?.message || 'Có lỗi xảy ra khi xóa CV';
+        
+        if (status === 404) {
+          toast.error('CV không tồn tại hoặc đã bị xóa');
+        } else if (status === 403) {
+          toast.error('Bạn không có quyền xóa CV này');
+        } else {
+          toast.error(errorMessage);
+        }
+      } else if (error.request) {
+        // Request was made but no response received
+        toast.error('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng của bạn.');
+      } else {
+        // Error setting up the request
+        toast.error('Có lỗi xảy ra khi xóa CV. Vui lòng thử lại sau.');
+      }
+      
+      // Try to refresh the CV list anyway to ensure UI consistency
+      try {
+        const userCvResponse = await authAPI().get(userApis.getAllUserCvByUserId);
+        setUserCv(userCvResponse.data.userCv);
+      } catch (refreshError) {
+        console.error('Error refreshing CV list:', refreshError);
+      }
     }
   };
 

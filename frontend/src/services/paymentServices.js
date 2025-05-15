@@ -20,7 +20,35 @@ const paymentServices = {
         }
     },
 
+    checkPaymentStatus: async (orderId) => {
+        try {
+            const response = await authAPI().get(`${userApis.checkPaymentStatus}?orderId=${orderId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error checking payment status:', error);
+            throw error;
+        }
+    },
     
+    updateUserPlan: async () => {
+        try {
+            const response = await authAPI().get(userApis.checkUserPlan);
+            return response.data;
+        } catch (error) {
+            console.error('Error updating user plan:', error);
+            throw error;
+        }
+    },
+
+    checkAndUpdateTransaction: async (orderId) => {
+        try {
+            const response = await authAPI().get(`${userApis.checkAndUpdateTransaction}?orderId=${orderId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error checking transaction:', error);
+            throw error;
+        }
+    }
 };
 
 export default paymentServices;

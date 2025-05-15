@@ -52,7 +52,6 @@ export const adminApis = {
     updateStatusJob: (job_id) => `/admin/job/update-status/${job_id}`,
     updateBusinessLicenseStatus: (id) => `/admin/company/update-business-license-status/${id}`,
     getCountCandidates: '/admin/candidate/count-all',
-    updateStatusRecruiterCompany: (recruiter_id) => `/admin/recruiter-companies/update-status/${recruiter_id}`,
 };
 
 export const userApis = {
@@ -186,6 +185,7 @@ export const userApis = {
 
     getAllConversations: '/user/conversations',
     getRecruiterCompanyByUserId: '/user/recruiter-company',
+    checkAndUpdateTransaction: '/vnpay/check-update-transaction',
 };
 
 

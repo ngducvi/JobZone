@@ -116,7 +116,7 @@
   height: 320px;
   width: 100%;
   overflow: hidden;
-  mask-image: radial-gradient(50% 50%, white, transparent);
+  mask-image: radial-gradient(50% 50% at center center, white, transparent);
 
   &::before {
     content: '';

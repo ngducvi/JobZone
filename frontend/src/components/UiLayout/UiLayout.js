@@ -1,27 +1,20 @@
 import styles from "./UiLayout.module.scss";
 import { Sparkles } from "./sparkles";
 import images from "~/assets/images";
-import React, { useEffect, useState, useContext, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import classNames from "classnames/bind";
-import Card from "~/pages/Dashboard/Card.js";
-import userServices from "~/services/userServices.js";
-import Button from "~/components/Button";
-import { Link, useNavigate } from "react-router-dom";
-import UserContext from "~/context/UserContext";
-import { NextPageIcon, PrevPageIcon } from "~/components/Icons";
+import { useNavigate } from "react-router-dom";
 // import LogoUi from "./LogoUi";
 const cx = classNames.bind(styles);
 
 export function UiLayout() {
   const navigate = useNavigate();
-  const [activeFilter, setActiveFilter] = useState("month")
   const [provinces, setProvinces] = useState([])
   const [districts, setDistricts] = useState([])
   const [selectedProvinces, setSelectedProvinces] = useState([])
   const [selectedDistricts, setSelectedDistricts] = useState([])
   const [showLocationDropdown, setShowLocationDropdown] = useState(false)
   const [searchKeyword, setSearchKeyword] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("")
   const locationRef = useRef(null)
 
   // Fetch provinces on mount

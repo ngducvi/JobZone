@@ -3,9 +3,9 @@ import classNames from "classnames/bind";
 import styles from "./Company.module.scss";
 import { adminApis, authAPI } from "~/utils/api";
 import { NextPageIcon, PrevPageIcon } from "~/components/Icons";
-import { FaBuilding, FaUser, FaGlobe, FaMapMarkerAlt, FaUsers, FaCalendarAlt, FaCheckCircle, FaClock, FaBan, FaChartLine, FaStar, FaFileContract, FaSearchPlus, FaSearchMinus } from "react-icons/fa";
+import { FaBuilding, FaGlobe, FaMapMarkerAlt, FaUsers, FaCalendarAlt, FaCheckCircle, FaClock, FaBan, FaChartLine, FaStar, FaFileContract, FaSearchPlus, FaSearchMinus } from "react-icons/fa";
 import { toast } from 'react-hot-toast';
-import useScrollTop from '~/hooks/useScrollTop';
+// import useScrollTop from '~/hooks/useScrollTop';
 const cx = classNames.bind(styles);
 
 function Company() {

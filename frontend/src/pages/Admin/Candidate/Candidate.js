@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import classNames from "classnames/bind";
 import styles from "./Candidate.module.scss";
 import { adminApis, authAPI } from "~/utils/api";
@@ -33,7 +33,7 @@ function Candidate() {
     };
 
     // Fetch candidates
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             setLoading(true);
             const result = await authAPI().get(adminApis.getAllCandidates, {
@@ -54,11 +54,11 @@ function Candidate() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [activePage, userDetails]);
 
     useEffect(() => {
         fetchData();
-    }, [activePage]);
+    }, [fetchData]);
 
     useEffect(() => {
         if (activeTab === 'All') {

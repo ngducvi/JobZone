@@ -5,9 +5,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './EditCV.module.scss';
 import { authAPI, userApis } from '~/utils/api';
-import { FaUndo, FaRedo, FaSave, FaDownload, FaEye, FaSpinner } from 'react-icons/fa';
+import { FaUndo, FaRedo, FaSave, FaEye, FaSpinner } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
-import useScrollTop from '~/hooks/useScrollTop';
 
 const cx = classNames.bind(styles);
 
@@ -21,10 +20,10 @@ const EditCV = () => {
   const [templateCss, setTemplateCss] = useState('');
   const [fieldValues, setFieldValues] = useState({});
   const [selectedColor, setSelectedColor] = useState('#013a74');
-  const [bgColor, setBgColor] = useState('rgba(240, 247, 255, 0.5)');
+  const [bgColor] = useState('rgba(240, 247, 255, 0.5)');
   const [lineSpacing, setLineSpacing] = useState(1.5);
   const [showBackground, setShowBackground] = useState(true);
-  const [isEditing, setIsEditing] = useState(true);
+  const [isEditing] = useState(true);
   const [history, setHistory] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [lastSavedState, setLastSavedState] = useState(null);
@@ -136,13 +135,14 @@ const EditCV = () => {
     if (isSaving) return;
     
     setIsSaving(true);
+    
+    // Define fieldValuesToUpdate outside the try block so it's accessible in the catch block
+    const fieldValuesToUpdate = templateFields.map(field => ({
+      field_id: field.field_id,
+      field_value: fieldValues[field.field_name] || ''
+    }));
+    
     try {
-      // Tạo object chứa các field values
-      const fieldValuesToUpdate = templateFields.map(field => ({
-        field_id: field.field_id,
-        field_value: fieldValues[field.field_name] || ''
-      }));
-
       // Gọi API để cập nhật CV
       const response = await authAPI().put(userApis.updateCV(cv_id), {
         name: fieldValues.fullName || 'CV mới',
@@ -157,7 +157,46 @@ const EditCV = () => {
       }
     } catch (error) {
       console.error('Error updating CV:', error);
-      toast.error('Có lỗi xảy ra khi cập nhật CV!');
+      
+      // Check if error is a deadlock error or other transient DB error
+      const isDeadlockError = error?.response?.data?.message?.includes('Deadlock');
+      
+      if (isDeadlockError) {
+        // For deadlock errors, the operation might have been successful anyway
+        // Wait a moment and try to fetch the CV data again to verify
+        try {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Fetch CV data to check if our changes were saved
+          const verifyResponse = await authAPI().get(userApis.getAllCvFieldValuesByCvId(cv_id));
+          
+          if (verifyResponse.data && verifyResponse.data.cvFieldValues) {
+            // Verify if the changes were actually saved
+            const savedValues = verifyResponse.data.cvFieldValues;
+            let allValuesSaved = true;
+            
+            // Check if all our field values match the saved values
+            for (const field of fieldValuesToUpdate) {
+              const savedField = savedValues.find(v => v.field_id === field.field_id);
+              if (!savedField || savedField.field_value !== field.field_value) {
+                allValuesSaved = false;
+                break;
+              }
+            }
+            
+            if (allValuesSaved) {
+              // If all values were saved despite the error, consider it a success
+              setLastSavedState(fieldValues);
+              toast.success('CV đã được cập nhật thành công, mặc dù có lỗi từ máy chủ!');
+              return;
+            }
+          }
+        } catch (verifyError) {
+          console.error('Error verifying save status:', verifyError);
+        }
+      }
+      
+      toast.error('Có lỗi xảy ra khi cập nhật CV! Vui lòng thử lại sau.');
     } finally {
       setIsSaving(false);
     }

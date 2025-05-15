@@ -2,14 +2,13 @@ import React, { useState, useEffect } from "react";
 import classNames from "classnames/bind";
 import styles from "./CreateCV.module.scss";
 import { authAPI, userApis } from "~/utils/api";
-import { FaEye, FaDownload, FaSearch, FaFilter, FaTimes, FaPalette, FaLanguage, FaSortAmountDown } from "react-icons/fa";
+import { FaEye, FaDownload, FaSearch, FaFilter, FaTimes, FaPalette, FaLanguage, FaSortAmountDown, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import images from "~/assets/images/index";
 
 const cx = classNames.bind(styles);
 
 const CreateCV = () => {
-  const [activeTab, setActiveTab] = useState("style");
   const [language, setLanguage] = useState("Tiếng Việt");
   const [sortBy, setSortBy] = useState("all");
   const [loading, setLoading] = useState(true);
@@ -22,10 +21,10 @@ const CreateCV = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [selectedColor, setSelectedColor] = useState('#013a74');
-  const [bgColor, setBgColor] = useState('rgba(240, 247, 255, 0.5)');
+  const [bgColor] = useState('rgba(240, 247, 255, 0.5)');
   const [cvLanguage, setCvLanguage] = useState("Tiếng Việt");
   const [cvPosition, setCvPosition] = useState("");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const itemsPerPage = 6; // Display 6 templates per page
   const navigate = useNavigate();
 
   const colors = [
@@ -37,26 +36,6 @@ const CreateCV = () => {
     '#424242', // Dark Grey
     '#ff5722'  // Deep Orange
   ];
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem("token");
-        if (!token) return;
-        const response = await authAPI().get(userApis.getAllCvTemplates);
-        const responseFields = await authAPI().get(userApis.getAllTemplateFieldsByTemplateId(response.data.cvTemplates[0].template_id));
-
-        setTemplates(response.data.cvTemplates);
-        setTotalPages(response.data.totalPages);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
 
   const getTemplateTypeName = (typeId) => {
     switch (typeId) {
@@ -73,6 +52,7 @@ const CreateCV = () => {
     }
   };
 
+  // Define filteredTemplates here before any useEffect that depends on it
   const filteredTemplates = templates.filter(
     (template) =>
       template.template_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -80,6 +60,54 @@ const CreateCV = () => {
         .toLowerCase()
         .includes(searchTerm.toLowerCase())
   );
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        const response = await authAPI().get(userApis.getAllCvTemplates);
+        await authAPI().get(userApis.getAllTemplateFieldsByTemplateId(response.data.cvTemplates[0].template_id));
+
+        setTemplates(response.data.cvTemplates);
+        setTotalPages(Math.ceil(response.data.cvTemplates.length / itemsPerPage));
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [itemsPerPage]);
+
+  // Update total pages when filtering templates
+  useEffect(() => {
+    if (filteredTemplates.length > 0) {
+      setTotalPages(Math.ceil(filteredTemplates.length / itemsPerPage));
+      // Reset to first page when search changes
+      if (currentPage > Math.ceil(filteredTemplates.length / itemsPerPage)) {
+        setCurrentPage(1);
+      }
+    }
+  }, [filteredTemplates.length, itemsPerPage, currentPage]);
+
+  // Get current page templates
+  const getCurrentPageTemplates = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredTemplates.slice(startIndex, endIndex);
+  };
+
+  const handlePageChange = (pageNumber) => {
+    if (pageNumber < 1 || pageNumber > totalPages) return;
+    setCurrentPage(pageNumber);
+    // Scroll to top of templates grid
+    window.scrollTo({
+      top: document.querySelector(`.${cx("templates-grid")}`).offsetTop - 100,
+      behavior: 'smooth'
+    });
+  };
 
   const handlePreview = (template) => {
     setSelectedTemplate(template);
@@ -185,7 +213,6 @@ const CreateCV = () => {
 
   const PreviewModal = ({ template, onClose }) => {
     const [formData, setFormData] = useState({});
-    const [templateFields, setTemplateFields] = useState([]);
 
     useEffect(() => {
       const fetchFields = async () => {
@@ -193,7 +220,7 @@ const CreateCV = () => {
           const response = await authAPI().get(
             userApis.getAllTemplateFieldsByTemplateId(template.template_id)
           );
-          setTemplateFields(response.data.templateFields);
+          // setTemplateFields(response.data.templateFields);
 
           // Khởi tạo formData với placeholder values
           const initialData = {};
@@ -208,12 +235,6 @@ const CreateCV = () => {
       fetchFields();
     }, [template.template_id]);
 
-    const handleInputChange = (fieldName, value) => {
-      setFormData(prev => ({
-        ...prev,
-        [fieldName]: value
-      }));
-    };
 
     const renderTemplate = () => {
       let html = template.template_html;
@@ -251,34 +272,6 @@ const CreateCV = () => {
       );
     };
 
-    const renderFields = () => {
-      return templateFields.map(field => (
-        <div key={field.field_id} className={cx("form-field")}>
-          <label>{field.field_label}</label>
-          {field.field_type === 'textarea' ? (
-            <textarea
-              value={formData[field.field_name] || ''}
-              onChange={e => handleInputChange(field.field_name, e.target.value)}
-              placeholder={field.field_placeholder}
-            />
-          ) : field.field_type === 'date' ? (
-            <input
-              type="date"
-              value={formData[field.field_name] || ''}
-              onChange={e => handleInputChange(field.field_name, e.target.value)}
-            />
-          ) : (
-            <input
-              type="text"
-              value={formData[field.field_name] || ''}
-              onChange={e => handleInputChange(field.field_name, e.target.value)}
-              placeholder={field.field_placeholder}
-            />
-          )}
-        </div>
-      ));
-    };
-
     return (
       <div className={cx("preview-modal-overlay")} onClick={onClose}>
         <div className={cx("preview-modal")} onClick={e => e.stopPropagation()}>
@@ -298,6 +291,52 @@ const CreateCV = () => {
         </div>
       </div>
     );
+  };
+
+  // Get pagination range with ellipsis
+  const getPaginationRange = () => {
+    const totalNumbers = 5; // Number of page numbers to show
+    const totalBlocks = totalNumbers + 2; // Total blocks including ellipsis
+    
+    if (totalPages <= totalBlocks) {
+      // If we have less pages than we want to show, display all pages
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    
+    // Calculate middle of the displayed numbers
+    const leftSiblingIndex = Math.max(currentPage - 1, 1);
+    const rightSiblingIndex = Math.min(currentPage + 1, totalPages);
+    
+    // Calculate if we should show the ellipsis
+    const shouldShowLeftDots = leftSiblingIndex > 2;
+    const shouldShowRightDots = rightSiblingIndex < totalPages - 1;
+    
+    if (!shouldShowLeftDots && shouldShowRightDots) {
+      // No left dots, but right dots
+      const leftRange = Array.from({ length: totalNumbers }, (_, i) => i + 1);
+      return [...leftRange, '...', totalPages];
+    }
+    
+    if (shouldShowLeftDots && !shouldShowRightDots) {
+      // Left dots, but no right dots
+      const rightRange = Array.from(
+        { length: totalNumbers },
+        (_, i) => totalPages - totalNumbers + i + 1
+      );
+      return [1, '...', ...rightRange];
+    }
+    
+    if (shouldShowLeftDots && shouldShowRightDots) {
+      // Both left and right dots
+      const middleRange = Array.from(
+        { length: rightSiblingIndex - leftSiblingIndex + 1 },
+        (_, i) => leftSiblingIndex + i
+      );
+      return [1, '...', ...middleRange, '...', totalPages];
+    }
+    
+    // Default case
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
   };
 
   return (
@@ -374,7 +413,7 @@ const CreateCV = () => {
               <p>Vui lòng thử tìm kiếm với từ khóa khác</p>
             </div>
           ) : (
-            filteredTemplates.map((template) => (
+            getCurrentPageTemplates().map((template) => (
               <div
                 key={template.template_id}
                 className={cx("template-card")}
@@ -432,6 +471,48 @@ const CreateCV = () => {
             ))
           )}
         </div>
+
+        {!loading && filteredTemplates.length > 0 && (
+          <div className={cx("results-info")}>
+            Hiển thị {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredTemplates.length)} trong tổng số {filteredTemplates.length} mẫu
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className={cx("pagination")}>
+            <button 
+              className={cx("pagination-btn", "prev", { disabled: currentPage === 1 })}
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              <FaChevronLeft className={cx("icon")} />
+            </button>
+            
+            <div className={cx("pagination-numbers")}>
+              {getPaginationRange().map((page, index) => (
+                page === '...' ? (
+                  <span key={`ellipsis-${index}`} className={cx("ellipsis")}>...</span>
+                ) : (
+                  <button
+                    key={`page-${page}`}
+                    className={cx("page-number", { active: currentPage === page })}
+                    onClick={() => handlePageChange(page)}
+                  >
+                    {page}
+                  </button>
+                )
+              ))}
+            </div>
+            
+            <button 
+              className={cx("pagination-btn", "next", { disabled: currentPage === totalPages })}
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              <FaChevronRight className={cx("icon")} />
+            </button>
+          </div>
+        )}
       </div>
 
       {showPreview && (

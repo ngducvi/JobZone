@@ -4,11 +4,10 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './UseTemplates.module.scss';
 import { authAPI, userApis } from '~/utils/api';
-import { FaUndo, FaRedo, FaSave, FaDownload, FaSpinner } from 'react-icons/fa';
+import { FaUndo, FaRedo, FaSave, FaDownload, FaSpinner, FaUser, FaUpload } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import TemplateList from './TemplateList';
 import CVGuide from './CVGuide';
-import useScrollTop from '~/hooks/useScrollTop';
 const cx = classNames.bind(styles);
 
 const UseTemplates = () => {
@@ -28,6 +27,10 @@ const UseTemplates = () => {
   const [modalContent, setModalContent] = useState(null);
   const [activeSidebarItem, setActiveSidebarItem] = useState('template');
   const [isSaving, setIsSaving] = useState(false);
+  const [profilePicture, setProfilePicture] = useState(null);
+  const [candidateId, setCandidateId] = useState(null);
+  const [, setUserId] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const colors = [
     '#013a74', // Blue
@@ -44,12 +47,46 @@ const UseTemplates = () => {
     { id: 'guide', label: 'Hướng dẫn viết CV', icon: null, count: null },
   ];
 
+  // Fetch user and candidate data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const userResponse = await authAPI().get(userApis.getCurrentUser);
+        if (userResponse.data.code === 1) {
+          const userId = userResponse.data.user.id;
+          setUserId(userId);
+          
+          // Get candidate profile to get profile picture
+          const candidateResponse = await authAPI().get(userApis.getCandidateProfile(userId));
+          if (candidateResponse.data.code === 1) {
+            const candidateData = candidateResponse.data.candidate;
+            setCandidateId(candidateData.candidate_id);
+            setProfilePicture(candidateData.profile_picture);
+            
+            // If we have a profile picture, update the formData with it
+            if (candidateData.profile_picture) {
+              setFormData(prevFormData => ({
+                ...prevFormData,
+                profileImage: `<img src="${candidateData.profile_picture}" alt="Profile" class="profile-image" />`
+              }));
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+    
+    fetchUserData();
+  }, []);
+
  useEffect(() => {
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
     });
   }, []); 
+  
   useEffect(() => {
     const fetchFields = async () => {
       try {
@@ -63,6 +100,12 @@ const UseTemplates = () => {
         response.data.templateFields.forEach(field => {
           initialData[field.field_name] = field.field_placeholder || '';
         });
+        
+        // Add profile image if we have it
+        if (profilePicture) {
+          initialData.profileImage = `<img src="${profilePicture}" alt="Profile" class="profile-image" />`;
+        }
+        
         setFormData(initialData);
         
         // Khởi tạo history với state đầu tiên
@@ -77,7 +120,7 @@ const UseTemplates = () => {
     if (template) {
       fetchFields();
     }
-  }, [template]);
+  }, [template, profilePicture]);
 
   const handleInputChange = (fieldName, value) => {
     const newFormData = {
@@ -114,12 +157,87 @@ const UseTemplates = () => {
     if (!template) return null;
     
     let html = template.template_html;
+    
+    // Sửa lại: Nếu template chỉ có phần đầu, bọc nó trong class cần thiết
+    if (html.trim() === '<div id="section-header">') {
+      html = `
+      <div class="cv-template-basic">
+        <header class="cv-header">
+          <div class="header-content">
+            <h1 class="fullname">{{fullName}}</h1>
+            <h2 class="title">{{jobTitle}}</h2>
+            <p class="objective">{{objective}}</p>
+          </div>
+          <div class="avatar-container">
+            <div class="avatar">{{profileImage}}</div>
+          </div>
+        </header>
+
+        <div class="personal-info">
+          <div class="info-item"><i class="fas fa-phone"></i>{{phone}}</div>
+          <div class="info-item"><i class="fas fa-envelope"></i>{{email}}</div>
+          <div class="info-item"><i class="fas fa-map-marker-alt"></i>{{address}}</div>
+          <div class="info-item"><i class="fas fa-globe"></i>{{website}}</div>
+        </div>
+
+        <section class="experience-section">
+          <h2>KINH NGHIỆM LÀM VIỆC</h2>
+          <div class="experience-item">
+            <div class="period">{{expStartDate}} - {{expEndDate}}</div>
+            <div class="position">{{expPosition}}</div>
+            <div class="company">{{expCompany}}</div>
+            <ul class="responsibilities">
+              {{expResponsibilities}}
+            </ul>
+          </div>
+        </section>
+
+        <section class="education-section">
+          <h2>HỌC VẤN</h2>
+          <div class="education-item">
+            <div class="period">{{eduStartDate}} - {{eduEndDate}}</div>
+            <div class="degree">{{degree}}</div>
+            <div class="institution">{{institution}}</div>
+            <div class="description">{{eduDescription}}</div>
+          </div>
+        </section>
+
+        <section class="skills-section">
+          <h2>KỸ NĂNG</h2>
+          <div class="skills-list">
+            {{skills}}
+          </div>
+        </section>
+      </div>`;
+    }
+    
+    // Handle profile image placeholder special case
+    const profileImagePlaceholder = '{{profileImage}}';
+    let profileImageValue = '';
+    
+    if (formData.profileImage) {
+      // If we have a profileImage in formData, use it
+      profileImageValue = `<div data-field="profileImage" ${isEditing ? 'contenteditable="true"' : ''} class="editable-content profile-image-container">${formData.profileImage}</div>`;
+    } else if (profilePicture) {
+      // If we have a profilePicture from candidate data, use it
+      profileImageValue = `<div data-field="profileImage" ${isEditing ? 'contenteditable="true"' : ''} class="editable-content profile-image-container"><img src="${profilePicture}" alt="Profile" class="profile-image" /></div>`;
+    } else {
+      // Default placeholder image
+      profileImageValue = `<div data-field="profileImage" ${isEditing ? 'contenteditable="true"' : ''} class="editable-content profile-image-container"><div class="profile-image-placeholder"><FaUser /></div></div>`;
+    }
+    
+    html = html.replace(new RegExp(profileImagePlaceholder, 'g'), profileImageValue);
+    
+    // Chuyển các placeholder sang định dạng editable content (except profileImage which we already handled)
     Object.keys(formData).forEach(key => {
-      const placeholder = `{{${key}}}`;
-      const value = formData[key] || '';
-      const editableValue = `<div data-field="${key}" ${isEditing ? 'contenteditable="true"' : ''} class="editable-content">${value}</div>`;
-      html = html.replace(new RegExp(placeholder, 'g'), editableValue);
+      if (key !== 'profileImage') { // Skip profileImage as we've already handled it
+        const placeholder = `{{${key}}}`;
+        const value = formData[key] || '';
+        const editableValue = `<div data-field="${key}" ${isEditing ? 'contenteditable="true"' : ''} class="editable-content">${value}</div>`;
+        html = html.replace(new RegExp(placeholder, 'g'), editableValue);
+      }
     });
+    
     return html;
   };
 
@@ -188,6 +306,11 @@ const UseTemplates = () => {
           content: <CVGuide />
         });
         break;  
+      
+      default:
+        // Default case if none of the above match
+        setModalContent(null);
+        break;
     }
     setShowModal(true);
   };
@@ -201,6 +324,66 @@ const UseTemplates = () => {
         bgColor 
       }
     }, { replace: true });
+  };
+
+  // Function to handle profile picture upload
+  const handleProfilePictureUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Check file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Vui lòng chọn một file hình ảnh (JPEG, PNG, GIF)');
+      return;
+    }
+    
+    // Check file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      toast.error('Kích thước file quá lớn. Vui lòng chọn file nhỏ hơn 5MB');
+      return;
+    }
+    
+    setIsUploading(true);
+    
+    try {
+      // Create formData
+      const formData = new FormData();
+      formData.append('profile_picture', file);
+      
+      // If we have candidateId, use it to update the profile picture
+      if (candidateId) {
+        const response = await authAPI().put(
+          userApis.editProfilePictureWithCandidateId(candidateId),
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        );
+        
+        if (response.data.code === 1) {
+          // Update the profile picture in state
+          setProfilePicture(response.data.profile_picture);
+          
+          // Update formData with the new profile picture
+          handleInputChange('profileImage', `<img src="${response.data.profile_picture}" alt="Profile" class="profile-image" />`);
+          
+          toast.success('Cập nhật ảnh đại diện thành công!');
+        } else {
+          toast.error(response.data.message || 'Có lỗi xảy ra khi cập nhật ảnh đại diện');
+        }
+      } else {
+        toast.error('Không tìm thấy thông tin ứng viên. Vui lòng tạo hồ sơ trước.');
+      }
+    } catch (error) {
+      console.error('Error uploading profile picture:', error);
+      toast.error('Có lỗi xảy ra khi cập nhật ảnh đại diện');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -316,6 +499,41 @@ const UseTemplates = () => {
       <div className={cx('editor-container')}>
         <div className={cx('form-section')}>
           <h2>Thông tin CV</h2>
+          
+          {/* Add profile picture upload section */}
+          <div className={cx("profile-image-control")}>
+            <div className={cx("profile-image-preview")}>
+              {profilePicture ? (
+                <img src={profilePicture} alt="Profile" />
+              ) : (
+                <div className={cx("placeholder")}>
+                  <FaUser />
+                </div>
+              )}
+            </div>
+            <label className={cx("upload-btn")} htmlFor="profile-picture-upload">
+              {isUploading ? (
+                <>
+                  <FaSpinner className={cx("spinner")} />
+                  Đang tải...
+                </>
+              ) : (
+                <>
+                  <FaUpload />
+                  {profilePicture ? 'Thay đổi ảnh' : 'Tải ảnh lên'}
+                </>
+              )}
+            </label>
+            <input
+              type="file"
+              id="profile-picture-upload"
+              accept="image/jpeg,image/png,image/gif"
+              style={{ display: 'none' }}
+              onChange={handleProfilePictureUpload}
+              disabled={isUploading}
+            />
+          </div>
+          
           {templateFields.map(field => (
             <div key={field.field_id} className={cx('form-group')}>
               <label>{field.field_label}</label>

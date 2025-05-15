@@ -388,6 +388,7 @@ const SidebarSectuiter = () => {
         <div className={cx("header")}>
           <Avatar src={images.logo} fontsize={"5px"} alt={"Logo"} />
           {/* nhà tuyển dụng */}
+          
           <div className={cx("toggle-buttons")}>
             <i
               className={`fa-solid ${isOpenSidebar ? 'fa-xmark' : 'fa-bars'}`}

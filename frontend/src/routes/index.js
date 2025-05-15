@@ -1,6 +1,5 @@
 //Layout
 import Dashboard from '~/pages/Dashboard';
-import AllTemplates from '~/pages/AllTemplates';
 import PaymentReturn from '~/pages/PaymentReturn';
 import Pricing from '~/pages/Pricing';
 import VerifyEmailSuccess from '~/pages/VerifyEmailSuccess';
@@ -89,7 +88,6 @@ import CompanyReviews from '~/pages/Recruiter/CompanyReviews/CompanyReviews';
 const publicRoutes = [
     { path: '/', component: Dashboard },
     { path: '/user/verify-email', component: VerifyEmailSuccess, layout: null },
-    { path: '/templates/all', component:  AllTemplates},
     { path: '/admin', component: Home, layout: AdminLayout},
     { path: '/admin/dashboarda', component: DashboardA, layout: AdminLayout},
     { path: '/admin/dashboardb', component: DashboardB, layout: AdminLayout},
