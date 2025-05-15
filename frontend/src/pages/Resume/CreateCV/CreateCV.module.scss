@@ -678,6 +678,128 @@ $type-colors: (
   }
 }
 
+// Results info
+.results-info {
+  text-align: center;
+  margin-top: 24px;
+  color: $text-light;
+  font-size: 14px;
+  animation: fadeIn 0.6s ease-out;
+}
+
+// Pagination
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 16px;
+  gap: 10px;
+  animation: fadeIn 0.6s ease-out;
+
+  .pagination-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: white;
+    color: $primary-color;
+    border: 1px solid $border-color;
+    cursor: pointer;
+    transition: $transition;
+
+    &:hover:not(.disabled) {
+      background: rgba($primary-color, 0.05);
+      border-color: $primary-color;
+    }
+
+    &.disabled {
+      color: $text-light;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .icon {
+      font-size: 14px;
+    }
+  }
+
+  .pagination-numbers {
+    display: flex;
+    gap: 8px;
+
+    .page-number {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: white;
+      color: $text-dark;
+      border: 1px solid $border-color;
+      font-weight: 500;
+      cursor: pointer;
+      transition: $transition;
+
+      &:hover:not(.active) {
+        background: rgba($primary-color, 0.05);
+        border-color: $primary-color;
+        color: $primary-color;
+      }
+
+      &.active {
+        background: $primary-color;
+        color: white;
+        border-color: $primary-color;
+      }
+    }
+    
+    .ellipsis {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      color: $text-light;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+  }
+}
+
+// Responsive adjustments for pagination
+@media (max-width: 768px) {
+  .pagination {
+    .pagination-numbers {
+      .page-number {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+      }
+    }
+  }
+}
+
+// For very small screens, show fewer page numbers
+@media (max-width: 480px) {
+  .pagination {
+    flex-wrap: wrap;
+
+    .pagination-numbers {
+      order: 2;
+      width: 100%;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    .pagination-btn {
+      order: 1;
+    }
+  }
+}
+
 // Responsive
 @media (max-width: 768px) {
   .header {

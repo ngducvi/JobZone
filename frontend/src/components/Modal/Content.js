@@ -18,6 +18,7 @@ import ResetPassword from './ResetPassword';
 import { Link } from 'react-router-dom';
 // import api from '~/utils/api';
 import LoginRecruiter from './LoginRecruiter';
+import RegisterRecruiter from './RegisterRecruiter';
 import UserContext from '~/context/UserContext';
 
 const cx = classNames.bind(styles);
@@ -45,13 +46,20 @@ function Content() {
 
     const renderAuthButtons = () => {
         const isRegister = modalType === 'register';
-        const buttonLabel = isRegister ? 'Đăng ký' : 'Đăng nhập';
+        const isRecruiter = modalType === 'registerRecruiter';
+        const buttonLabel = isRegister || isRecruiter ? 'Đăng ký' : 'Đăng nhập';
 
         const providers = [
             {
                 icon: <UserIcon />,
                 label: `${buttonLabel} bằng tài khoản`,
-                action: () => handleClick(isRegister ? config.routes.registerEmail : config.routes.loginEmail),
+                action: () => handleClick(
+                    isRegister 
+                        ? config.routes.registerEmail 
+                        : isRecruiter 
+                            ? 'registerRecruiterEmail' 
+                            : config.routes.loginEmail
+                ),
             },
             // { icon: <GoogleIcon />, label: `${buttonLabel} với Google`, action: () => handleLogin(googleProvider) },
 
@@ -72,7 +80,8 @@ function Content() {
     };
 
     const modalTitle = useMemo(() => {
-        if (modalType.includes('register')) return 'Đăng ký tài khoản Job Zone';
+        if (modalType.includes('register') && !modalType.includes('Recruiter')) return 'Đăng ký tài khoản Job Zone';
+        if (modalType.includes('registerRecruiter')) return 'Đăng ký tài khoản nhà tuyển dụng';
         if (modalType.includes('login')) return 'Đăng nhập tài khoản Job Zone';
         return modalType === 'forgotPassword' ? 'Quên mật khẩu?' : 'Đặt lại mật khẩu';
     }, [modalType]);
@@ -114,15 +123,16 @@ function Content() {
 
             <main className={cx('main')}>
                 <div className={cx('main-content')}>
-                    {(modalType === 'register' || modalType === 'login') && (
+                    {(modalType === 'register' || modalType === 'login' || modalType === 'registerRecruiter') && (
                         <div className={cx('auth-buttons')}>
                             {renderAuthButtons()}
                         </div>
                     )}
 
                     {modalType === 'loginEmail' && <Login />}
-                    {modalType === 'LoginRecruiter' &&  <LoginRecruiter />}
+                    {modalType === 'LoginRecruiter' && <LoginRecruiter />}
                     {modalType === 'registerEmail' && <Register />}
+                    {modalType === 'registerRecruiterEmail' && <RegisterRecruiter />}
                     {modalType === 'forgotPassword' && <ForgotPassword setModalType={setModalType} />}
                     {modalType === 'resetPassword' && (
                         <ResetPassword setModalType={setModalType} setResetPasswordSuccess={setResetPasswordSuccess} />
@@ -133,7 +143,11 @@ function Content() {
                             <>
                                 <p className={cx('register-or-login')}>
                                     {modalType.includes('register') ? 'Bạn đã có tài khoản? ' : 'Bạn chưa có tài khoản? '}
-                                    <span onClick={() => setModalType(modalType.includes('register') ? 'loginEmail' : 'registerEmail')}>
+                                    <span onClick={() => setModalType(
+                                        modalType.includes('register') 
+                                            ? (modalType.includes('Recruiter') ? 'LoginRecruiter' : 'loginEmail')
+                                            : (modalType.includes('Recruiter') ? 'registerRecruiter' : 'register')
+                                    )}>
                                         {modalType.includes('register') ? 'Đăng nhập' : 'Đăng ký'}
                                     </span>
                                 </p>

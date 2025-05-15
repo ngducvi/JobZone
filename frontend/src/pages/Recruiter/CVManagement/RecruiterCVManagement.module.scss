@@ -171,7 +171,7 @@
     }
 
     .create-job-btn {
-      background: linear-gradient(135deg, #02a346 0%, #4caf50 100%);
+      background: linear-gradient(135deg, #013a74 0%, #02a346 100%);
       color: white;
       border: none;
       padding: 12px 24px;
@@ -747,6 +747,96 @@
     }
   }
 
+  .cv-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 200px;
+  }
+  
+  .cv-type {
+    margin-bottom: 0;
+    width: 100%;
+  }
+  
+  .cv-badge {
+    display: inline-flex;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    width: 100%;
+    
+    &.created {
+      background-color: #e0f2fe;
+      color: #0284c7;
+    }
+    
+    &.uploaded {
+      background-color: #fef3c7;
+      color: #d97706;
+    }
+    
+    .cv-badge-header {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      
+      i {
+        font-size: 12px;
+      }
+    }
+    
+    i {
+      font-size: 10px;
+    }
+    
+    .cv-id {
+      margin-left: 0;
+      font-size: 10px;
+      opacity: 0.8;
+      font-family: monospace;
+      background-color: rgba(255, 255, 255, 0.5);
+      padding: 2px 4px;
+      border-radius: 2px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: block;
+      width: 100%;
+    }
+    
+    .cv-name {
+      font-weight: 600;
+      margin-left: 0;
+      background-color: rgba(255, 255, 255, 0.7);
+      padding: 2px 4px;
+      border-radius: 2px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: block;
+      width: 100%;
+    }
+    
+    .cv-date {
+      font-size: 9px;
+      opacity: 0.7;
+      margin-left: 0;
+      font-style: italic;
+      display: block;
+      width: 100%;
+      text-align: right;
+    }
+  }
+  
   .download-btn {
     display: inline-block;
     background: #02a346;
@@ -755,12 +845,71 @@
     border-radius: 6px;
     text-decoration: none;
     transition: background 0.3s;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 
     &:hover {
       background: #028a3c;
     }
   }
+  
+  .view-btn {
+    display: inline-block;
+    background: #0284c7;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: background 0.3s;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: 8px;
+
+    &:hover {
+      background: #0369a1;
+    }
+  }
+  
+  .cv-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .no-cv {
+    color: #94a3b8;
+    font-style: italic;
+  }
+
+  .test-btn {
+    display: inline-block;
+    background: #8b5cf6;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: background 0.3s;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    &:hover {
+      background: #7c3aed;
+    }
+  }
 }
+
 .action-btn {
   &.detail {
     background: #013a74;
@@ -776,22 +925,28 @@
     }
   }
 }
+
 .status-column {
   width: 170px;
 }
+
 .cv-column {
-  width: 100px;
+  width: 220px;
 }
+
 .detail-column {
   width: 130px;
   margin-left: 10px;
 }
+
 .name-column {
   width: 140px;
 }
+
 .location-column {
   width: 130px;
 }
+
 .status-select {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
@@ -799,6 +954,7 @@
   width: 100%;
   height: 100%;
 }
+
 .tabs {
   display: flex;
   gap: 12px;
@@ -1000,7 +1156,21 @@
     }
     
     .tabs {
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding-bottom: 5px;
+      
+      /* Hide scrollbar */
+      &::-webkit-scrollbar {
+        display: none;
+      }
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+      
+      .tab {
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
     }
     
     .candidate-table {
@@ -1014,7 +1184,7 @@
         font-size: 14px;
       }
       
-      .download-btn {
+      .download-btn, .view-btn {
         padding: 6px 10px;
         font-size: 13px;
       }
@@ -1034,11 +1204,17 @@
       }
     }
   }
+  
+  .new-applications-notification {
+    width: 90%;
+    max-width: 350px;
+    right: 10px;
+  }
 }
 
 @media (max-width: 768px) {
   .wrapper {
-    padding: 16px;
+    padding: 16px 12px;
   }
   
   .header-section {
@@ -1046,40 +1222,94 @@
       flex-direction: column;
       align-items: flex-start;
       gap: 16px;
+      margin-bottom: 16px;
       
       h1 {
-        font-size: 24px;
+        font-size: 22px;
       }
       
-      .create-job-btn {
+      .header-actions {
         width: 100%;
-        justify-content: center;
+        flex-direction: column;
+        gap: 12px;
+        
+        .realtime-toggle {
+          width: 100%;
+          justify-content: space-between;
+        }
+        
+        .create-job-btn {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    }
+    
+    .stats-cards {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      
+      .stats-card {
+        padding: 12px;
+        
+        .stats-icon {
+          width: 40px;
+          height: 40px;
+        }
+        
+        .stats-info {
+          h3 {
+            font-size: 20px;
+          }
+          
+          p {
+            font-size: 12px;
+          }
+        }
       }
     }
   }
   
   .content-section {
-    padding: 16px;
+    padding: 16px 12px;
     
     .filter-section {
+      margin-bottom: 16px;
+      
       .tabs {
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 8px;
+        margin-bottom: 16px;
+        
+        /* Hide scrollbar */
+        &::-webkit-scrollbar {
+          display: none;
+        }
+        -ms-overflow-style: none;
+        scrollbar-width: none;
         
         .tab {
           font-size: 13px;
           padding: 6px 12px;
+          white-space: nowrap;
+          flex-shrink: 0;
         }
       }
     }
     
     .jobs-grid {
       grid-template-columns: 1fr;
+      gap: 16px;
       
       .job-card {
+        padding: 16px;
+        
         .job-header {
           flex-direction: column;
           align-items: flex-start;
           gap: 8px;
+          margin-bottom: 12px;
           
           .job-status {
             align-self: flex-start;
@@ -1088,9 +1318,11 @@
         
         .job-actions {
           flex-direction: column;
+          gap: 8px;
           
           .action-btn {
             width: 100%;
+            justify-content: center;
           }
         }
       }
@@ -1100,9 +1332,41 @@
   .no-license {
     .message {
       width: 90%;
+      padding: 2rem 1.5rem;
       
       h2 {
         font-size: 1.5rem;
+      }
+    }
+  }
+  
+  .modal {
+    max-width: 100%;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    padding: 16px 12px;
+    
+    .modal-header {
+      h3 {
+        font-size: 18px;
+      }
+    }
+    
+    .modal-content {
+      .candidate-table {
+        .cv-container {
+          min-width: 150px;
+        }
+        
+        .cv-actions {
+          flex-direction: column;
+          gap: 6px;
+          
+          button {
+            width: 100%;
+          }
+        }
       }
     }
   }
@@ -1110,15 +1374,16 @@
 
 @media (max-width: 576px) {
   .wrapper {
-    padding: 10px;
+    padding: 10px 8px;
   }
   
   .content-section {
     border-radius: 12px;
+    padding: 12px 10px;
     
     .filter-section {
       .tabs {
-        gap: 8px;
+        gap: 6px;
         
         .tab {
           font-size: 12px;
@@ -1133,23 +1398,108 @@
       .search-section {
         .search-box {
           padding: 8px;
+          
+          input {
+            font-size: 14px;
+          }
         }
       }
     }
   }
   
+  .header-section {
+    .title-section {
+      h1 {
+        font-size: 20px;
+      }
+    }
+    
+    .stats-cards {
+      grid-template-columns: 1fr;
+      
+      .stats-card {
+        padding: 10px;
+      }
+    }
+  }
+  
+  .new-applications-notification {
+    top: 10px;
+    max-width: calc(100% - 20px);
+    padding: 10px 15px;
+    font-size: 14px;
+    
+    svg {
+      font-size: 16px;
+    }
+  }
+  
   .modal {
-    padding: 12px;
+    padding: 12px 10px;
     
     .modal-content {
       .tabs {
-        gap: 6px;
+        gap: 4px;
         
         .tab {
-          font-size: 12px;
-          padding: 6px 10px;
+          font-size: 11px;
+          padding: 5px 8px;
         }
       }
+      
+      .candidate-table {
+        th, td {
+          min-width: 100px;
+          padding: 8px 6px;
+          font-size: 12px;
+        }
+        
+        .cv-badge {
+          padding: 6px;
+          
+          .cv-badge-header {
+            font-size: 11px;
+          }
+          
+          .cv-id, .cv-name {
+            font-size: 9px;
+          }
+        }
+      }
+    }
+  }
+  
+  .btn-text {
+    display: none;
+  }
+  
+  .modal-actions {
+    .export-btn {
+      padding: 8px !important;
+      
+      svg {
+        margin-right: 0;
+      }
+    }
+  }
+  
+  .cv-actions {
+    button {
+      padding: 8px !important;
+      justify-content: center;
+      
+      i {
+        margin-right: 0;
+      }
+    }
+  }
+  
+  .action-btn.detail {
+    padding: 8px !important;
+    justify-content: center;
+    
+    i {
+      margin-right: 0;
     }
   }
 }
@@ -1158,7 +1508,7 @@
   .header-section {
     .title-section {
       h1 {
-        font-size: 22px;
+        font-size: 18px;
       }
     }
   }
@@ -1173,41 +1523,56 @@
   }
   
   .modal {
-    padding: 10px;
-    border-radius: 10px;
+    padding: 10px 8px;
     
     .modal-header {
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       
       h3 {
-        font-size: 18px;
+        font-size: 16px;
         line-height: 1.3;
+      }
+      
+      .modal-actions {
+        gap: 8px;
+        
+        .export-btn {
+          padding: 6px 10px;
+          font-size: 12px;
+        }
+        
+        .close-btn {
+          padding: 6px;
+          font-size: 16px;
+        }
       }
     }
     
-    .modal-actions {
-      .export-btn {
-        padding: 6px 12px;
-        font-size: 13px;
+    .modal-content {
+      .tabs {
+        .tab {
+          font-size: 10px;
+          padding: 4px 6px;
+        }
       }
     }
   }
   
   .job-card {
-    padding: 15px;
+    padding: 12px;
     
     .job-header {
       h3 {
-        font-size: 16px;
+        font-size: 15px;
       }
     }
     
     .job-info p {
-      font-size: 13px;
+      font-size: 12px;
     }
     
     .job-stats span {
-      font-size: 13px;
+      font-size: 12px;
     }
     
     .job-actions .action-btn {
@@ -1215,16 +1580,124 @@
       padding: 6px;
     }
   }
+  
+  /* Mobile-specific table improvements */
+  .candidate-table {
+    td:nth-child(3), /* Phone column */
+    td:nth-child(4), /* Location column */
+    td:nth-child(6), /* About me column */
+    td:nth-child(7), /* Career objective column */
+    th:nth-child(3),
+    th:nth-child(4),
+    th:nth-child(6),
+    th:nth-child(7) {
+      display: none;
+    }
+  }
 }
 
-@keyframes pulse {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
-  100% {
-    opacity: 1;
+/* Add new styles for mobile-friendly CV view modal */
+.mobile-cv-view-modal {
+  display: none;
+}
+
+@media (max-width: 576px) {
+  .mobile-cv-view-modal {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: white;
+    z-index: 1100;
+    padding: 16px;
+    overflow-y: auto;
+    
+    .mobile-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 12px;
+      
+      h3 {
+        font-size: 18px;
+        color: #1e293b;
+      }
+      
+      .close-btn {
+        background: none;
+        border: none;
+        color: #64748b;
+        font-size: 20px;
+        cursor: pointer;
+        padding: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+    
+    .mobile-cv-actions {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      
+      button {
+        flex: 1;
+        padding: 12px;
+        border-radius: 8px;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-weight: 500;
+        font-size: 14px;
+        cursor: pointer;
+        
+        &.view-btn {
+          background: #0284c7;
+          color: white;
+        }
+        
+        &.download-btn {
+          background: #02a346;
+          color: white;
+        }
+      }
+    }
+    
+    .mobile-cv-info {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      
+      h4 {
+        font-size: 16px;
+        color: #1e293b;
+        margin-bottom: 12px;
+      }
+      
+      .info-item {
+        margin-bottom: 10px;
+        
+        label {
+          display: block;
+          font-size: 12px;
+          color: #64748b;
+          margin-bottom: 4px;
+        }
+        
+        p {
+          font-size: 14px;
+          color: #1e293b;
+          font-weight: 500;
+        }
+      }
+    }
   }
 }

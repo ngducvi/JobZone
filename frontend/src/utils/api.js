@@ -52,7 +52,6 @@ export const adminApis = {
     updateStatusJob: (job_id) => `/admin/job/update-status/${job_id}`,
     updateBusinessLicenseStatus: (id) => `/admin/company/update-business-license-status/${id}`,
     getCountCandidates: '/admin/candidate/count-all',
-    updateStatusRecruiterCompany: (recruiter_id) => `/admin/recruiter-companies/update-status/${recruiter_id}`,
 };
 
 export const userApis = {
@@ -82,6 +81,7 @@ export const userApis = {
     refreshToken: '/api/refresh-token/',
     getAllCandidateProfile: '/user/candidate-profile',
     getAllCategories: '/user/categories',
+    getCategoriesByParentId: (parentId) => `/user/categories/${parentId}`,
     getCandidateProfile: (id) => `/user/candidate-profile/${id}`,
     getAllCategoriesPost: '/user/categories-post',
     getAllCareerHandbooks: '/user/career-handbook',
@@ -185,6 +185,7 @@ export const userApis = {
 
     getAllConversations: '/user/conversations',
     getRecruiterCompanyByUserId: '/user/recruiter-company',
+    checkAndUpdateTransaction: '/vnpay/check-update-transaction',
 };
 
 
@@ -226,6 +227,10 @@ export const recruiterApis = {
     exportJobApplications: (job_id) => `/recruiter/export-job-applications/${job_id}`,
     findSimilarCandidates: '/recruiter/find-similar-candidates',
     getNewJobApplicationsStats: (company_id, since) => `/recruiter/job-applications/new-stats?company_id=${company_id}${since ? `&since=${since}` : ''}`,
+    getCompanyReviews: (company_id, rating) => `/recruiter/company-reviews/${company_id}${rating ? `?rating=${rating}` : ''}`,
+    getAllUserCvByCvId: (cv_id) => `/recruiter/user-cvs/${cv_id}`,
+    getAllCandidateCvByCvId: (cv_id) => `/recruiter/candidate-cvs/${cv_id}`,
+    createRecruiterCompany: '/recruiter/create-recruiter-company',
 };
 
 export const messagesApis = {

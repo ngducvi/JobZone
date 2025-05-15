@@ -88,36 +88,72 @@ function RecruiterHome() {
         const response = await authAPI().get(userApis.getCurrentUser);
         setRecruiter(response.data.user);
 
+        // Get recruiter company info
         const responseCompany = await authAPI().get(
           recruiterApis.getAllRecruiterCompanies
         );
-        setCompanyInfo(responseCompany.data.companies[0]);
-        setPlan(responseCompany.data.companies[0].plan);
-        console.log("plan", plan);
+        
+        // Check if company exists, if not create one
+        if (!responseCompany.data.companies || responseCompany.data.companies.length === 0) {
+          console.log("No company found, creating one...");
+          try {
+            // Create default company for recruiter
+            await authAPI().post(recruiterApis.createRecruiterCompany, {
+              name: response.data.user.name ? `Công ty của ${response.data.user.name}` : "Công ty của bạn",
+              address: "",
+              website: "",
+              description: "",
+              logo: null,
+              banner: null,
+              size: "Nhỏ hơn 20",
+              company_emp: 10
+            });
+            
+            // Fetch updated company info
+            const updatedCompanyResponse = await authAPI().get(
+              recruiterApis.getAllRecruiterCompanies
+            );
+            
+            if (updatedCompanyResponse.data.companies && updatedCompanyResponse.data.companies.length > 0) {
+              setCompanyInfo(updatedCompanyResponse.data.companies[0]);
+              setPlan(updatedCompanyResponse.data.companies[0].plan);
+            }
+          } catch (error) {
+            console.error("Error creating company:", error);
+          }
+        } else {
+          setCompanyInfo(responseCompany.data.companies[0]);
+          setPlan(responseCompany.data.companies[0].plan);
+        }
+      } catch (error) {
+        console.error("Error fetching recruiter data:", error);
+      }
+    };
+    
+    if (token) {
+      fetchData();
+    }
+  }, [token, setUser]);
 
+  // Separate useEffect to fetch company-related data when companyInfo changes
+  useEffect(() => {
+    const fetchCompanyData = async () => {
+      if (!companyInfo) return;
+      
+      try {
         // Check business license
         const responseCheckLicense = await authAPI().get(
-          recruiterApis.checkBusinessLicense(responseCompany.data.companies[0].company_id)
+          recruiterApis.checkBusinessLicense(companyInfo.company_id)
         );
         setHasBusinessLicense(responseCheckLicense.data.businessLicense);
 
-        // get business licenses
-        const responseBusinessLicenses = await authAPI().get(
-          recruiterApis.getBusinessLicensesByCompanyId("7")
-        );
-        console.log(
-          "businessLicenses",
-          responseBusinessLicenses.data.businessLicenses
-        );
-
-        //
+        // get jobs for this company
         const responseJob = await authAPI().get(
-          recruiterApis.getAllJobsByCompanyId(
-            responseCompany.data.companies[0].company_id
-          )
+          recruiterApis.getAllJobsByCompanyId(companyInfo.company_id)
         );
         setJobs(responseJob.data.jobs);
-        //
+        
+        // get applications for each job
         const applications = {};
         for (const job of responseJob.data.jobs) {
           const responseJobApplications = await authAPI().get(
@@ -127,9 +163,8 @@ function RecruiterHome() {
             responseJobApplications.data.jobApplications;
         }
         setJobApplications(applications);
-        console.log("jobApplications", applications);
-
-        // get total jobs
+        
+        // get dashboard stats
         const responseJobs = await authAPI().get(
           recruiterApis.getDashboardStats
         );
@@ -139,21 +174,13 @@ function RecruiterHome() {
         setTotalApplications7DaysAgo(
           responseJobs.data.totalApplications7DaysAgo
         );
-
-        // Lấy thống kê
-        const statsResponse = await authAPI().get(
-          recruiterApis.getDashboardStats
-        );
       } catch (error) {
-        // localStorage.removeItem("token");
-        // localStorage.removeItem("user");
-        console.log(error);
+        console.error("Error fetching company data:", error);
       }
     };
-    if (token) {
-      fetchData();
-    }
-  }, [token, setUser]);
+
+    fetchCompanyData();
+  }, [companyInfo]);
 
   return (
     <div className={cx("wrapper")}>

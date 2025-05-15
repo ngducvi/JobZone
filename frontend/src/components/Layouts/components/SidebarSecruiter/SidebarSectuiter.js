@@ -26,7 +26,8 @@ const planDetails = {
   ProMax: { color: '#d9534f', icon: faGem },
 };
 
-const sidebarIcons = [
+// Danh sách menu sidebar sẽ được cập nhật động dựa vào trạng thái
+const getInitialSidebarIcons = () => [
   {
     icon: <i className="fa-solid fa-house"></i>,
     title: "Bảng tin",
@@ -44,7 +45,8 @@ const sidebarIcons = [
     icon: <i className="fa-solid fa-bullhorn"></i>,
     title: "Đăng tin tuyển dụng",
     to: "/recruiter/post-job",
-    minPlan: "Basic"
+    minPlan: "Basic",
+    requireVerification: true,
   },
   {
     icon: <i className="fa-solid fa-magnifying-glass"></i>,
@@ -70,7 +72,8 @@ const sidebarIcons = [
     icon: <i className="fa-solid fa-briefcase"></i>,
     title: "Tin tuyển dụng",
     to: "/recruiter/jobs",
-    minPlan: "Basic"
+    minPlan: "Basic",
+    requireVerification: true,
   },
   {
     icon: <i className="fa-solid fa-folder"></i>,
@@ -99,7 +102,7 @@ const sidebarIcons = [
     minPlan: "Basic"
   },
   {
-    icon: <i className="fa-solid fa-star"></i>,
+    icon: <i className="fa-solid fa-gear"></i>,
     title: "Dịch vụ của tôi",
     to: "/recruiter/my-services",
     minPlan: "Basic"
@@ -110,6 +113,13 @@ const sidebarIcons = [
   //   to: "/recruiter/activity-history",
   //   minPlan: "Basic"
   // },
+  // đánh giá công ty
+  {
+    icon: <i className="fa-solid fa-star"></i>,
+    title: "Đánh giá công ty",
+    to: "/recruiter/company-reviews",
+    minPlan: "Basic"
+  },
   {
     icon: <i className="fa-solid fa-gear"></i>,
     title: "Cài đặt tài khoản",
@@ -143,12 +153,73 @@ const SidebarSectuiter = () => {
   const navigate = useNavigate();
   const [currentPlan, setCurrentPlan] = useState('Basic');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [companyVerified, setCompanyVerified] = useState(false);
+  const [businessLicenseVerified, setBusinessLicenseVerified] = useState(false);
+  const [sidebarIcons, setSidebarIcons] = useState(getInitialSidebarIcons());
+  const [companyId, setCompanyId] = useState(null);
 
   const token = localStorage.getItem("token");
 
   const closeModal = () => {
     setModalType(null);
   };
+
+  // Kiểm tra trạng thái công ty và giấy phép
+  useEffect(() => {
+    const checkVerificationStatus = async () => {
+      try {
+        // Kiểm tra trạng thái công ty
+        const companyResponse = await authAPI().get(recruiterApis.checkRecruiterCompany);
+        const isCompanyActive = companyResponse.data.recruiterCompany === 'active';
+        setCompanyVerified(isCompanyActive);
+
+        // Lấy thông tin công ty để kiểm tra giấy phép
+        const responseCompany = await authAPI().get(recruiterApis.getAllRecruiterCompanies);
+        if (responseCompany.data.companies && responseCompany.data.companies.length > 0) {
+          const company = responseCompany.data.companies[0];
+          setCompanyId(company.company_id);
+          
+          // Kiểm tra trạng thái giấy phép kinh doanh
+          if (company.company_id) {
+            const licenseResponse = await authAPI().get(
+              recruiterApis.checkBusinessLicense(company.company_id)
+            );
+            
+            // Kiểm tra nếu có giấy phép và đã được xác thực
+            const hasVerifiedLicense = licenseResponse.data.businessLicense && 
+                                      licenseResponse.data.businessLicense.business_license_status === 'verified';
+            
+            setBusinessLicenseVerified(hasVerifiedLicense);
+          }
+        }
+      } catch (error) {
+        console.error("Error checking verification status:", error);
+      }
+    };
+
+    if (token) {
+      checkVerificationStatus();
+    }
+  }, [token]);
+
+  // Cập nhật sidebar khi trạng thái xác thực thay đổi
+  useEffect(() => {
+    // Clone sidebar items
+    const updatedSidebarIcons = getInitialSidebarIcons();
+    
+    // Kiểm tra xem công ty và giấy phép đã được xác minh chưa
+    const isVerified = companyVerified && businessLicenseVerified;
+    
+    // Cập nhật trạng thái các menu item cần xác minh
+    updatedSidebarIcons.forEach(item => {
+      if (item.requireVerification && !isVerified) {
+        item.disabled = true;
+        item.verificationRequired = true;
+      }
+    });
+    
+    setSidebarIcons(updatedSidebarIcons);
+  }, [companyVerified, businessLicenseVerified]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -172,13 +243,17 @@ const SidebarSectuiter = () => {
     const fetchCompanyPlan = async () => {
       try {
         const responseCompany = await authAPI().get(recruiterApis.getAllRecruiterCompanies);
-        setCurrentPlan(responseCompany.data.companies[0].plan);
+        if (responseCompany.data.companies && responseCompany.data.companies.length > 0) {
+          setCurrentPlan(responseCompany.data.companies[0].plan);
+        }
       } catch (error) {
         console.log(error);
       }
     };
-    fetchCompanyPlan();
-  }, []);
+    if (token) {
+      fetchCompanyPlan();
+    }
+  }, [token]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -271,6 +346,39 @@ const SidebarSectuiter = () => {
     if (isMobile) setIsOpenSidebar(false);
   };
 
+  // Hiển thị thông báo thông tin khi nhấn vào tính năng yêu cầu xác minh
+  const handleVerificationRequired = () => {
+    toast.error(
+      <div>
+        <strong>Tài khoản chưa được xác minh đầy đủ</strong>
+        <p>Bạn cần hoàn tất xác minh công ty và giấy phép kinh doanh để sử dụng tính năng này</p>
+        <button 
+          onClick={() => {
+            toast.dismiss();
+            navigate('/recruiter/settings', { state: { activeTab: 'license' } });
+          }}
+          style={{
+            padding: '6px 12px',
+            background: '#013a74',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            marginTop: '8px',
+            cursor: 'pointer'
+          }}
+        >
+          Đi đến trang cài đặt
+        </button>
+      </div>,
+      {
+        duration: 5000,
+        style: {
+          maxWidth: '500px'
+        }
+      }
+    );
+  };
+
   return (
     <>
       <div className={cx("wrapper", { 
@@ -280,6 +388,7 @@ const SidebarSectuiter = () => {
         <div className={cx("header")}>
           <Avatar src={images.logo} fontsize={"5px"} alt={"Logo"} />
           {/* nhà tuyển dụng */}
+          
           <div className={cx("toggle-buttons")}>
             <i
               className={`fa-solid ${isOpenSidebar ? 'fa-xmark' : 'fa-bars'}`}
@@ -290,6 +399,19 @@ const SidebarSectuiter = () => {
             ></i>
           </div>
         </div>
+        
+        {(!companyVerified || !businessLicenseVerified) && (
+          <div className={cx("verification-warning")}>
+            <i className="fa-solid fa-triangle-exclamation"></i>
+            <div>
+              <p>Tài khoản chưa được xác minh đầy đủ</p>
+              <button onClick={() => navigate('/recruiter/settings', { state: { activeTab: 'license' } })}>
+                Xác minh ngay
+              </button>
+            </div>
+          </div>
+        )}
+        
         <ul className={cx("list")}>
           {sidebarIcons.map((item, index) => (
             <li key={index}>
@@ -298,10 +420,14 @@ const SidebarSectuiter = () => {
                 className={cx("item-btn", {
                   actived: item.to === location.pathname,
                   disabled: !canAccessFeature(item.minPlan) || item.disabled,
-                  [`plan-${item.minPlan?.toLowerCase()}`]: item.minPlan
+                  [`plan-${item.minPlan?.toLowerCase()}`]: item.minPlan,
+                  "verification-required": item.verificationRequired
                 })}
                 onClick={(e) => {
-                  if (!canAccessFeature(item.minPlan) || item.disabled) {
+                  if (item.verificationRequired) {
+                    e.preventDefault();
+                    handleVerificationRequired();
+                  } else if (!canAccessFeature(item.minPlan) || item.disabled) {
                     e.preventDefault();
                     toast(
                       !canAccessFeature(item.minPlan)
@@ -327,6 +453,9 @@ const SidebarSectuiter = () => {
                 )}
                 {item.minPlan && !canAccessFeature(item.minPlan) && (
                   <span className={cx("plan-badge", `plan-${item.minPlan.toLowerCase()}`)}>{item.minPlan}</span>
+                )}
+                {item.verificationRequired && (
+                  <i className={cx("fa-solid fa-triangle-exclamation", "verification-icon")}></i>
                 )}
               </Link>
             </li>
@@ -356,7 +485,7 @@ const SidebarSectuiter = () => {
             <div className={cx("actions")}>
               <button
                 className={cx("register-btn")}
-                onClick={() => setModalType("registerEmail")}
+                onClick={() => setModalType("registerRecruiter")}
               >
                 Đăng ký
               </button>

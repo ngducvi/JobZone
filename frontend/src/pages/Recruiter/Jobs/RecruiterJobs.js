@@ -63,6 +63,69 @@ function EditJobModal({ isOpen, onClose, jobData, onEdit, setSelectedJob }) {
   const [companyStatus, setCompanyStatus] = useState(null);
   const locationRef = useRef(null);
 
+  // State cho hierarchical categories
+  const [categories, setCategories] = useState([]);
+  const [currentCategoryLevel, setCurrentCategoryLevel] = useState(1);
+  const [currentParentId, setCurrentParentId] = useState('root');
+  const [categoryPath, setCategoryPath] = useState([{ id: 'root', name: 'Tất cả' }]);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [categoryName, setCategoryName] = useState("Chọn danh mục nghề");
+  const categoryRef = useRef(null);
+
+  // Mapping từ giá trị database sang giá trị hiển thị
+  const salaryMapping = {
+    "duoi-10-trieu": "Dưới 10 triệu",
+    "10-15-trieu": "10 - 15 triệu",
+    "15-20-trieu": "15 - 20 triệu",
+    "20-25-trieu": "20 - 25 triệu",
+    "25-30-trieu": "25 - 30 triệu",
+    "30-50-trieu": "30 - 50 triệu",
+    "tren-50-trieu": "Trên 50 triệu",
+    "thoa-thuan": "Thỏa thuận"
+  };
+
+  const experienceMapping = {
+    "khong-yeu-cau": "Không yêu cầu",
+    "duoi-1-nam": "Dưới 1 năm",
+    "1-nam": "1 năm",
+    "2-nam": "2 năm",
+    "3-nam": "3 năm",
+    "4-nam": "4 năm",
+    "5-nam": "5 năm"
+  };
+
+  const jobTypeMapping = {
+    "toan-thoi-gian": "Toàn thời gian",
+    "ban-thoi-gian": "Bán thời gian",
+    "thuc-tap": "Thực tập",
+    "khac": "Khác"
+  };
+
+  const rankMapping = {
+    "nhan-vien": "staff",
+    "truong-nhom": "team_lead",
+    "truong-pho-phong": "manager",
+    "quan-ly-giam-sat": "Quản lý / Giám sát",
+    "truong-chi-nhanh": "branch_manager",
+    "pho-giam-doc": "vice_director",
+    "giam-doc": "director",
+    "thuc-tap-sinh": "intern"
+  };
+
+  // Hàm chuyển đổi giá trị từ database sang hiển thị
+  const mapDatabaseValueToDisplay = (value, mapping) => {
+    return mapping[value] || value;
+  };
+
+  // Hàm chuyển đổi giá trị hiển thị sang giá trị database
+  const mapDisplayValueToDatabase = (value, mapping) => {
+    const reversedMapping = Object.entries(mapping).reduce((acc, [key, val]) => {
+      acc[val] = key;
+      return acc;
+    }, {});
+    return reversedMapping[value] || value;
+  };
+
   // active, pending, closed
   const statusLabel = status === 'Active' ? 'Đang hiển thị' : status === 'Pending' ? 'Chờ duyệt' : 'Đã đóng';
 
@@ -70,17 +133,80 @@ function EditJobModal({ isOpen, onClose, jobData, onEdit, setSelectedJob }) {
     if (jobData) {
       setTitle(jobData.title);
       setDescription(jobData.description);
-      setSalary(jobData.salary);
+      
+      // Sử dụng hàm mapping để chuyển đổi giá trị từ database
+      if (jobData.salary) {
+        // Nếu giá trị từ database đã là dạng hiển thị (ví dụ: "25 - 30 triệu")
+        if (Object.values(salaryMapping).includes(jobData.salary)) {
+          setSalary(jobData.salary);
+        } else {
+          // Nếu là dạng key từ database (ví dụ: "25-30-trieu")
+          setSalary(mapDatabaseValueToDisplay(jobData.salary, salaryMapping) || jobData.salary);
+        }
+      }
+      
       setLocation(jobData.location);
-      setExperience(jobData.experience);
-      setJobType(jobData.working_time);
-      setRank(jobData.rank);
+      
+      if (jobData.experience) {
+        if (Object.values(experienceMapping).includes(jobData.experience)) {
+          setExperience(jobData.experience);
+        } else {
+          setExperience(mapDatabaseValueToDisplay(jobData.experience, experienceMapping) || jobData.experience);
+        }
+      }
+      
+      if (jobData.working_time) {
+        if (Object.values(jobTypeMapping).includes(jobData.working_time)) {
+          setJobType(jobData.working_time);
+        } else {
+          setJobType(mapDatabaseValueToDisplay(jobData.working_time, jobTypeMapping) || jobData.working_time);
+        }
+      }
+      
+      if (jobData.rank) {
+        if (Object.values(rankMapping).includes(jobData.rank)) {
+          setRank(jobData.rank);
+        } else {
+          setRank(mapDatabaseValueToDisplay(jobData.rank, rankMapping) || jobData.rank);
+        }
+      }
+      
       setDeadline(jobData.deadline.split('T')[0]);
       setBenefits(jobData.benefits);
       setJobRequirements(jobData.job_requirements);
-      setWorkingLocation(jobData.working_location);
+      setWorkingLocation(jobData.working_location || jobData.location);
       setStatus(jobData.status);
       setCategoryId(jobData.category_id);
+      
+      // Tìm và thiết lập tên danh mục
+      const getCategoryDetails = async () => {
+        try {
+          // Khởi tạo danh mục cấp 1
+          await fetchCategoriesByParentId('root');
+          
+          // Tìm danh mục thích hợp để hiển thị
+          const apiUrl = userApis.getAllCategories;
+          const response = await authAPI().get(apiUrl);
+          const allCategories = response.data.categories;
+          
+          if (allCategories && allCategories.length > 0) {
+            const foundCategory = allCategories.find(cat => cat.category_id === jobData.category_id);
+            if (foundCategory) {
+              setCategoryName(foundCategory.category_name);
+              
+              // Cập nhật danh mục trong đường dẫn
+              setCategoryPath([
+                { id: 'root', name: 'Tất cả' },
+                { id: foundCategory.category_id, name: foundCategory.category_name }
+              ]);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching category details:", error);
+        }
+      };
+      
+      getCategoryDetails();
     }
   }, [jobData]);
   
@@ -158,23 +284,133 @@ function EditJobModal({ isOpen, onClose, jobData, onEdit, setSelectedJob }) {
     setShowLocationDropdown(false);
   };
 
+  // Fetch categories by parent_id
+  const fetchCategoriesByParentId = async (parentId) => {
+    try {
+      console.log("Fetching categories for parent_id:", parentId);
+      const apiUrl = userApis.getCategoriesByParentId(parentId);
+      console.log("API URL:", apiUrl);
+      
+      const response = await authAPI().get(apiUrl);
+      console.log("API Response:", response.data);
+      
+      const fetchedCategories = response.data.categories;
+      console.log("Fetched Categories:", fetchedCategories);
+
+      // Process categories to add has_children flag
+      const processedCategories = fetchedCategories.map(category => ({
+        ...category,
+        has_children: category.level < 3 // Assume categories with level < 3 have children
+      }));
+      console.log("Processed Categories:", processedCategories);
+
+      setCategories(processedCategories);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      setCategories([]);
+    }
+  };
+
+  // Handle category selection and navigation between levels
+  const handleCategorySelect = async (category) => {    
+    // If we're at level 3 or this category doesn't have children, select it as final choice
+    if (category.level === 3 || !category.has_children) {
+      setCategoryId(category.category_id);
+      setCategoryName(category.category_name);
+      setShowCategoryModal(false);
+      
+      // Update the category path for display
+      if (!categoryPath.find(item => item.id === category.category_id)) {
+        setCategoryPath(prev => [
+          ...prev.slice(0, currentCategoryLevel),
+          { id: category.category_id, name: category.category_name }
+        ]);
+      }
+      return;
+    }
+    
+    // Otherwise, navigate to next level
+    const nextLevel = currentCategoryLevel + 1;
+    setCurrentCategoryLevel(nextLevel);
+    setCurrentParentId(category.category_id);
+    
+    // Update the category path, ensuring we don't add duplicates
+    setCategoryPath(prev => {
+      // If we already have this category in our path at the current position, just trim the array
+      if (prev[currentCategoryLevel-1]?.id === category.category_id) {
+        return prev.slice(0, currentCategoryLevel);
+      }
+      
+      // Otherwise append it, trimming any existing entries beyond the current level
+      return [
+        ...prev.slice(0, currentCategoryLevel),
+        { id: category.category_id, name: category.category_name }
+      ];
+    });
+    
+    // Fetch subcategories for the selected category
+    await fetchCategoriesByParentId(category.category_id);
+  };
+  
+  // Handle confirm button in category modal
+  const handleConfirmCategory = () => {
+    // Nếu đã chọn một danh mục (danh mục nằm ở level cuối cùng trong đường dẫn)
+    if (categoryPath.length > 1) {
+      const selectedCategory = categoryPath[categoryPath.length - 1];
+      setCategoryId(selectedCategory.id);
+      setCategoryName(selectedCategory.name);
+    }
+    setShowCategoryModal(false);
+  };
+
+  // Navigate back to a previous level in the hierarchy
+  const handleCategoryPathClick = async (index) => {
+    // If clicking the current level, do nothing
+    if (index === currentCategoryLevel - 1) {
+      return;
+    }
+    
+    // Get the parent ID at the clicked index
+    const parentId = categoryPath[index].id;
+    const newLevel = index + 1;
+    
+    // Update state
+    setCurrentParentId(parentId);
+    setCurrentCategoryLevel(newLevel);
+    
+    // Trim the path to this level
+    setCategoryPath(prev => prev.slice(0, newLevel));
+    
+    // Fetch categories for the selected level
+    await fetchCategoriesByParentId(parentId);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Chuyển đổi giá trị hiển thị sang giá trị database
+    const salaryValue = mapDisplayValueToDatabase(salary, salaryMapping);
+    const experienceValue = mapDisplayValueToDatabase(experience, experienceMapping);
+    const jobTypeValue = mapDisplayValueToDatabase(jobType, jobTypeMapping);
+    const rankValue = mapDisplayValueToDatabase(rank, rankMapping);
+    
     const updatedJob = {
       title,
       description,
-      salary,
+      salary: salaryValue,
       location,
-      experience,
-      working_time: jobType,
-      rank,
+      experience: experienceValue,
+      working_time: jobTypeValue,
+      rank: rankValue,
       deadline,
       benefits,
-      job_requirements:jobRequirements,
-      working_location:workingLocation,
+      job_requirements: jobRequirements,
+      working_location: workingLocation,
       status,
-      category_id:categoryId,
+      category_id: categoryId,
     };
+    
+    console.log("Submitting updated job:", updatedJob);
     await onEdit(jobData.job_id, updatedJob);
     onClose();
   };
@@ -325,25 +561,84 @@ function EditJobModal({ isOpen, onClose, jobData, onEdit, setSelectedJob }) {
           </div>
           <div className={cx('form-group')}> 
             <label htmlFor="categoryId">Chuyên ngành</label>
-            <select id="categoryId" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
-              <option value="">Chọn chuyên ngành</option>
-              <option value="1f25e3ee-ce9e-11ef-9430-2cf05db24bc7">Software Engineering</option>
-              <option value="1f25e912-ce9e-11ef-9430-2cf05db24bc7">Data Science</option>
-              <option value="1f25ea73-ce9e-11ef-9430-2cf05db24bc7">Project Management</option>
-              <option value="1f25eb8c-ce9e-11ef-9430-2cf05db24bc7">Marketing</option>
-              <option value="1f25ec4e-ce9e-11ef-9430-2cf05db24bc7">Graphic Design</option>
-              <option value="1f25ed2a-ce9e-11ef-9430-2cf05db24bc7">Sales</option>
-              <option value="1f25ee06-ce9e-11ef-9430-2cf05db24bc7">Human Resources</option>
-              <option value="1f25eec3-ce9e-11ef-9430-2cf05db24bc7">Customer Support</option>
-              <option value="1f25fb0c-ce9e-11ef-9430-2cf05db24bc7">Web Development</option>
-              <option value="1f25f02b-ce9e-11ef-9430-2cf05db24bc7">Mobile Development</option>
-            </select>
+            <div 
+              className={cx('category-selector')} 
+              onClick={() => setShowCategoryModal(true)}
+            >
+              <span className={cx('category-text')}>
+                {categoryName}
+              </span>
+              <i className={cx('fa-solid fa-chevron-down')}></i>
+            </div>
           </div>
           <div className={cx('button-group')}> 
             <button type="submit" className={cx('submit-btn')}>Lưu thay đổi</button>
             <button type="button" className={cx('cancel-btn')} onClick={() => { onClose(); setSelectedJob(null); }}>Hủy</button>
           </div>
         </form>
+        
+        {/* Category Modal */}
+        {showCategoryModal && (
+          <div className={cx('modal-overlay', 'inner-modal')} ref={categoryRef}>
+            <div className={cx('modal-content', 'category-modal')}>
+              <div className={cx('modal-header')}>
+                <h3>Chọn danh mục nghề</h3>
+                <button className={cx('close-btn')} onClick={() => setShowCategoryModal(false)}>
+                  <i className="fa-solid fa-times"></i>
+                </button>
+              </div>
+
+              <div className={cx('modal-body')}>
+                {/* Category navigation path */}
+                {categoryPath.length > 1 && (
+                  <div className={cx('category-path')}>
+                    {categoryPath.map((item, index) => (
+                      <span key={item.id}>
+                        <button 
+                          className={cx('path-item', { active: index === categoryPath.length - 1 })}
+                          onClick={() => handleCategoryPathClick(index)}
+                        >
+                          {item.name}
+                        </button>
+                        {index < categoryPath.length - 1 && <i className="fas fa-chevron-right"></i>}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                
+                <div className={cx('categories-list')}>
+                  {categories.map((category) => (
+                    <div
+                      key={category.category_id}
+                      className={cx('category-item', {
+                        "has-children": category.level < 3,
+                        "active": categoryId === category.category_id || 
+                                categoryPath.some(item => item.id === category.category_id)
+                      })}
+                      onClick={() => handleCategorySelect(category)}
+                    >
+                      <div className={cx('category-content')}>
+                        <span className={cx('category-name')}>{category.category_name}</span>
+                        {category.level < 3 && (
+                          <i className="fas fa-chevron-right"></i>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className={cx('modal-footer')}>
+                <button className={cx('cancel-btn')} onClick={() => setShowCategoryModal(false)}>
+                  Hủy
+                </button>
+                <button className={cx('confirm-btn')} onClick={handleConfirmCategory}>
+                  Xác nhận
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -437,6 +732,7 @@ function RecruiterJobs() {
   const handleEditJob = (job) => {
     setSelectedJob(job);
     setIsEditModalOpen(true);
+    console.log(job);
   };
 
   const handleEditSubmit = async (jobId, updatedJob) => {

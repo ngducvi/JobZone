@@ -986,3 +986,242 @@
   }
 }
 
+.category-selector {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #fff;
+  cursor: pointer;
+  transition: all 0.3s;
+  
+  &:hover {
+    border-color: #cbd5e1;
+    background-color: #f8fafc;
+  }
+  
+  .category-text {
+    font-size: 14px;
+    color: #334155;
+  }
+  
+  i {
+    color: #64748b;
+    transition: transform 0.3s;
+    
+    &.rotated {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.inner-modal {
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1100;
+}
+
+.category-modal {
+  max-width: 600px;
+  max-height: 80vh;
+  width: 90%;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 1101;
+  
+  .modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    
+    h3 {
+      color: #0f172a;
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0;
+    }
+    
+    .close-btn {
+      background: none;
+      border: none;
+      color: #64748b;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      transition: all 0.3s;
+      
+      &:hover {
+        background-color: #f1f5f9;
+        color: #334155;
+      }
+    }
+  }
+  
+  .modal-body {
+    padding: 16px 20px;
+    overflow-y: auto;
+    flex: 1;
+    
+    .category-path {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding: 8px 12px;
+      background: #f8fafc;
+      border-radius: 6px;
+      font-size: 14px;
+      
+      span {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .path-item {
+        background: none;
+        border: none;
+        color: #64748b;
+        cursor: pointer;
+        font-size: 14px;
+        padding: 0;
+        
+        &.active {
+          color: #0369a1;
+          font-weight: 500;
+        }
+        
+        &:hover:not(.active) {
+          color: #0284c7;
+          text-decoration: underline;
+        }
+      }
+      
+      i {
+        color: #94a3b8;
+        font-size: 10px;
+      }
+    }
+    
+    .categories-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 0;
+      list-style: none;
+      margin: 0;
+      max-height: 400px;
+      overflow-y: auto;
+      
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+      
+      &::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+      }
+      
+      &::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 3px;
+        
+        &:hover {
+          background: #999;
+        }
+      }
+    }
+    
+    .category-item {
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      
+      &:hover {
+        background-color: #f1f5f9;
+      }
+      
+      &.active {
+        background-color: #e0f2fe;
+        border-left: 3px solid #0284c7;
+      }
+      
+      .category-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      
+      .category-name {
+        font-size: 14px;
+        color: #334155;
+      }
+      
+      &.has-children {
+        color: #0369a1;
+        
+        .category-name {
+          font-weight: 500;
+        }
+        
+        i {
+          color: #94a3b8;
+          font-size: 12px;
+        }
+      }
+    }
+  }
+  
+  .modal-footer {
+    padding: 16px 20px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    
+    button {
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 14px;
+      
+      &.cancel-btn {
+        background-color: #f1f5f9;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        
+        &:hover {
+          background-color: #e2e8f0;
+        }
+      }
+      
+      &.confirm-btn {
+        background-color: #2563eb;
+        color: white;
+        border: none;
+        
+        &:hover {
+          background-color: #1d4ed8;
+        }
+      }
+    }
+  }
+}
+

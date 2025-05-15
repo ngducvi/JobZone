@@ -361,9 +361,12 @@
 
 @media (max-width: 1024px) {
     .profile-header {
+        .header-content {
         flex-direction: column;
         align-items: center;
         text-align: center;
+            gap: 24px;
+        }
     }
 
     .stats-section {
@@ -373,33 +376,250 @@
 }
 
 @media (max-width: 768px) {
+    .wrapper {
+        padding: 20px 16px;
+    }
+    
     .profile-content {
         flex-direction: column;
+        padding: 16px;
     }
 
     .profile-header {
-        padding: 20px;
+        padding: 24px 16px;
+        
+        .user-info {
+            h2 {
+                font-size: 24px;
+                margin-bottom: 12px;
+            }
+            
+            .contact-details {
+                gap: 8px;
+                
+                .contact-item {
+                    font-size: 14px;
+                }
+            }
+        }
+    }
+
+    .avatar-section {
+        .avatar {
+            width: 120px;
+            height: 120px;
+        }
+        
+        .upload-btn {
+            padding: 10px 16px;
+            font-size: 14px;
+        }
     }
 
     .stats-section {
         grid-template-columns: 1fr;
         gap: 16px;
-        padding: 0 20px;
-    }
-
-    .avatar-section {
-        flex-direction: column;
-        text-align: center;
-        gap: 20px;
+        padding: 0 16px;
     }
 
     .menu-section {
         flex: none;
-        padding: 16px 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 12px;
+        justify-content: center;
+        
+        .menu-item {
+            flex: 0 0 calc(50% - 8px);
+            padding: 12px 8px;
+            justify-content: center;
+            
+            .menu-label {
+                font-size: 14px;
+            }
+        }
     }
 
     .content-section {
-        padding: 20px;
+        padding: 0;
+    }
+    
+    .form-section {
+        padding: 20px 16px;
+        
+        h2 {
+            font-size: 20px;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+        }
+    }
+    
+    .form-row {
+        flex-direction: column;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .info-group {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 20px;
+        
+        h2 {
+            font-size: 20px;
+        }
+    }
+    
+    .item-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        
+        .action-buttons {
+            width: 100%;
+            justify-content: space-between;
+        }
+    }
+    
+    .education-item,
+    .experience-item,
+    .certification-item,
+    .project-item,
+    .language-item {
+        padding: 16px;
+    }
+    
+    .modal {
+        width: 95%;
+        padding: 16px;
+        
+        .modal-header {
+            h3 {
+                font-size: 18px;
+            }
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .wrapper {
+        padding: 12px 8px;
+    }
+    
+    .profile-container {
+        border-radius: 16px;
+    }
+    
+    .profile-header {
+        padding: 20px 12px;
+        
+        .user-info {
+            h2 {
+                font-size: 20px;
+            }
+        }
+    }
+    
+    .avatar-section {
+        .avatar {
+            width: 100px;
+            height: 100px;
+        }
+    }
+
+    .menu-section {
+        padding: 8px;
+        
+        .menu-item {
+            flex: 0 0 100%;
+            margin-bottom: 8px;
+        }
+    }
+    
+    .form-section {
+        padding: 16px 12px;
+        
+        h2 {
+            font-size: 18px;
+        }
+    }
+    
+    .education-item,
+    .experience-item,
+    .certification-item,
+    .project-item,
+    .language-item {
+        padding: 12px;
+    }
+    
+    .action-buttons {
+        width: 100%;
+        flex-direction: column;
+        
+        button {
+            width: 100%;
+    }
+    }
+}
+
+// Touch-friendly improvements for mobile
+@media (max-width: 768px) {
+    .menu-item {
+        min-height: 44px;
+    }
+    
+    .edit-btn,
+    .delete-btn,
+    .save-btn,
+    .cancel-btn,
+    .add-btn {
+        min-height: 44px;
+        padding: 12px 16px;
+    }
+    
+    input, 
+    select, 
+    textarea {
+        font-size: 16px; // Prevents iOS zoom on focus
+        padding: 12px;
+    }
+    
+    .form-group {
+        label {
+            font-size: 14px;
+        }
+    }
+    
+    .upload-btn {
+        min-height: 44px;
+        padding: 12px 16px;
+    }
+    
+    .modal-overlay {
+        align-items: flex-end;
+        
+        .modal {
+            border-radius: 16px 16px 0 0;
+            max-height: 80vh;
+            width: 100%;
+            animation: slideUp 0.3s ease;
+            
+            @keyframes slideUp {
+                from {
+                    transform: translateY(100%);
+                }
+                to {
+                    transform: translateY(0);
+                }
+            }
+        }
     }
 }
 

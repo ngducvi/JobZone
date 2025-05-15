@@ -30,6 +30,15 @@ const JobSearch = () => {
   const [searchLocation, setSearchLocation] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [savedStatus, setSavedStatus] = useState({});
+  const [currentCategoryLevel, setCurrentCategoryLevel] = useState(1);
+  const [currentParentId, setCurrentParentId] = useState('root');
+  const [categoryPath, setCategoryPath] = useState([{ id: 'root', name: 'Tất cả' }]);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [selectedProvinces, setSelectedProvinces] = useState([]);
+  const [selectedDistricts, setSelectedDistricts] = useState([]);
+  const locationRef = useRef(null);
 
   const [filters, setFilters] = useState({
     category_id: 'all',
@@ -109,65 +118,6 @@ const JobSearch = () => {
     { value: 'pro', label: 'Pro Company' }
   ];
 
-  const defaultCategories = [
-    {
-      category_id: "all",
-      category_name: "Tất cả",
-      description: "Tất cả các danh mục"
-    },
-    {
-      category_id: "1f25e3ee-ce9e-11ef-9430-2cf05db24bc7",
-      category_name: "Software Engineering",
-      description: "Category for software development jobs including back-end, front-end, and full-stack development."
-    },
-    {
-      category_id: "1f25e912-ce9e-11ef-9430-2cf05db24bc7",
-      category_name: "Data Science",
-      description: "Category for jobs related to data analysis, machine learning, and artificial intelligence."
-    },
-    {
-      category_id: "1f25ea73-ce9e-11ef-9430-2cf05db24bc7", 
-      category_name: "Project Management",
-      description: "Category for project management roles in tech and non-tech industries."
-    },
-    {
-      category_id: "1f25eb8c-ce9e-11ef-9430-2cf05db24bc7",
-      category_name: "Marketing",
-      description: "Category for marketing roles including digital marketing, content creation, and brand management."
-    },
-    {
-      category_id: "1f25ec4e-ce9e-11ef-9430-2cf05db24bc7",
-      category_name: "Graphic Design", 
-      description: "Category for graphic design and UI/UX design roles."
-    },
-    {
-      category_id: "1f25ed2a-ce9e-11ef-9430-2cf05db24bc7",
-      category_name: "Sales",
-      description: "Category for sales roles including account management and business development."
-    },
-    {
-      category_id: "1f25ee06-ce9e-11ef-9430-2cf05db24bc7",
-      category_name: "Human Resources",
-      description: "Category for HR roles including recruitment, payroll, and employee relations."
-    },
-    {
-      category_id: "1f25eec3-ce9e-11ef-9430-2cf05db24bc7",
-      category_name: "Customer Support",
-      description: "Category for customer support and customer service roles."
-    },
-    {
-      category_id: "1f25ef7a-ce9e-11ef-9430-2cf05db24bc7",
-      category_name: "Web Development",
-      description: "Category for web development jobs including front-end and back-end development."
-    },
-    {
-      category_id: "1f25f02b-ce9e-11ef-9430-2cf05db24bc7",
-      category_name: "Mobile Development",
-      description: "Category for mobile app development roles for iOS and Android platforms."
-    },
-    // ... thêm các categories khác
-  ];
-
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -178,8 +128,8 @@ const JobSearch = () => {
       setTotalJobs(responseJobs.data.jobs.length);
       console.log("responseJobs", responseJobs.data.jobs);
       
-      // Sử dụng defaultCategories thay vì gọi API
-      setCategories(defaultCategories);
+      // Fetch categories by parent_id
+      await fetchCategoriesByParentId(currentParentId);
       
       jobs.map((job) => {
         const jobDate = new Date(job.created_at);
@@ -189,6 +139,60 @@ const JobSearch = () => {
     };
     fetchData();
   }, []);
+
+  // Fetch categories by parent_id
+  const fetchCategoriesByParentId = async (parentId) => {
+    try {
+      console.log("Fetching categories for parent_id:", parentId);
+      const apiUrl = userApis.getCategoriesByParentId(parentId);
+      console.log("API URL:", apiUrl);
+      
+      const response = await api.get(apiUrl);
+      console.log("API Response:", response.data);
+      
+      const fetchedCategories = response.data.categories;
+      console.log("Fetched Categories:", fetchedCategories);
+
+      // Process categories to add has_children flag
+      const processedCategories = fetchedCategories.map(category => ({
+        ...category,
+        has_children: category.level < 3 // Assume categories with level < 3 have children
+      }));
+      console.log("Processed Categories:", processedCategories);
+
+      // Add "All" option only for level 1
+      if (parentId === 'root') {
+        setCategories([
+          {
+            category_id: "all",
+            category_name: "Tất cả",
+            description: "Tất cả các danh mục",
+            level: 1,
+            has_children: false
+          },
+          ...processedCategories
+        ]);
+      } else {
+        setCategories(processedCategories);
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      // Fallback đến defaultCategories chỉ khi API fails
+      if (parentId === 'root') {
+        // Tạo một fallback categories đơn giản khi không lấy được từ API
+        const fallbackCategories = [
+          {
+            category_id: "all",
+            category_name: "Tất cả",
+            description: "Tất cả các danh mục",
+            level: 1,
+            has_children: false
+          }
+        ];
+        setCategories(fallbackCategories);
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchSavedJobs = async () => {
@@ -226,7 +230,7 @@ const JobSearch = () => {
     if (categoryId) {
       handleFilterChange('category_id', categoryId);
       // Find and select the category in the list
-      const category = defaultCategories.find(cat => cat.category_id === categoryId);
+      const category = categories.find(cat => cat.category_id === categoryId);
       if (category) {
         setSelectedCategories([categoryId]);
       }
@@ -270,6 +274,11 @@ const JobSearch = () => {
     fetchFilteredJobs();
   }, [filters]);
 
+  // Fetch categories when currentParentId changes
+  useEffect(() => {
+    fetchCategoriesByParentId(currentParentId);
+  }, [currentParentId]);
+
   const handleFilterChange = (filterName, value) => {
     setFilters(prev => ({
       ...prev,
@@ -302,6 +311,102 @@ const JobSearch = () => {
     setVisibleCategories(5);
   };
   
+  // Handle category selection and navigation between levels
+  const handleCategorySelect = async (category) => {
+    // If "all" selected, apply filter and stay at current level
+    if (category.category_id === "all") {
+      handleFilterChange('category_id', 'all');
+      return;
+    }
+    
+    // Nếu là danh mục cấp 2, lấy tất cả danh mục cấp 3 con và lọc theo chúng
+    if (category.level === 2) {
+      // Lưu trữ danh mục cấp 2 hiện tại để hiển thị trong giao diện
+      setCurrentCategoryLevel(2);
+      setCurrentParentId(category.category_id);
+      
+      // Cập nhật đường dẫn danh mục
+      setCategoryPath(prev => {
+        // Trường hợp đã có danh mục này trong đường dẫn, cắt bớt đường dẫn
+        if (prev[1]?.id === category.category_id) {
+          return prev.slice(0, 2);
+        }
+        
+        // Thêm danh mục cấp 2 vào đường dẫn
+        return [
+          ...prev.slice(0, 1), // Giữ lại root
+          { id: category.category_id, name: category.category_name }
+        ];
+      });
+      
+      // Áp dụng bộ lọc là danh mục cấp 2
+      handleFilterChange('category_id', category.category_id);
+      
+      // Tải các danh mục con của cấp 2 để hiển thị
+      await fetchCategoriesByParentId(category.category_id);
+      return;
+    }
+    
+    // If we're at level 3 or this category doesn't have children, apply as filter
+    if (category.level === 3 || !category.has_children) {
+      handleFilterChange('category_id', category.category_id);
+      
+      // If this is a leaf node, add it to the path without navigating
+      if (!categoryPath.find(item => item.id === category.category_id)) {
+        setCategoryPath(prev => [
+          ...prev.slice(0, currentCategoryLevel),
+          { id: category.category_id, name: category.category_name }
+        ]);
+      }
+      return;
+    }
+    
+    // Otherwise, navigate to next level
+    const nextLevel = currentCategoryLevel + 1;
+    setCurrentCategoryLevel(nextLevel);
+    setCurrentParentId(category.category_id);
+    
+    // Update the category path, ensuring we don't add duplicates
+    setCategoryPath(prev => {
+      // If we already have this category in our path at the current position, just trim the array
+      if (prev[currentCategoryLevel-1]?.id === category.category_id) {
+        return prev.slice(0, currentCategoryLevel);
+      }
+      
+      // Otherwise append it, trimming any existing entries beyond the current level
+      return [
+        ...prev.slice(0, currentCategoryLevel),
+        { id: category.category_id, name: category.category_name }
+      ];
+    });
+  };
+  
+  // Navigate back to a previous level in the hierarchy
+  const handleCategoryPathClick = async (index) => {
+    // If clicking the current level, do nothing
+    if (index === currentCategoryLevel - 1) {
+      return;
+    }
+    
+    // Get the parent ID at the clicked index
+    const parentId = categoryPath[index].id;
+    const newLevel = index + 1;
+    
+    // Update state
+    setCurrentParentId(parentId);
+    setCurrentCategoryLevel(newLevel);
+    
+    // Trim the path to this level
+    setCategoryPath(prev => prev.slice(0, newLevel));
+    
+    // If we're going back to the first level, reset the category filter
+    if (index === 0 && parentId === 'root') {
+      handleFilterChange('category_id', 'all');
+    } else {
+      // Otherwise set the filter to the category we navigated to
+      handleFilterChange('category_id', parentId);
+    }
+  };
 
   // Filter jobs by date posted
   const filterJobsByDate = (jobs) => {
@@ -334,7 +439,7 @@ const JobSearch = () => {
   const getFilterLabel = (filterName, value) => {
     switch (filterName) {
       case 'category_id':
-        const category = defaultCategories.find(cat => cat.category_id === value);
+        const category = categories.find(cat => cat.category_id === value);
         return category ? category.category_name : value;
       case 'experience':
         return experienceOptions.find(opt => opt.value === value)?.label;
@@ -467,6 +572,159 @@ const JobSearch = () => {
       behavior: 'smooth'
     });
   }, []);
+
+  // Fetch provinces on mount
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      try {
+        const response = await fetch("https://esgoo.net/api-tinhthanh/1/0.htm");
+        const data = await response.json();
+        if (Array.isArray(data.data)) {
+          setProvinces(data.data);
+        } else {
+          setProvinces([]);
+        }
+      } catch (error) {
+        setProvinces([]);
+      }
+    };
+    fetchProvinces();
+  }, []);
+
+  // Fetch districts when provinces change
+  useEffect(() => {
+    const fetchDistricts = async () => {
+      try {
+        const districtsData = await Promise.all(
+          selectedProvinces.map(async (provinceId) => {
+            const formattedId = provinceId.toString().padStart(2, "0");
+            const response = await fetch(`https://esgoo.net/api-tinhthanh/2/${formattedId}.htm`);
+            const data = await response.json();
+            if (Array.isArray(data.data)) {
+              return data.data.map((district) => ({
+                ...district,
+                provinceId: provinceId,
+              }));
+            }
+            return [];
+          })
+        );
+        setDistricts(districtsData.flat());
+      } catch (error) {
+        console.error("Error fetching districts:", error);
+        setDistricts([]);
+      }
+    };
+
+    if (selectedProvinces.length > 0) {
+      fetchDistricts();
+    } else {
+      setDistricts([]);
+    }
+  }, [selectedProvinces]);
+
+  // Handle clicks outside location dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (locationRef.current && !locationRef.current.contains(event.target)) {
+        setShowLocationModal(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleProvinceSelect = (provinceId) => {
+    setSelectedProvinces((prev) => {
+      const isSelected = prev.includes(provinceId);
+      if (isSelected) {
+        return prev.filter((id) => id !== provinceId);
+      } else {
+        return [...prev, provinceId];
+      }
+    });
+  };
+
+  const handleDistrictSelect = (districtId) => {
+    setSelectedDistricts((prev) => {
+      const isSelected = prev.includes(districtId);
+      if (isSelected) {
+        return prev.filter((id) => id !== districtId);
+      } else {
+        return [...prev, districtId];
+      }
+    });
+  };
+
+  const handleSelectAllDistricts = (provinceId) => {
+    const provinceDistricts = districts
+      .filter((d) => d.provinceId === provinceId)
+      .map((d) => d.id);
+
+    setSelectedDistricts((prev) => {
+      const allSelected = provinceDistricts.every((id) => prev.includes(id));
+      if (allSelected) {
+        return prev.filter((id) => !provinceDistricts.includes(id));
+      } else {
+        return [...new Set([...prev, ...provinceDistricts])];
+      }
+    });
+  };
+
+  const renderDistrictsByProvince = (provinceId) => {
+    const province = provinces.find((p) => p.id === provinceId);
+    const provinceDistricts = districts.filter((d) => d.provinceId === provinceId);
+
+    if (!provinceDistricts.length) return null;
+
+    return (
+      <div key={provinceId} className={cx("district-group")}>
+        <label className={cx("checkbox-item", "province-header")}>
+          <input
+            type="checkbox"
+            checked={provinceDistricts.every((d) =>
+              selectedDistricts.includes(d.id)
+            )}
+            onChange={() => handleSelectAllDistricts(provinceId)}
+          />
+          <span>{province?.name}</span>
+        </label>
+        <div className={cx("district-items")}>
+          {provinceDistricts.map((district) => (
+            <label key={district.id} className={cx("checkbox-item")}>
+              <input
+                type="checkbox"
+                checked={selectedDistricts.includes(district.id)}
+                onChange={() => handleDistrictSelect(district.id)}
+              />
+              <span>{district.name}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const handleConfirmLocation = () => {
+    const selectedProvinceNames = selectedProvinces
+      .map(id => provinces.find(p => p.id === id)?.name)
+      .filter(Boolean);
+    const selectedDistrictNames = selectedDistricts
+      .map(id => districts.find(d => d.id === id)?.name)
+      .filter(Boolean);
+    
+    const locationText = [...selectedProvinceNames, ...selectedDistrictNames].join(', ');
+    setSearchLocation(locationText);
+    setShowLocationModal(false);
+    
+    // Update URL and fetch jobs with new location
+    const params = new URLSearchParams(location.search);
+    params.set('location', locationText);
+    navigate(`${location.pathname}?${params.toString()}`);
+    handleSearch();
+  };
+
   return (
     <div className={cx("job-search")}>
       <div className={cx("search-header")}>
@@ -486,7 +744,7 @@ const JobSearch = () => {
                 }}
               />
             </div>
-            <div className={cx("location-input")}>
+            <div className={cx("location-input")} onClick={() => setShowLocationModal(true)}>
               <i className="fas fa-map-marker-alt"></i>
               <input 
                 type="text" 
@@ -498,6 +756,7 @@ const JobSearch = () => {
                     handleSearch();
                   }
                 }}
+                readOnly
               />
             </div>
             <button 
@@ -520,23 +779,46 @@ const JobSearch = () => {
           <aside className={cx("filters")} ref={filtersRef}>
             <div className={cx("filter-section")} id="categories">
               <h3>Theo danh mục nghề</h3>
+              
+              {/* Category navigation path */}
+              {categoryPath.length > 1 && (
+                <div className={cx("category-path")}>
+                  {categoryPath.map((item, index) => (
+                    <span key={item.id}>
+                      <button 
+                        className={cx("path-item", { active: index === categoryPath.length - 1 })}
+                        onClick={() => handleCategoryPathClick(index)}
+                      >
+                        {item.name}
+                      </button>
+                      {index < categoryPath.length - 1 && <i className="fas fa-chevron-right"></i>}
+                    </span>
+                  ))}
+                </div>
+              )}
+              
               <div className={cx("categories-list")}>
                 {categories.slice(0, visibleCategories).map((category) => (
-                  <label key={category.category_id} className={cx("radio-item")}>
-                    <input
-                      type="radio"
-                      name="category"
-                      value={category.category_id}
-                      checked={filters.category_id === category.category_id}
-                      onChange={(e) => handleFilterChange('category_id', e.target.value)}
-                    />
-                    <div className={cx("date-filter-info")}>
-                      <span className={cx("category-name")}>{category.category_name}</span>
-                      <span className={cx("job-count")}>
-                        ({jobCounts.category_id[category.category_id] || 0} việc làm)
-                      </span>
+                  <div
+                    key={category.category_id}
+                    className={cx("category-item", {
+                      active: filters.category_id === category.category_id,
+                      "has-children": category.level < 3 && category.category_id !== "all"
+                    })}
+                    onClick={() => handleCategorySelect(category)}
+                  >
+                    <div className={cx("category-content")}>
+                      <div className={cx("category-name-container")}>
+                        <span className={cx("category-name")}>{category.category_name}</span>
+                        <span className={cx("job-count")}>
+                          ({jobCounts.category_id[category.category_id] || 0} việc làm)
+                        </span>
+                      </div>
+                      {category.level < 3 && category.category_id !== "all" && (
+                        <i className="fas fa-chevron-right"></i>
+                      )}
                     </div>
-                  </label>
+                  </div>
                 ))}
               </div>
 
@@ -792,6 +1074,56 @@ const JobSearch = () => {
           </main>
         </div>
       </div>
+
+      {/* Location Selection Modal */}
+      {showLocationModal && (
+        <div className={cx("modal-overlay")} ref={locationRef}>
+          <div className={cx("modal-content", "location-modal")}>
+            <div className={cx("modal-header")}>
+              <h3>Chọn địa điểm làm việc</h3>
+              <button className={cx("close-btn")} onClick={() => setShowLocationModal(false)}>
+                <i className="fa-solid fa-times"></i>
+              </button>
+            </div>
+
+            <div className={cx("modal-body")}>
+              <div className={cx("location-sections")}>
+                <div className={cx("provinces-section")}>
+                  <h4>Tỉnh/Thành phố</h4>
+                  <div className={cx("provinces-list")}>
+                    {provinces.map((province) => (
+                      <label key={province.id} className={cx("checkbox-item")}>
+                        <input
+                          type="checkbox"
+                          checked={selectedProvinces.includes(province.id)}
+                          onChange={() => handleProvinceSelect(province.id)}
+                        />
+                        <span>{province.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={cx("districts-section")}>
+                  <h4>Quận/Huyện</h4>
+                  <div className={cx("districts-list")}>
+                    {selectedProvinces.map((provinceId) => renderDistrictsByProvince(provinceId))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className={cx("modal-footer")}>
+              <button className={cx("cancel-btn")} onClick={() => setShowLocationModal(false)}>
+                Hủy
+              </button>
+              <button className={cx("confirm-btn")} onClick={handleConfirmLocation}>
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

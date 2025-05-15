@@ -40,6 +40,7 @@ const Reviews = require("../models/Reviews");
 const fileService = require('../services/FileService');
 const NotificationController = require("./NotificationController");
 const { getIO, notifyNewJobApplication } = require("../config/socket");
+const sequelize = require("../config/database");
 
 class UserController {
   constructor() {
@@ -650,6 +651,43 @@ class UserController {
       return res.status(500).send({
         message: error.message,
         code: -1,
+      });
+    }
+  }
+
+  // get categories by parent_id
+  async getCategoriesByParentId(req, res) {
+    try {
+      const { parent_id } = req.params;
+      console.log("getCategoriesByParentId called with parent_id:", parent_id);
+      
+      let whereClause = {};
+      
+      if (parent_id === 'root') {
+        // If root is requested, get level 1 categories (without parent)
+        whereClause = { 
+          level: 1,
+          parent_category_id: null 
+        };
+      } else {
+        // Otherwise get categories with the specified parent_id
+        whereClause = { parent_category_id: parent_id };
+      }
+      
+      const categories = await Category.findAll({
+        where: whereClause,
+        order: [['category_name', 'ASC']]
+      });
+      
+      return res.status(200).send({
+        message: "Categories retrieved successfully",
+        code: 1,
+        categories
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: error.message,
+        code: -1
       });
     }
   }
@@ -1346,6 +1384,7 @@ class UserController {
   async createCandidateCvWithCvId(req, res) {
     try {
       const { user_id, cv_name } = req.body;
+      const userId = user_id || req.user.id;
 
       if (!req.file) {
         return res.status(400).send({ message: "No file uploaded", code: -1 });
@@ -1356,8 +1395,8 @@ class UserController {
 
       const candidateCv = await CandidateCv.create({
         cv_id: this.generateCandidateCvId(),
-        user_id,
-        cv_name,
+        user_id: userId,
+        cv_name: cv_name || req.file.originalname || 'Uploaded CV',
         cv_link: uploadResult.secure_url,
         created_at: new Date(),
       });
@@ -1386,12 +1425,12 @@ class UserController {
         whereClause.rating = parseInt(rating);
       }
       
-      const reviews = await Reviews.findAll({
+    const reviews = await Reviews.findAll({
         where: whereClause,
-        order: [["review_date", "DESC"]],
-      });
+      order: [["review_date", "DESC"]],
+    });
       
-      return res.json({ reviews });
+    return res.json({ reviews });
     } catch (error) {
       console.error('Error getting reviews by company ID:', error);
       return res.status(500).json({ message: 'Lỗi khi lấy đánh giá', error: error.message });
@@ -1760,13 +1799,9 @@ class UserController {
         });
       }
 
-      let filename = req.file.filename;
-      filename = filename.split(".");
-      filename = filename[0] + uuid() + "." + filename[1];
-
       try {
         // Upload vào folder "profile_pictures" trong cloudinary
-        const result = await cloudinary.uploader.upload(req.file.path, {
+        const result = await cloudinary.uploader.upload(req.file.path || `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`, {
           resource_type: "image",
           folder: "profile_pictures", // Chỉ định folder để lưu trữ
           public_id: `user_${req.params.candidate_id}_${Date.now()}`, // Tạo tên file duy nhất
@@ -2302,7 +2337,25 @@ class UserController {
 
       // Filter by category
       if (category_id && category_id !== "all") {
+        // Kiểm tra xem category_id thuộc cấp nào
+        const selectedCategory = await Category.findByPk(category_id);
+        if (selectedCategory && selectedCategory.level === 2) {
+          // Nếu là danh mục cấp 2, tìm tất cả danh mục con cấp 3
+          const childCategories = await Category.findAll({
+            where: { parent_category_id: category_id }
+          });
+          
+          // Lấy tất cả ID của danh mục cấp 3 con
+          const childCategoryIds = childCategories.map(cat => cat.category_id);
+          
+          // Thêm cả danh mục cấp 2 và các danh mục con cấp 3 vào điều kiện lọc
+          whereClause.category_id = {
+            [Op.or]: [category_id, ...childCategoryIds]
+          };
+        } else {
+          // Nếu không phải danh mục cấp 2 (hoặc không tìm thấy), lọc theo chính danh mục đó
         whereClause.category_id = category_id;
+        }
       }
 
       // Filter by experience
@@ -2681,7 +2734,7 @@ class UserController {
 
   // Thêm vào UserController
   async applyForJob(req, res) {
-    const { job_id, cv_id, previous_status } = req.body;
+    const { job_id, cv_id, cv_type, resume_url, previous_status } = req.body;
     const userId = req.user.id;
 
     try {
@@ -2739,7 +2792,9 @@ class UserController {
           // Nếu đã qua thời gian chờ, cập nhật trạng thái của đơn ứng tuyển
           await existingApplication.update({
             status: "Đang xét duyệt",
-            updated_at: new Date()
+            updated_at: new Date(),
+            resume: cv_id || resume_url || existingApplication.resume,
+            resume_type: cv_type || existingApplication.resume_type
           });
           
           // Trả về thành công
@@ -2774,6 +2829,8 @@ class UserController {
         application = existingApplication;
         application.status = "Đang xét duyệt";
         application.updated_at = new Date();
+        application.resume = cv_id || resume_url || application.resume;
+        application.resume_type = cv_type || application.resume_type;
         await application.save();
       } else {
         application = await JobApplication.create({
@@ -2782,6 +2839,8 @@ class UserController {
           job_id: job_id,
           applied_at: new Date(),
           status: "Đang xét duyệt",
+          resume: cv_id || resume_url,
+          resume_type: cv_type || (cv_id ? 'created' : 'uploaded')
         });
       }
 
@@ -3551,27 +3610,51 @@ class UserController {
   }
   // delete user cv template
   async deleteUserCvTemplate(req, res) {
+    let transaction;
     try {
       const { cv_id } = req.params;
       const user_id = req.user.id;
+      
+      // Start a transaction
+      transaction = await sequelize.transaction();
+      
+      // Find the CV first
       const cv = await UserCv.findOne({
         where: {
           cv_id: cv_id,
           user_id: user_id
-        }
+        },
+        transaction
       });
+
       if (!cv) {
+        await transaction.rollback();
         return res.status(404).json({
           code: 0,
           message: "CV not found"
         });
       }
-      await cv.destroy();
+
+      // First delete all related field values
+      await CvFieldValues.destroy({
+        where: { cv_id: cv_id },
+        transaction
+      });
+
+      // Then delete the CV itself
+      await cv.destroy({ transaction });
+      
+      // Commit the transaction
+      await transaction.commit();
+      
       return res.status(200).json({
         code: 1,
         message: "CV template deleted successfully"
       });
     } catch (error) {
+      // Rollback in case of error
+      if (transaction) await transaction.rollback();
+      
       console.error("Error in deleteUserCvTemplate:", error);
       return res.status(500).json({
         code: 0,
@@ -3843,20 +3926,26 @@ class UserController {
   }
 
   async updateCV(req, res) {
+    let transaction;
     try {
       const { cv_id } = req.params;
       const { name, fieldValues } = req.body;
       const user_id = req.user.id;
+
+      // Start a transaction for all database operations
+      transaction = await sequelize.transaction();
 
       // 1. Kiểm tra CV có tồn tại và thuộc về user không
       const existingCV = await UserCv.findOne({
         where: {
           cv_id,
           user_id
-        }
+        },
+        transaction
       });
 
       if (!existingCV) {
+        await transaction.rollback();
         return res.status(404).json({
           message: 'CV không tồn tại hoặc không có quyền chỉnh sửa',
           code: -1
@@ -3867,29 +3956,41 @@ class UserController {
       await existingCV.update({
         cv_name: name,
         updated_at: new Date()
-      });
+      }, { transaction });
 
-      // 3. Cập nhật các field values
+      // 3. Cập nhật các field values - sequential approach to avoid deadlocks
       if (fieldValues && Array.isArray(fieldValues)) {
-        const updatePromises = fieldValues.map(async field => {
-          const { field_id, field_value } = field;
-
-          // Tìm và cập nhật field value
-          await CvFieldValues.update(
-            { field_value },
-            {
-              where: {
-                cv_id,
-                field_id
-              }
-            }
-          );
+        // Instead of updating each field value individually with many queries,
+        // fetch all existing fields first and then process updates in memory
+        const existingFieldValues = await CvFieldValues.findAll({
+          where: { cv_id },
+          transaction
         });
 
-        await Promise.all(updatePromises);
+        for (const field of fieldValues) {
+          const { field_id, field_value } = field;
+          const existingField = existingFieldValues.find(f => f.field_id === field_id);
+          
+          if (existingField) {
+            // Update existing field
+            existingField.field_value = field_value;
+            await existingField.save({ transaction });
+          } else {
+            // Create new field if it doesn't exist (unlikely in update scenario)
+            await CvFieldValues.create({
+              value_id: this.generateValueId(),
+                cv_id,
+              field_id,
+              field_value
+            }, { transaction });
+              }
+            }
       }
 
-      // 4. Lấy thông tin CV đã cập nhật để trả về
+      // Commit the transaction
+      await transaction.commit();
+
+      // 4. Lấy thông tin CV đã cập nhật để trả về (outside transaction)
       const updatedCV = await UserCv.findByPk(cv_id);
       const template = await CvTemplates.findByPk(updatedCV.template_id);
       const updatedFieldValues = await CvFieldValues.findAll({
@@ -3907,6 +4008,9 @@ class UserController {
       });
 
     } catch (error) {
+      // Rollback the transaction if an error occurred
+      if (transaction) await transaction.rollback();
+
       console.error('Error updating CV:', error);
       return res.status(500).json({
         message: error.message,

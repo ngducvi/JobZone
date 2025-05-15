@@ -4,7 +4,7 @@ import styles from "./RecruiterCVManagement.module.scss";
 import { authAPI, userApis, recruiterApis } from "~/utils/api";
 import UserContext from "~/context/UserContext";
 import images from "~/assets/images";
-import { FaTimes, FaFileExcel, FaBell } from "react-icons/fa";
+import { FaTimes, FaFileExcel, FaBell, FaEye, FaDownload, FaArrowLeft } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import socketService from "~/utils/socket";
@@ -68,6 +68,9 @@ function RecruiterCVManagement() {
   const [isRealTimeEnabled, setIsRealTimeEnabled] = useState(true);
   const [lastUpdateTime, setLastUpdateTime] = useState(null);
   const [showNewApplicationsNotification, setShowNewApplicationsNotification] = useState(false);
+  const [showMobileCvModal, setShowMobileCvModal] = useState(false);
+  const [selectedApplication, setSelectedApplication] = useState(null);
+  const [isMobileView, setIsMobileView] = useState(false);
   
   const pollIntervalRef = useRef(null);
   const prevNewApplicationsCountRef = useRef(0);
@@ -105,7 +108,6 @@ function RecruiterCVManagement() {
             )
           );
           setJobs(responseJobs.data.jobs);
-          console.log(responseJobs.data);
 
           // Calculate job statistics
           const stats = responseJobs.data.jobs.reduce(
@@ -181,7 +183,6 @@ function RecruiterCVManagement() {
       
       // Listen for new job applications
       socketService.onNewJobApplication((data) => {
-        console.log('Received new job application:', data);
         toast.info(`🎉 ${data.candidate_name} vừa ứng tuyển vào vị trí ${data.job_title}!`);
         setShowNewApplicationsNotification(true);
         
@@ -343,7 +344,6 @@ function RecruiterCVManagement() {
         ...newApplicationsData
       }));
       
-      console.log("Đã cập nhật dữ liệu ứng viên mới");
     } catch (error) {
       console.error("Error refreshing job applications data:", error);
     }
@@ -387,6 +387,20 @@ function RecruiterCVManagement() {
   const handleJobClick = async (job) => {
     setSelectedJob(job);
     setShowModal(true);
+    
+    // Log job applications data for debugging
+    if (jobApplications[job.job_id]) {
+      console.log("Job applications data:", jobApplications[job.job_id]);
+      
+      // Log CV information for each application
+      jobApplications[job.job_id].forEach((application, index) => {
+        console.log(`Application ${index + 1} CV info:`, {
+          resume: application.resume,
+          resume_type: application.resume_type,
+          cv_info: application.cv_info
+        });
+      });
+    }
   };
 
   const handleStatusChange = async (applicationId, newStatus) => {
@@ -501,6 +515,376 @@ function RecruiterCVManagement() {
     }
   };
 
+  // Add function to check CV field values
+  const checkCvFieldValues = async (cvId) => {
+    try {
+      console.log("Checking CV field values for ID:", cvId);
+      const response = await authAPI().get(userApis.getAllCvFieldValuesByCvId(cvId));
+      console.log("CV field values:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching CV field values:", error);
+      return null;
+    }
+  };
+
+  // Update fetchCvDetails to also check field values
+  const fetchCvDetails = async (application) => {
+    try {
+      console.log("Application data:", application);
+      console.log("Resume field:", application.resume);
+      console.log("Resume type:", application.resume_type);
+      console.log("CV info:", application.cv_info);
+      
+      // Determine CV type and ID
+      const resumeType = application.cv_info?.cv_type || application.resume_type;
+      const resumeId = application.cv_info?.cv_id || application.resume;
+      
+      console.log("Determined resume type:", resumeType);
+      console.log("Determined resume ID:", resumeId);
+      
+      if (resumeType === 'created' && resumeId) {
+        try {
+          // Fetch user CV details
+          const response = await authAPI().get(recruiterApis.getAllUserCvByCvId(resumeId));
+          console.log("User CV details:", response.data);
+          
+          // Also check CV field values
+          if (response.data.userCv) {
+            await checkCvFieldValues(resumeId);
+          }
+          
+          return response.data;
+        } catch (error) {
+          console.error("Error fetching user CV:", error);
+          // Try candidate CV as fallback
+          try {
+            const response = await authAPI().get(recruiterApis.getAllCandidateCvByCvId(resumeId));
+            console.log("Candidate CV details:", response.data);
+            return response.data;
+          } catch (innerError) {
+            console.error("Error fetching candidate CV:", innerError);
+          }
+        }
+      } else if (resumeType === 'uploaded' && resumeId) {
+        try {
+          // Fetch candidate CV details
+          const response = await authAPI().get(recruiterApis.getAllCandidateCvByCvId(resumeId));
+          console.log("Candidate CV details:", response.data);
+          return response.data;
+        } catch (error) {
+          console.error("Error fetching candidate CV:", error);
+        }
+      }
+    } catch (error) {
+      console.error("Error in fetchCvDetails:", error);
+    }
+    return null;
+  };
+
+  // Check if screen is mobile
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobileView(window.innerWidth <= 576);
+    };
+
+    // Initial check
+    checkIfMobile();
+
+    // Add event listener
+    window.addEventListener('resize', checkIfMobile);
+
+    // Clean up
+    return () => {
+      window.removeEventListener('resize', checkIfMobile);
+    };
+  }, []);
+
+  // Update handleViewCV to handle mobile view
+  const handleViewCV = async (application) => {
+    try {
+      // Set the selected application for mobile view
+      setSelectedApplication(application);
+      
+      // For mobile devices, show the mobile CV modal instead
+      if (isMobileView) {
+        setShowMobileCvModal(true);
+        return;
+      }
+      
+      // Fetch and log CV details first
+      await fetchCvDetails(application);
+      
+      if (!application.resume && !application.cv_info) {
+        toast.error("Không tìm thấy CV của ứng viên này");
+        return;
+      }
+
+      // Use cv_info if available, otherwise fall back to resume field
+      const resumeType = application.cv_info?.cv_type || application.resume_type;
+      const resumeValue = application.cv_info?.cv_link || application.cv_info?.cv_id || application.resume;
+      
+      console.log("View CV - Type:", resumeType);
+      console.log("View CV - Value:", resumeValue);
+
+      if (resumeType === 'uploaded' || (resumeValue && resumeValue.startsWith('http'))) {
+        // For uploaded CVs, open the link directly in a new tab
+        window.open(resumeValue, '_blank');
+      } else if (resumeType === 'created') {
+        try {
+          // For created CVs, we need to fetch the template_id first
+          const response = await authAPI().get(recruiterApis.getAllUserCvByCvId(resumeValue));
+          console.log("User CV details for viewing:", response.data);
+          
+          if (response.data.userCv) {
+            // Navigate to the CV preview page with both cv_id and template_id
+            navigate(`/user/see-cv`, {
+              state: {
+                cv_id: resumeValue,
+                template_id: response.data.userCv.template_id,
+                is_recruiter_view: true
+              }
+            });
+          } else {
+            toast.error("Không tìm thấy thông tin CV");
+          }
+        } catch (error) {
+          console.error("Error fetching user CV details:", error);
+          toast.error("Có lỗi xảy ra khi xem CV");
+        }
+      } else {
+        // For compatibility with older data that might not have resume_type
+        // Try to determine type based on resume format
+        if (resumeValue && resumeValue.startsWith('http')) {
+          window.open(resumeValue, '_blank');
+        } else if (resumeValue) {
+          try {
+            // Try to get template_id for this CV
+            const response = await authAPI().get(recruiterApis.getAllUserCvByCvId(resumeValue));
+            
+            if (response.data.userCv) {
+              navigate(`/user/see-cv`, {
+                state: {
+                  cv_id: resumeValue,
+                  template_id: response.data.userCv.template_id,
+                  is_recruiter_view: true
+                }
+              });
+            } else {
+              toast.error("Không tìm thấy thông tin CV");
+            }
+          } catch (error) {
+            console.error("Error fetching user CV details:", error);
+            toast.error("Có lỗi xảy ra khi xem CV");
+          }
+        } else {
+          toast.error("Không thể xác định loại CV");
+        }
+      }
+    } catch (error) {
+      console.error("Error viewing CV:", error);
+      toast.error("Có lỗi xảy ra khi xem CV");
+    }
+  };
+
+  // Update handleDownloadCV to handle mobile view
+  const handleDownloadCV = async (application) => {
+    try {
+      // For mobile devices, show the mobile CV modal if not already shown
+      if (isMobileView && !showMobileCvModal) {
+        setSelectedApplication(application);
+        setShowMobileCvModal(true);
+        return;
+      }
+      
+      if (!application.resume && !application.cv_info) {
+        toast.error("Không tìm thấy CV của ứng viên này");
+        return;
+      }
+
+      // Use cv_info if available, otherwise fall back to resume field
+      const resumeType = application.cv_info?.cv_type || application.resume_type;
+      const resumeValue = application.cv_info?.cv_link || application.cv_info?.cv_id || application.resume;
+
+      if (resumeType === 'uploaded' || (resumeValue && resumeValue.startsWith('http'))) {
+        // For uploaded CVs, download the file
+        try {
+          const response = await fetch(resumeValue);
+          const blob = await response.blob();
+          const downloadUrl = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = downloadUrl;
+          
+          // Set filename from URL or use default
+          const fileName = resumeValue.split('/').pop() || `CV_${application.user.name.replace(/\s+/g, '_')}.pdf`;
+          link.setAttribute('download', fileName);
+          
+          // Append to body, click and remove
+          document.body.appendChild(link);
+          link.click();
+          link.parentNode.removeChild(link);
+          
+          // Clean up the URL
+          window.URL.revokeObjectURL(downloadUrl);
+          
+          toast.success("Đang tải CV");
+        } catch (error) {
+          console.error("Error downloading CV:", error);
+          toast.error("Có lỗi xảy ra khi tải CV");
+        }
+      } else if (resumeType === 'created') {
+        try {
+          // For created CVs, we need to fetch the template_id first
+          const response = await authAPI().get(recruiterApis.getAllUserCvByCvId(resumeValue));
+          console.log("User CV details for downloading:", response.data);
+          
+          if (response.data.userCv) {
+            // Navigate to the CV preview page with both cv_id and template_id
+            toast.success("Đang chuyển đến trang xem CV, bạn có thể tải xuống từ đó");
+            navigate(`/user/see-cv`, {
+              state: {
+                cv_id: resumeValue,
+                template_id: response.data.userCv.template_id,
+                is_recruiter_view: true,
+                download_mode: true
+              }
+            });
+          } else {
+            toast.error("Không tìm thấy thông tin CV");
+          }
+        } catch (error) {
+          console.error("Error fetching user CV details:", error);
+          toast.error("Có lỗi xảy ra khi tải CV");
+        }
+      } else {
+        toast.error("Không thể xác định loại CV");
+      }
+    } catch (error) {
+      console.error("Error downloading CV:", error);
+      toast.error("Có lỗi xảy ra khi tải CV");
+    }
+  };
+
+  // Handle mobile CV view from modal
+  const handleMobileCvView = async () => {
+    if (!selectedApplication) return;
+    
+    // Close the modal first
+    setShowMobileCvModal(false);
+    
+    // Then proceed with regular view logic
+    const application = selectedApplication;
+    
+    try {
+      if (!application.resume && !application.cv_info) {
+        toast.error("Không tìm thấy CV của ứng viên này");
+        return;
+      }
+
+      const resumeType = application.cv_info?.cv_type || application.resume_type;
+      const resumeValue = application.cv_info?.cv_link || application.cv_info?.cv_id || application.resume;
+
+      if (resumeType === 'uploaded' || (resumeValue && resumeValue.startsWith('http'))) {
+        window.open(resumeValue, '_blank');
+      } else if (resumeType === 'created') {
+        try {
+          const response = await authAPI().get(recruiterApis.getAllUserCvByCvId(resumeValue));
+          
+          if (response.data.userCv) {
+            navigate(`/user/see-cv`, {
+              state: {
+                cv_id: resumeValue,
+                template_id: response.data.userCv.template_id,
+                is_recruiter_view: true
+              }
+            });
+          } else {
+            toast.error("Không tìm thấy thông tin CV");
+          }
+        } catch (error) {
+          console.error("Error fetching user CV details:", error);
+          toast.error("Có lỗi xảy ra khi xem CV");
+        }
+      } else {
+        toast.error("Không thể xác định loại CV");
+      }
+    } catch (error) {
+      console.error("Error in mobile CV view:", error);
+      toast.error("Có lỗi xảy ra khi xem CV");
+    }
+  };
+
+  // Handle mobile CV download from modal
+  const handleMobileCvDownload = async () => {
+    if (!selectedApplication) return;
+    
+    // Close the modal first
+    setShowMobileCvModal(false);
+    
+    // Then proceed with regular download logic
+    const application = selectedApplication;
+    
+    try {
+      if (!application.resume && !application.cv_info) {
+        toast.error("Không tìm thấy CV của ứng viên này");
+        return;
+      }
+
+      const resumeType = application.cv_info?.cv_type || application.resume_type;
+      const resumeValue = application.cv_info?.cv_link || application.cv_info?.cv_id || application.resume;
+
+      if (resumeType === 'uploaded' || (resumeValue && resumeValue.startsWith('http'))) {
+        try {
+          const response = await fetch(resumeValue);
+          const blob = await response.blob();
+          const downloadUrl = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = downloadUrl;
+          
+          const fileName = resumeValue.split('/').pop() || `CV_${application.user.name.replace(/\s+/g, '_')}.pdf`;
+          link.setAttribute('download', fileName);
+          
+          document.body.appendChild(link);
+          link.click();
+          link.parentNode.removeChild(link);
+          
+          window.URL.revokeObjectURL(downloadUrl);
+          
+          toast.success("Đang tải CV");
+        } catch (error) {
+          console.error("Error downloading CV:", error);
+          toast.error("Có lỗi xảy ra khi tải CV");
+        }
+      } else if (resumeType === 'created') {
+        try {
+          const response = await authAPI().get(recruiterApis.getAllUserCvByCvId(resumeValue));
+          
+          if (response.data.userCv) {
+            toast.success("Đang chuyển đến trang xem CV, bạn có thể tải xuống từ đó");
+            navigate(`/user/see-cv`, {
+              state: {
+                cv_id: resumeValue,
+                template_id: response.data.userCv.template_id,
+                is_recruiter_view: true,
+                download_mode: true
+              }
+            });
+          } else {
+            toast.error("Không tìm thấy thông tin CV");
+          }
+        } catch (error) {
+          console.error("Error fetching user CV details:", error);
+          toast.error("Có lỗi xảy ra khi tải CV");
+        }
+      } else {
+        toast.error("Không thể xác định loại CV");
+      }
+    } catch (error) {
+      console.error("Error in mobile CV download:", error);
+      toast.error("Có lỗi xảy ra khi tải CV");
+    }
+  };
+
   if (isCheckingLicense) {
     return (
       <div className={cx("wrapper")}>
@@ -563,24 +947,24 @@ function RecruiterCVManagement() {
               )}
             </div>
             
-            {isCompanyActive ? (
-              <button
-                className={cx("create-job-btn")}
-                onClick={() => navigate("/recruiter/post-job")}
-              >
-                <i className="fa-solid fa-plus"></i>
-                Đăng tin tuyển dụng
-              </button>
-            ) : (
-              <button
-                className={cx("create-job-btn", "disabled")}
-                disabled
-              >
-                <i className="fa-solid fa-exclamation-circle"></i>
-                Tài khoản chưa được kích hoạt
-              </button>
-            )}
-          </div>
+          {isCompanyActive ? (
+            <button
+              className={cx("create-job-btn")}
+              onClick={() => navigate("/recruiter/post-job")}
+            >
+              <i className="fa-solid fa-plus"></i>
+              Đăng tin tuyển dụng
+            </button>
+          ) : (
+            <button
+              className={cx("create-job-btn", "disabled")}
+              disabled
+            >
+              <i className="fa-solid fa-exclamation-circle"></i>
+              Tài khoản chưa được kích hoạt
+            </button>
+          )}
+        </div>
         </div>
         
         {newApplicationsStats && (
@@ -731,7 +1115,7 @@ function RecruiterCVManagement() {
                   disabled={!jobApplications[selectedJob?.job_id]?.length}
                 >
                   <FaFileExcel />
-                  Xuất Excel
+                  <span className={cx("btn-text")}>Xuất Excel</span>
                 </button>
               <button
                 className={cx("close-btn")}
@@ -761,7 +1145,6 @@ function RecruiterCVManagement() {
                       <th className={cx("email-column")}>Email</th>
                       <th className={cx("phone-column")}>Số điện thoại</th>
                       <th className={cx("location-column")}>Địa điểm</th>
-                      {/* <th className={cx("status-column-cv")}>Trạng thái CV</th> */}
                       <th className={cx("cv-column")}>CV</th>
                       <th className={cx("about-me-column")}>Về tôi</th>
                       <th>Mục tiêu nghề nghiệp</th>
@@ -783,19 +1166,73 @@ function RecruiterCVManagement() {
                             {application.candidate.location ||
                               "Không có địa điểm"}
                           </td>
-                          {/* <td>
-                            $
-                            {application.candidate.current_salary ||
-                              "Không có thông tin"}
-                          </td> */}
-                          {/* <td>{application.status || "Không có thông tin"}</td> */}
                           <td>
-                            <a
-                              href={application.candidate.CV_link}
+                            {application.resume || application.cv_info ? (
+                              <div className={cx("cv-container")}>
+                                <div className={cx("cv-type")}>
+                                  {application.cv_info?.cv_type === 'created' || application.resume_type === 'created' ? (
+                                    <div className={cx("cv-badge", "created")}>
+                                      <div className={cx("cv-badge-header")}>
+                                        <i className="fa-solid fa-file-code"></i> CV tạo trên web
+                                      </div>
+                                      <span className={cx("cv-id")}>
+                                        ID: {application.cv_info?.cv_id || application.resume}
+                                      </span>
+                                      {application.cv_info?.cv_name && (
+                                        <span className={cx("cv-name")}>
+                                          {application.cv_info.cv_name}
+                                        </span>
+                                      )}
+                                      {application.cv_info?.created_at && (
+                                        <span className={cx("cv-date")}>
+                                          {new Date(application.cv_info.created_at).toLocaleDateString('vi-VN')}
+                                        </span>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <div className={cx("cv-badge", "uploaded")}>
+                                      <div className={cx("cv-badge-header")}>
+                                        <i className="fa-solid fa-file-pdf"></i> CV tải lên
+                                      </div>
+                                      {application.cv_info?.cv_name && (
+                                        <span className={cx("cv-name")}>
+                                          {application.cv_info.cv_name}
+                                        </span>
+                                      )}
+                                      <span className={cx("cv-id")}>
+                                        {application.cv_info?.cv_link ? 'Link: PDF' : 
+                                         application.resume ? `ID: ${application.resume.substring(0, 15)}...` : 'N/A'}
+                                      </span>
+                                      {application.cv_info?.created_at && (
+                                        <span className={cx("cv-date")}>
+                                          {new Date(application.cv_info.created_at).toLocaleDateString('vi-VN')}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className={cx("cv-actions")}>
+                                  <button
+                                    className={cx("view-btn")}
+                                    onClick={() => handleViewCV(application)}
+                                    title="Xem CV"
+                                  >
+                                    <i className="fa-solid fa-eye"></i>
+                                    <span className={cx("btn-text")}>Xem</span>
+                                  </button>
+                                  <button
                               className={cx("download-btn")}
-                            >
-                              Tải CV
-                            </a>
+                                    onClick={() => handleDownloadCV(application)}
+                                    title="Tải CV"
+                                  >
+                                    <i className="fa-solid fa-download"></i>
+                                    <span className={cx("btn-text")}>Tải xuống</span>
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <span className={cx("no-cv")}>Không có CV</span>
+                            )}
                           </td>
                           <td>
                             {application.candidate.about_me ||
@@ -833,7 +1270,7 @@ function RecruiterCVManagement() {
                               }
                             >
                               <i className="fa-solid fa-eye"></i>
-                              <span> Chi tiết</span>
+                              <span className={cx("btn-text")}> Chi tiết</span>
                             </button>
                           </td>
                         </tr>
@@ -843,6 +1280,103 @@ function RecruiterCVManagement() {
               ) : (
                 <p>Không có ứng viên nào cho công việc này.</p>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile CV View Modal */}
+      {showMobileCvModal && selectedApplication && (
+        <div className={cx("mobile-cv-view-modal")}>
+          <div className={cx("mobile-modal-header")}>
+            <button
+              className={cx("close-btn")}
+              onClick={() => setShowMobileCvModal(false)}
+            >
+              <FaArrowLeft />
+            </button>
+            <h3>CV của {selectedApplication.user.name || "Ứng viên"}</h3>
+          </div>
+          
+          <div className={cx("mobile-cv-actions")}>
+            <button
+              className={cx("view-btn")}
+              onClick={handleMobileCvView}
+            >
+              <FaEye />
+              <span>Xem CV</span>
+            </button>
+            <button
+              className={cx("download-btn")}
+              onClick={handleMobileCvDownload}
+            >
+              <FaDownload />
+              <span>Tải xuống</span>
+            </button>
+          </div>
+          
+          <div className={cx("mobile-cv-info")}>
+            <h4>Thông tin CV</h4>
+            
+            <div className={cx("info-item")}>
+              <label>Loại CV</label>
+              <p>
+                {selectedApplication.cv_info?.cv_type === 'created' || selectedApplication.resume_type === 'created'
+                  ? 'CV tạo trên web'
+                  : 'CV tải lên'}
+              </p>
+            </div>
+            
+            {selectedApplication.cv_info?.cv_name && (
+              <div className={cx("info-item")}>
+                <label>Tên CV</label>
+                <p>{selectedApplication.cv_info.cv_name}</p>
+              </div>
+            )}
+            
+            {selectedApplication.cv_info?.created_at && (
+              <div className={cx("info-item")}>
+                <label>Ngày tạo</label>
+                <p>{new Date(selectedApplication.cv_info.created_at).toLocaleDateString('vi-VN')}</p>
+              </div>
+            )}
+            
+            <div className={cx("info-item")}>
+              <label>ID CV</label>
+              <p>
+                {selectedApplication.cv_info?.cv_id || 
+                 selectedApplication.resume?.substring(0, 20) || 'Không có'}
+                {selectedApplication.resume?.length > 20 && '...'}
+              </p>
+            </div>
+          </div>
+          
+          <div className={cx("mobile-cv-info")}>
+            <h4>Thông tin ứng viên</h4>
+            
+            <div className={cx("info-item")}>
+              <label>Tên</label>
+              <p>{selectedApplication.user.name || "Không có tên"}</p>
+            </div>
+            
+            <div className={cx("info-item")}>
+              <label>Email</label>
+              <p>{selectedApplication.user.email || "Không có email"}</p>
+            </div>
+            
+            <div className={cx("info-item")}>
+              <label>Số điện thoại</label>
+              <p>{selectedApplication.user.phone || "Không có số điện thoại"}</p>
+            </div>
+            
+            <div className={cx("info-item")}>
+              <label>Địa điểm</label>
+              <p>{selectedApplication.candidate.location || "Không có địa điểm"}</p>
+            </div>
+            
+            <div className={cx("info-item")}>
+              <label>Trạng thái</label>
+              <p>{selectedApplication.status}</p>
             </div>
           </div>
         </div>

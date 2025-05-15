@@ -45,4 +45,8 @@ router.delete('/notifications/read/all', recruiterController.deleteAllReadNotifi
 router.get('/check-recruiter-company', recruiterController.checkRecruiterCompany.bind(recruiterController));
 router.get('/export-job-applications/:job_id', recruiterController.exportJobApplications.bind(recruiterController));
 router.get('/job-applications/new-stats', recruiterController.getNewJobApplicationsStats.bind(recruiterController));
+router.get('/company-reviews/:company_id', recruiterController.getCompanyReviewsByCompanyId.bind(recruiterController));
+router.get('/user-cvs/:cv_id', recruiterController.getAllUserCvByCvId.bind(recruiterController));
+router.get('/candidate-cvs/:cv_id', recruiterController.getAllCandidateCvByCvId.bind(recruiterController));
+router.post('/create-recruiter-company', recruiterController.createRecruiterCompany.bind(recruiterController));
 module.exports = router;

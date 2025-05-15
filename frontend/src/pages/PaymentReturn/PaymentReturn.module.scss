@@ -1,12 +1,44 @@
 .wrapper {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
     background: linear-gradient(120deg, #fff, #a6c0fe);
     padding: 2rem;
   
-    
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2rem;
+      
+      .spinner {
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border-left-color: var(--primary-color);
+        animation: spin 1s linear infinite;
+        margin-bottom: 1.5rem;
+      }
+      
+      p {
+        font-size: 1.6rem;
+        color: #455a64;
+        font-weight: 500;
+      }
+      
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    }
 
     .card {
       background-color: #ffffff;
@@ -18,6 +50,7 @@
       text-align: center;
       padding: 3rem 2.5rem;
       animation: fadeIn 0.5s ease-in-out;
+      margin-top: 2rem;
   
       @keyframes fadeIn {
         from {
@@ -28,6 +61,76 @@
           opacity: 1;
           transform: translateY(0);
         }
+      }
+      
+      .error-message {
+        background-color: #ffebee;
+        border: 1px solid #ef9a9a;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        
+        i {
+          color: #d32f2f;
+          font-size: 2.4rem;
+          margin-bottom: 1rem;
+        }
+        
+        p {
+          color: #b71c1c;
+          font-size: 1.5rem;
+          font-weight: 500;
+          line-height: 1.5;
+          margin-bottom: 1rem;
+        }
+        
+        .direct-access-info {
+          margin-top: 1rem;
+          text-align: center;
+          
+          p {
+            color: #455a64;
+            font-size: 1.4rem;
+            font-weight: normal;
+            margin-bottom: 0.8rem;
+          }
+          
+          .btn {
+            margin-top: 1.5rem;
+            padding: 1rem 2rem;
+            font-size: 1.4rem;
+            background: linear-gradient(120deg, #42a5f5, #1e88e5);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            
+            &:hover {
+              background: linear-gradient(120deg, #1e88e5, #1565c0);
+              box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            }
+            
+            &.mt-2 {
+              margin-top: 2rem;
+            }
+          }
+        }
+      }
+      
+      .response-message {
+        font-size: 1.4rem;
+        color: #f44336;
+        background-color: #ffebee;
+        padding: 1rem;
+        border-radius: 8px;
+        margin: -1rem 0 1.5rem;
+        font-weight: 500;
       }
   
       .icon-container {
@@ -107,10 +210,12 @@
       .actions {
         display: flex;
         justify-content: center;
+        flex-wrap: wrap;
         gap: 1.5rem;
   
         .btn {
           flex: 1;
+          min-width: 120px;
           padding: 1rem 1.5rem;
           font-size: 1.5rem;
           border-radius: 12px;
@@ -137,6 +242,58 @@
             &:hover {
               background: linear-gradient(120deg, #afb42b, #827717);
               box-shadow: 0 6px 15px rgba(205, 220, 57, 0.3);
+            }
+          }
+          
+          &.btn-success {
+            background: linear-gradient(120deg, #66bb6a, #43a047);
+            color: #ffffff;
+  
+            &:hover {
+              background: linear-gradient(120deg, #43a047, #2e7d32);
+              box-shadow: 0 6px 15px rgba(76, 175, 80, 0.3);
+            }
+          }
+        }
+      }
+    }
+
+    .note {
+      font-size: 1.2rem;
+      color: #757575;
+      margin-top: 2rem;
+      text-align: center;
+    }
+    
+    .direct-access-guide {
+      margin-top: 3rem;
+      border-top: 1px dashed #e0e0e0;
+      padding-top: 2rem;
+      
+      h3 {
+        color: #455a64;
+        font-size: 1.8rem;
+        margin-bottom: 1.5rem;
+        text-align: center;
+      }
+      
+      ol {
+        text-align: left;
+        padding-left: 2rem;
+        
+        li {
+          color: #455a64;
+          font-size: 1.4rem;
+          margin-bottom: 1rem;
+          line-height: 1.5;
+          
+          a {
+            color: #1e88e5;
+            text-decoration: none;
+            font-weight: 500;
+            
+            &:hover {
+              text-decoration: underline;
             }
           }
         }
