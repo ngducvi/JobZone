@@ -785,9 +785,24 @@ $transition: all 0.3s ease;
     .skills {
       @include flex(row, center, flex-start, 8px);
       flex-wrap: wrap;
+      min-height: 32px; // Ensure consistent height during loading
       
       @media (max-width: 576px) {
         margin-top: 6px;
+      }
+
+      .skills-loading {
+        @include flex(row, center, center, 8px);
+        padding: 4px 12px;
+        background: rgba($primary-color, 0.05);
+        border-radius: 20px;
+        font-size: 13px;
+        color: $text-secondary;
+        
+        .spinner {
+          animation: spin 1s linear infinite;
+          font-size: 12px;
+        }
       }
 
       .skill-tag {
@@ -798,9 +813,28 @@ $transition: all 0.3s ease;
         font-size: 13px;
         font-weight: 500;
         transition: $transition;
+        animation: fadeIn 0.3s ease;
         
         &:hover {
           background: rgba($primary-color, 0.1);
+          transform: translateY(-1px);
+        }
+        
+        &.no-skills {
+          background: rgba($text-light, 0.1);
+          color: $text-light;
+          font-style: italic;
+        }
+        
+        &.more-skills {
+          background: rgba($primary-color, 0.1);
+          color: $primary-color;
+          font-weight: 600;
+          cursor: pointer;
+          
+          &:hover {
+            background: rgba($primary-color, 0.15);
+          }
         }
       }
     }
@@ -1801,5 +1835,29 @@ $transition: all 0.3s ease;
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+// Add new animations
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
   }
 }

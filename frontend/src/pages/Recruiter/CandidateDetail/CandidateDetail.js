@@ -6,7 +6,8 @@ import styles from "./CandidateDetail.module.scss";
 import images from "~/assets/images";
 import useScrollTop from '~/hooks/useScrollTop';
 import { toast } from "react-hot-toast";
-import html2pdf from 'html2pdf.js';
+import html2pdf from 'html2pdf.js/dist/html2pdf.bundle.min.js';
+
 import { FaUser, FaEllipsisV, FaArrowLeft, FaPaperclip, FaImage, FaPaperPlane, FaEdit, FaTrash, FaEnvelope } from "react-icons/fa";
 import { messagesApis } from "~/utils/api";
 
@@ -195,7 +196,10 @@ const CandidateDetail = () => {
     // Show loading toast
     const loadingToast = toast.loading('Đang tạo PDF...');
 
-    html2pdf().set(opt).from(cvElement).save()
+    html2pdf()
+      .set(opt)
+      .from(cvElement)
+      .save()
       .then(() => {
         toast.dismiss(loadingToast);
         toast.success('Tải CV thành công!');

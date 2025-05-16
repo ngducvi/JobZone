@@ -7,6 +7,8 @@ const Anthropic = require("@anthropic-ai/sdk");
 const Supplier = require("../models/Supplier");
 const Common = require("../helpers/Common");
 const { Op } = require("sequelize");
+const JobSkill = require('../models/JobSkill');
+const Skill = require('../models/Skill');
 
 require("dotenv").config();
 class OpenAIController {
@@ -920,11 +922,26 @@ Hãy trả về kết quả dưới dạng JSON với cấu trúc sau:
     }
   }
 
+  // Helper: get all skill_name for a job
+  async getJobSkillNames(job_id) {
+    const jobSkills = await JobSkill.findAll({ where: { job_id } });
+    const skillIds = jobSkills.map(js => js.skill_id);
+    if (!skillIds.length) return [];
+    const skills = await Skill.findAll({ where: { skill_id: skillIds } });
+    return skills.map(s => s.skill_name);
+  }
+
   async analyzeJobForCandidate(req, res) {
-    const { job, candidateProfile, model = "gpt-4o-mini" } = req.body;
+    const { job, candidateProfile, model = "gemini-2.0-flash" } = req.body;
 
     if (!job || !candidateProfile) {
       return res.status(400).json({ error: "Thông tin công việc và hồ sơ ứng viên là bắt buộc" });
+    }
+
+    // Get real job skills from JobSkill/Skill
+    let jobSkills = [];
+    if (job.job_id) {
+      jobSkills = await this.getJobSkillNames(job.job_id);
     }
 
     const prompt = `
@@ -938,6 +955,7 @@ THÔNG TIN CÔNG VIỆC:
 - Lương: ${job.salary || "Không xác định"}
 - Địa điểm: ${job.location || "Không xác định"}
 - Phúc lợi: ${job.benefits || "Không xác định"}
+- Kỹ năng yêu cầu: ${jobSkills.length ? jobSkills.join(', ') : 'Không xác định'}
 
 HỒ SƠ ỨNG VIÊN:
 - Kỹ năng: ${candidateProfile.skills || "Không xác định"}
@@ -946,9 +964,16 @@ HỒ SƠ ỨNG VIÊN:
 - Vị trí hiện tại: ${candidateProfile.current_job_title || "Không xác định"}
 - Công ty hiện tại: ${candidateProfile.current_company || "Không xác định"}
 
+YÊU CẦU PHÂN TÍCH KỸ NĂNG:
+- So sánh kỹ năng ứng viên với kỹ năng yêu cầu của công việc một cách linh hoạt.
+- Nếu kỹ năng ứng viên trùng khớp tuyệt đối với kỹ năng job, liệt kê vào "matched_skills".
+- Nếu kỹ năng ứng viên tương đương, liên quan, hoặc có thể thay thế cho kỹ năng job, liệt kê vào "partially_matched_skills" và giải thích lý do tương đương.
+- Nếu kỹ năng còn thiếu, liệt kê vào "missing_skills".
+- Đánh giá dựa trên cả kỹ năng cứng, kỹ năng mềm, và các kỹ năng liên quan.
+
 Dựa trên thông tin trên, vui lòng cung cấp các nội dung sau dưới dạng JSON:
 1. Phân tích chi tiết sự phù hợp giữa hồ sơ ứng viên và yêu cầu công việc
-2. Phân tích khoảng cách về kỹ năng
+2. Phân tích khoảng cách về kỹ năng (phân loại matched_skills, partially_matched_skills, missing_skills, giải thích lý do tương đương nếu có)
 3. Lời khuyên ứng tuyển cá nhân hóa
 4. Các câu hỏi phỏng vấn tiềm năng mà ứng viên có thể gặp
 5. Lời khuyên về thương lượng lương nếu có
@@ -1019,6 +1044,41 @@ Trả về kết quả dưới dạng JSON với cấu trúc sau:
     } catch (error) {
       console.error('Lỗi trong analyzeJobForCandidate:', error);
       return res.status(500).json({ error: "Lỗi khi phân tích công việc cho ứng viên" });
+    }
+  }
+
+  // API: Get all skill_name for a job
+  async getJobSkills(req, res) {
+    const { job_id } = req.params;
+    if (!job_id) return res.status(400).json({ error: 'job_id là bắt buộc' });
+    try {
+      const jobSkills = await JobSkill.findAll({ where: { job_id } });
+      const skillIds = jobSkills.map(js => js.skill_id);
+      if (!skillIds.length) return res.json({ skills: [] });
+      const skills = await Skill.findAll({ where: { skill_id: skillIds } });
+      return res.json({ skills: skills.map(s => s.skill_name) });
+    } catch (err) {
+      return res.status(500).json({ error: 'Lỗi khi lấy kỹ năng job' });
+    }
+  }
+
+  // API: Get all skill_name for a candidate
+  async getCandidateSkills(req, res) {
+    const { candidate_id } = req.params;
+    if (!candidate_id) return res.status(400).json({ error: 'candidate_id là bắt buộc' });
+    try {
+      // Giả sử Candidate model có trường skills dạng string "HTML, CSS, JS" hoặc mảng
+      const Candidate = require('../models/Candidate');
+      const candidate = await Candidate.findOne({ where: { candidate_id } });
+      if (!candidate) return res.status(404).json({ error: 'Không tìm thấy ứng viên' });
+      let skills = candidate.skills;
+      if (!skills) return res.json({ skills: [] });
+      if (typeof skills === 'string') {
+        skills = skills.split(',').map(s => s.trim()).filter(Boolean);
+      }
+      return res.json({ skills });
+    } catch (err) {
+      return res.status(500).json({ error: 'Lỗi khi lấy kỹ năng ứng viên' });
     }
   }
 }

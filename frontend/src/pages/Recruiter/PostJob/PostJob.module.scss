@@ -1251,6 +1251,89 @@ textarea {
   i {
     font-size: 12px;
   }
+
+  & + .skills-section {
+    margin-top: 16px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+
+    .skills-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+
+      h4 {
+        font-size: 14px;
+        font-weight: 500;
+        color: #ffffff;
+        margin: 0;
+      }
+
+      .skills-count {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.7);
+        background: rgba(255, 255, 255, 0.1);
+        padding: 2px 8px;
+        border-radius: 12px;
+      }
+    }
+
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 8px;
+    }
+
+    .skill-item {
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 255, 0.2);
+      }
+
+      &.selected {
+        background: rgba(2, 163, 70, 0.2);
+        border-color: rgba(2, 163, 70, 0.4);
+
+        .skill-name {
+          color: #02a346;
+        }
+      }
+
+      .skill-name {
+        font-size: 13px;
+        color: #ffffff;
+        margin-bottom: 2px;
+      }
+
+      .skill-description {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.7);
+      }
+    }
+
+    .loading-skills {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 14px;
+
+      .spinner {
+        margin-right: 8px;
+      }
+    }
+  }
 }
 
 .error-hint {
@@ -1380,5 +1463,163 @@ textarea {
       color: #94a3b8;
       font-size: 12px;
     }
+  }
+}
+
+.skills-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 16px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  font-size: 15px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .selected-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex: 1;
+  }
+
+  .placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  i {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+  }
+}
+
+.skill-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: rgba(2, 163, 70, 0.2);
+  border: 1px solid rgba(2, 163, 70, 0.4);
+  border-radius: 4px;
+  font-size: 13px;
+  color: #ffffff;
+
+  .remove-skill {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border: none;
+    background: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.2s ease;
+
+    &:hover {
+      color: #ffffff;
+    }
+
+    svg {
+      width: 10px;
+      height: 10px;
+    }
+  }
+}
+
+.skills-modal {
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.skills-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  padding: 16px;
+  overflow-y: auto;
+  max-height: 400px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+
+    &:hover {
+      background: #999;
+    }
+  }
+}
+
+.skill-item {
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
+
+  &:hover {
+    border-color: #02a346;
+    background: #f0fdf4;
+  }
+
+  &.selected {
+    border-color: #02a346;
+    background: #dcfce7;
+
+    .skill-name {
+      color: #02a346;
+      font-weight: 500;
+    }
+  }
+
+  .skill-name {
+    display: block;
+    font-size: 14px;
+    color: #1e293b;
+    margin-bottom: 4px;
+  }
+
+  .skill-description {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  gap: 12px;
+  color: #64748b;
+
+  .spinner {
+    font-size: 24px;
+    color: #02a346;
   }
 }

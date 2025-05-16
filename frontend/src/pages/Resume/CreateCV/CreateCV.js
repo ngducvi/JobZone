@@ -9,6 +9,7 @@ import images from "~/assets/images/index";
 const cx = classNames.bind(styles);
 
 const CreateCV = () => {
+  const [activeTab, setActiveTab] = useState("style");
   const [language, setLanguage] = useState("Tiếng Việt");
   const [sortBy, setSortBy] = useState("all");
   const [loading, setLoading] = useState(true);
@@ -21,9 +22,10 @@ const CreateCV = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [selectedColor, setSelectedColor] = useState('#013a74');
-  const [bgColor] = useState('rgba(240, 247, 255, 0.5)');
+  const [bgColor, setBgColor] = useState('rgba(240, 247, 255, 0.5)');
   const [cvLanguage, setCvLanguage] = useState("Tiếng Việt");
   const [cvPosition, setCvPosition] = useState("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const itemsPerPage = 6; // Display 6 templates per page
   const navigate = useNavigate();
 
@@ -68,7 +70,7 @@ const CreateCV = () => {
         const token = localStorage.getItem("token");
         if (!token) return;
         const response = await authAPI().get(userApis.getAllCvTemplates);
-        await authAPI().get(userApis.getAllTemplateFieldsByTemplateId(response.data.cvTemplates[0].template_id));
+        const responseFields = await authAPI().get(userApis.getAllTemplateFieldsByTemplateId(response.data.cvTemplates[0].template_id));
 
         setTemplates(response.data.cvTemplates);
         setTotalPages(Math.ceil(response.data.cvTemplates.length / itemsPerPage));
@@ -213,6 +215,7 @@ const CreateCV = () => {
 
   const PreviewModal = ({ template, onClose }) => {
     const [formData, setFormData] = useState({});
+    const [templateFields, setTemplateFields] = useState([]);
 
     useEffect(() => {
       const fetchFields = async () => {
@@ -220,7 +223,7 @@ const CreateCV = () => {
           const response = await authAPI().get(
             userApis.getAllTemplateFieldsByTemplateId(template.template_id)
           );
-          // setTemplateFields(response.data.templateFields);
+          setTemplateFields(response.data.templateFields);
 
           // Khởi tạo formData với placeholder values
           const initialData = {};
@@ -235,6 +238,12 @@ const CreateCV = () => {
       fetchFields();
     }, [template.template_id]);
 
+    const handleInputChange = (fieldName, value) => {
+      setFormData(prev => ({
+        ...prev,
+        [fieldName]: value
+      }));
+    };
 
     const renderTemplate = () => {
       let html = template.template_html;
@@ -270,6 +279,34 @@ const CreateCV = () => {
           `}
         </style>
       );
+    };
+
+    const renderFields = () => {
+      return templateFields.map(field => (
+        <div key={field.field_id} className={cx("form-field")}>
+          <label>{field.field_label}</label>
+          {field.field_type === 'textarea' ? (
+            <textarea
+              value={formData[field.field_name] || ''}
+              onChange={e => handleInputChange(field.field_name, e.target.value)}
+              placeholder={field.field_placeholder}
+            />
+          ) : field.field_type === 'date' ? (
+            <input
+              type="date"
+              value={formData[field.field_name] || ''}
+              onChange={e => handleInputChange(field.field_name, e.target.value)}
+            />
+          ) : (
+            <input
+              type="text"
+              value={formData[field.field_name] || ''}
+              onChange={e => handleInputChange(field.field_name, e.target.value)}
+              placeholder={field.field_placeholder}
+            />
+          )}
+        </div>
+      ));
     };
 
     return (

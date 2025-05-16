@@ -186,6 +186,12 @@ export const userApis = {
     getAllConversations: '/user/conversations',
     getRecruiterCompanyByUserId: '/user/recruiter-company',
     checkAndUpdateTransaction: '/vnpay/check-update-transaction',
+    getCandidateSkillsByCandidateId: (candidate_id) => `/user/candidate-skills/${candidate_id}`,
+    getAllSkills: '/user/skills',
+    addCandidateSkill: '/user/candidate-skill',
+    deleteCandidateSkill: (candidate_id, skill_name) => `/user/candidate-skill/${candidate_id}/${encodeURIComponent(skill_name)}`,
+    getJobSkills: (job_id) => `/openai/job-skills/${job_id}`,
+    getCandidateSkills: (candidate_id) => `/openai/candidate-skills/${candidate_id}`,
 };
 
 
@@ -231,6 +237,13 @@ export const recruiterApis = {
     getAllUserCvByCvId: (cv_id) => `/recruiter/user-cvs/${cv_id}`,
     getAllCandidateCvByCvId: (cv_id) => `/recruiter/candidate-cvs/${cv_id}`,
     createRecruiterCompany: '/recruiter/create-recruiter-company',
+    // Skills management
+    getAllSkills: '/recruiter/skills',
+    getSkillsByCategoryId: (categoryId) => `/recruiter/skills/category/${categoryId}`,
+    getJobSkills: (job_id) => `/openai/job-skills/${job_id}`,
+    getCandidateSkills: (candidate_id) => `/openai/candidate-skills/${candidate_id}`,
+    addJobSkill: '/recruiter/job-skill',
+    removeJobSkill: '/recruiter/job-skill',
 };
 
 export const messagesApis = {
@@ -274,6 +287,17 @@ export const authAPI = () => {
 
 
     return instance;
+};
+
+// API recruiter public (không auth)
+export const recruiterAPI = () => {
+    return axios.create({
+        baseURL: HOST,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        withCredentials: true,
+    });
 };
 
 export default api;

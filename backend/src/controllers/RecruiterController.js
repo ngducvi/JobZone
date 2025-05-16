@@ -40,6 +40,9 @@ const fileService = require('../services/FileService');
 const NotificationController = require("./NotificationController");
 const excel = require('exceljs');
 const sequelize = require('sequelize');
+const Skill = require("../models/Skill");
+const JobSkill = require("../models/JobSkill");
+const CategorySkill = require("../models/CategorySkill");
 
 class RecruiterController {
   constructor() {
@@ -1190,6 +1193,16 @@ class RecruiterController {
         deadline: req.body.deadline,
         category_id: req.body.category_id,
       });
+
+      // Handle skills if provided
+      if (req.body.skills && Array.isArray(req.body.skills)) {
+        const jobSkills = req.body.skills.map(skill_id => ({
+          job_id: job.job_id,
+          skill_id
+        }));
+        await JobSkill.bulkCreate(jobSkills);
+      }
+
       return res.json({
         message: "Đăng tin tuyển dụng thành công",
         code: 1,
@@ -2391,6 +2404,137 @@ class RecruiterController {
         message: "Lỗi khi lấy đánh giá công ty",
         error: error.message,
         code: -1
+      });
+    }
+  }
+
+  async getAllSkills(req, res) {
+    try {
+      const skills = await Skill.findAll({
+        order: [['skill_name', 'ASC']]
+      });
+      return res.json({
+        message: "Lấy danh sách kỹ năng thành công",
+        code: 1,
+        skills: skills
+      });
+    } catch (error) {
+      console.error("Error getting skills:", error);
+      res.status(400).send({
+        message: "Đã xảy ra lỗi khi lấy danh sách kỹ năng.",
+        error: error.message
+      });
+    }
+  }
+
+  async getJobSkills(req, res) {
+    try {
+      const { job_id } = req.params;
+      const jobSkills = await JobSkill.findAll({
+        where: { job_id },
+        include: [{
+          model: Skill,
+          attributes: ['skill_id', 'skill_name', 'description']
+        }]
+      });
+      return res.json({
+        message: "Lấy danh sách kỹ năng của job thành công",
+        code: 1,
+        skills: jobSkills.map(js => js.Skill)
+      });
+    } catch (error) {
+      console.error("Error getting job skills:", error);
+      res.status(400).send({
+        message: "Đã xảy ra lỗi khi lấy danh sách kỹ năng của job.",
+        error: error.message
+      });
+    }
+  }
+
+  async addJobSkill(req, res) {
+    try {
+      const { job_id, skill_id } = req.body;
+      
+      // Check if skill already exists for this job
+      const existingSkill = await JobSkill.findOne({
+        where: { job_id, skill_id }
+      });
+
+      if (existingSkill) {
+        return res.status(400).json({
+          message: "Kỹ năng này đã được thêm vào job",
+          code: 0
+        });
+      }
+
+      await JobSkill.create({
+        job_id,
+        skill_id
+      });
+
+      return res.json({
+        message: "Thêm kỹ năng vào job thành công",
+        code: 1
+      });
+    } catch (error) {
+      console.error("Error adding job skill:", error);
+      res.status(400).send({
+        message: "Đã xảy ra lỗi khi thêm kỹ năng vào job.",
+        error: error.message
+      });
+    }
+  }
+
+  async removeJobSkill(req, res) {
+    try {
+      const { job_id, skill_id } = req.body;
+      
+      const deleted = await JobSkill.destroy({
+        where: { job_id, skill_id }
+      });
+
+      if (!deleted) {
+        return res.status(404).json({
+          message: "Không tìm thấy kỹ năng trong job",
+          code: 0
+        });
+      }
+
+      return res.json({
+        message: "Xóa kỹ năng khỏi job thành công",
+        code: 1
+      });
+    } catch (error) {
+      console.error("Error removing job skill:", error);
+      res.status(400).send({
+        message: "Đã xảy ra lỗi khi xóa kỹ năng khỏi job.",
+        error: error.message
+      });
+    }
+  }
+  // get all skills by category_id
+  async getSkillsByCategoryId(req, res) {
+    try {
+      const { category_id } = req.params;
+      // lấy tất cả skill_id có trong bảng category_skills có category_id = category_id
+      const categorySkills = await CategorySkill.findAll({
+        where: { category_id },
+        attributes: ['skill_id']
+      });
+      // lấy tất cả skill_id để lấy skill_name
+      const skills = await Skill.findAll({
+        where: { skill_id: categorySkills.map(s => s.skill_id) }
+      });
+      return res.json({
+        message: "Lấy danh sách kỹ năng theo danh mục thành công",
+        code: 1,
+        skills: skills
+      });
+    } catch (error) {
+      console.error("Error getting skills by category:", error);
+      res.status(400).send({
+        message: "Đã xảy ra lỗi khi lấy danh sách kỹ năng theo danh mục.",
+        error: error.message
       });
     }
   }

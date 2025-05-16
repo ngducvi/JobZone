@@ -41,6 +41,7 @@ const fileService = require('../services/FileService');
 const NotificationController = require("./NotificationController");
 const { getIO, notifyNewJobApplication } = require("../config/socket");
 const sequelize = require("../config/database");
+const Skill = require("../models/Skill");
 
 class UserController {
   constructor() {
@@ -3610,51 +3611,27 @@ class UserController {
   }
   // delete user cv template
   async deleteUserCvTemplate(req, res) {
-    let transaction;
     try {
       const { cv_id } = req.params;
       const user_id = req.user.id;
-      
-      // Start a transaction
-      transaction = await sequelize.transaction();
-      
-      // Find the CV first
       const cv = await UserCv.findOne({
         where: {
           cv_id: cv_id,
           user_id: user_id
-        },
-        transaction
+        }
       });
-
       if (!cv) {
-        await transaction.rollback();
         return res.status(404).json({
           code: 0,
           message: "CV not found"
         });
       }
-
-      // First delete all related field values
-      await CvFieldValues.destroy({
-        where: { cv_id: cv_id },
-        transaction
-      });
-
-      // Then delete the CV itself
-      await cv.destroy({ transaction });
-      
-      // Commit the transaction
-      await transaction.commit();
-      
+      await cv.destroy();
       return res.status(200).json({
         code: 1,
         message: "CV template deleted successfully"
       });
     } catch (error) {
-      // Rollback in case of error
-      if (transaction) await transaction.rollback();
-      
       console.error("Error in deleteUserCvTemplate:", error);
       return res.status(500).json({
         code: 0,
@@ -4067,6 +4044,155 @@ class UserController {
       return res.status(500).json({
         success: false,
         message: error.message || 'Lỗi khi cập nhật cài đặt thông báo'
+      });
+    }
+  }
+  // getCandidateSkillsByCandidateId 
+  async getCandidateSkillsByCandidateId(req, res) {
+    try {
+      const { candidate_id } = req.params;
+      const skills = await Candidate.findOne({
+        where: { candidate_id }
+      });
+      return res.status(200).json({
+        success: true,
+        data: skills
+      });
+    } catch (error) {
+      console.error('Error in getCandidateSkillsByCandidateId:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Lỗi khi lấy kỹ năng của ứng viên'
+      });
+    }
+  }
+
+  async getAllSkills(req, res) {
+    try {
+      const skills = await Skill.findAll({
+        order: [['skill_name', 'ASC']]
+      });
+      return res.json({
+        message: "Lấy danh sách kỹ năng thành công",
+        code: 1,
+        skills: skills
+      });
+    } catch (error) {
+      console.error("Error getting skills:", error);
+      res.status(400).send({
+        message: "Đã xảy ra lỗi khi lấy danh sách kỹ năng.",
+        error: error.message
+      });
+    }
+  }
+
+  async addCandidateSkill(req, res) {
+    try {
+      const { candidate_id, skill_id, skill_level } = req.body;
+      
+      // Get the candidate
+      const candidate = await Candidate.findOne({
+        where: { candidate_id }
+      });
+
+      if (!candidate) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy ứng viên'
+        });
+      }
+
+      // Get the skill
+      const skill = await Skill.findOne({
+        where: { skill_id }
+      });
+
+      if (!skill) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy kỹ năng'
+        });
+      }
+
+      // Get current skills
+      let currentSkills = candidate.skills || '';
+      let skillsArray = currentSkills ? currentSkills.split(',').map(s => s.trim()) : [];
+
+      // Check if skill already exists
+      if (skillsArray.includes(skill.skill_name)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Kỹ năng này đã tồn tại trong hồ sơ'
+        });
+      }
+
+      // Add new skill
+      skillsArray.push(skill.skill_name);
+      const updatedSkills = skillsArray.join(', ');
+
+      // Update candidate's skills
+      await candidate.update({
+        skills: updatedSkills
+      });
+
+      return res.json({
+        success: true,
+        message: 'Thêm kỹ năng thành công',
+        code: 1,
+        candidate_skill_id: Date.now().toString(), // Temporary ID for frontend
+        skills: updatedSkills
+      });
+
+    } catch (error) {
+      console.error('Error adding candidate skill:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Lỗi khi thêm kỹ năng'
+      });
+    }
+  }
+
+  async deleteCandidateSkill(req, res) {
+    try {
+      const { candidate_id, skill_name } = req.params;
+      
+      // Get the candidate
+      const candidate = await Candidate.findOne({
+        where: { candidate_id }
+      });
+
+      if (!candidate) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy ứng viên'
+        });
+      }
+
+      // Get current skills
+      let currentSkills = candidate.skills || '';
+      let skillsArray = currentSkills ? currentSkills.split(',').map(s => s.trim()) : [];
+
+      // Remove the skill
+      skillsArray = skillsArray.filter(skill => skill !== skill_name);
+      const updatedSkills = skillsArray.join(', ');
+
+      // Update candidate's skills
+      await candidate.update({
+        skills: updatedSkills
+      });
+
+      return res.json({
+        success: true,
+        message: 'Xóa kỹ năng thành công',
+        code: 1,
+        skills: updatedSkills
+      });
+
+    } catch (error) {
+      console.error('Error deleting candidate skill:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Lỗi khi xóa kỹ năng'
       });
     }
   }

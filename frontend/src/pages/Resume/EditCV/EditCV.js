@@ -5,8 +5,9 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './EditCV.module.scss';
 import { authAPI, userApis } from '~/utils/api';
-import { FaUndo, FaRedo, FaSave, FaEye, FaSpinner } from 'react-icons/fa';
+import { FaUndo, FaRedo, FaSave, FaDownload, FaEye, FaSpinner } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
+import useScrollTop from '~/hooks/useScrollTop';
 
 const cx = classNames.bind(styles);
 
@@ -20,10 +21,10 @@ const EditCV = () => {
   const [templateCss, setTemplateCss] = useState('');
   const [fieldValues, setFieldValues] = useState({});
   const [selectedColor, setSelectedColor] = useState('#013a74');
-  const [bgColor] = useState('rgba(240, 247, 255, 0.5)');
+  const [bgColor, setBgColor] = useState('rgba(240, 247, 255, 0.5)');
   const [lineSpacing, setLineSpacing] = useState(1.5);
   const [showBackground, setShowBackground] = useState(true);
-  const [isEditing] = useState(true);
+  const [isEditing, setIsEditing] = useState(true);
   const [history, setHistory] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [lastSavedState, setLastSavedState] = useState(null);
@@ -137,11 +138,11 @@ const EditCV = () => {
     setIsSaving(true);
     
     // Define fieldValuesToUpdate outside the try block so it's accessible in the catch block
-    const fieldValuesToUpdate = templateFields.map(field => ({
-      field_id: field.field_id,
-      field_value: fieldValues[field.field_name] || ''
-    }));
-    
+      const fieldValuesToUpdate = templateFields.map(field => ({
+        field_id: field.field_id,
+        field_value: fieldValues[field.field_name] || ''
+      }));
+
     try {
       // Gọi API để cập nhật CV
       const response = await authAPI().put(userApis.updateCV(cv_id), {

@@ -15,6 +15,8 @@ const SearchCandidate = () => {
   const [searchName, setSearchName] = useState("");
   const [searchLocation, setSearchLocation] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [candidateSkills, setCandidateSkills] = useState({});
+  const [loadingSkills, setLoadingSkills] = useState({});
   const [filters, setFilters] = useState({
     experience: "all",
     salary: "all",
@@ -61,7 +63,7 @@ const SearchCandidate = () => {
   ]);
   const [isFindingSimilar, setIsFindingSimilar] = useState(false);
   const [similarResults, setSimilarResults] = useState(null);
-  const [selectedAIModel, setSelectedAIModel] = useState("gpt-4o-mini");
+  const [selectedAIModel, setSelectedAIModel] = useState("gemini-1.5-pro");
 
   const [userPlan, setUserPlan] = useState('Basic');
   const [companyInfo, setCompanyInfo] = useState(null);
@@ -131,8 +133,13 @@ const SearchCandidate = () => {
   const fetchCandidates = async () => {
     try {
       const response = await authAPI().get(recruiterApis.getAllCandidate);
-      setAllCandidates(response.data.candidates);
-      setFilteredCandidates(response.data.candidates);
+      const candidatesData = response.data.candidates;
+      setAllCandidates(candidatesData);
+      setFilteredCandidates(candidatesData);
+      
+      // Fetch skills for visible candidates only
+      const visibleCandidates = candidatesData.slice(0, 10); // Initially fetch for first 10 candidates
+      fetchCandidateSkills(visibleCandidates);
     } catch (error) {
       console.error("Error fetching candidates:", error);
       toast.error("Có lỗi xảy ra khi tải danh sách ứng viên");
@@ -157,6 +164,89 @@ const SearchCandidate = () => {
       setIsLoadingPlan(false);
     }
   };
+
+  const fetchCandidateSkills = async (candidatesToFetch) => {
+    const candidatesToLoad = candidatesToFetch.filter(
+      candidate => !candidateSkills[candidate.candidate_id] && !loadingSkills[candidate.candidate_id]
+    );
+
+    if (candidatesToLoad.length === 0) return;
+
+    // Set loading state for these candidates
+    setLoadingSkills(prev => ({
+      ...prev,
+      ...candidatesToLoad.reduce((acc, candidate) => ({
+        ...acc,
+        [candidate.candidate_id]: true
+      }), {})
+    }));
+
+    try {
+      // Fetch skills in parallel for better performance
+      const skillsPromises = candidatesToLoad.map(candidate =>
+        authAPI().get(recruiterApis.getCandidateSkills(candidate.candidate_id))
+          .then(res => ({
+            candidateId: candidate.candidate_id,
+            skills: res.data.skills || []
+          }))
+          .catch(err => {
+            console.error(`Error fetching skills for candidate ${candidate.candidate_id}:`, err);
+            return {
+              candidateId: candidate.candidate_id,
+              skills: []
+            };
+          })
+      );
+
+      const skillsResults = await Promise.all(skillsPromises);
+      
+      // Update skills state
+      setCandidateSkills(prev => ({
+        ...prev,
+        ...skillsResults.reduce((acc, { candidateId, skills }) => ({
+          ...acc,
+          [candidateId]: skills
+        }), {})
+      }));
+    } catch (error) {
+      console.error("Error fetching candidate skills:", error);
+      toast.error("Có lỗi xảy ra khi tải kỹ năng ứng viên");
+    } finally {
+      // Clear loading state
+      setLoadingSkills(prev => ({
+        ...prev,
+        ...candidatesToLoad.reduce((acc, candidate) => ({
+          ...acc,
+          [candidate.candidate_id]: false
+        }), {})
+      }));
+    }
+  };
+
+  // Add intersection observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const candidateId = entry.target.dataset.candidateId;
+            const candidate = allCandidates.find(c => c.candidate_id === candidateId);
+            if (candidate && !candidateSkills[candidateId] && !loadingSkills[candidateId]) {
+              fetchCandidateSkills([candidate]);
+            }
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    // Observe candidate cards
+    document.querySelectorAll(`.${cx('candidate-card')}`).forEach(card => {
+      observer.observe(card);
+    });
+
+    return () => observer.disconnect();
+  }, [allCandidates, candidateSkills, loadingSkills]);
 
   const handleFilterChange = (filterName, value) => {
     setFilters(prev => ({
@@ -1002,6 +1092,7 @@ const SearchCandidate = () => {
                         "medium-match": candidate.match_score >= 60 && candidate.match_score < 80,
                         "low-match": candidate.match_score !== undefined && candidate.match_score < 60,
                       })}
+                      data-candidate-id={candidate.candidate_id}
                     >
                       {candidate.match_score !== undefined && (
                         <div className={cx("match-indicator")}>
@@ -1031,16 +1122,27 @@ const SearchCandidate = () => {
                           </span>
                         </div>
                         <div className={cx("skills")}>
-                          {candidate.skills
-                            ?.split(",")
-                            ?.slice(0, 3)
-                            ?.map((skill, index) => (
-                              <span key={index} className={cx("skill-tag")}>
-                                {skill.trim()}
-                              </span>
-                            )) || (
-                            <span className={cx("skill-tag")}>
+                          {loadingSkills[candidate.candidate_id] ? (
+                            <div className={cx("skills-loading")}>
+                              <FaSpinner className={cx("spinner")} />
+                              <span>Đang tải kỹ năng...</span>
+                            </div>
+                          ) : candidateSkills[candidate.candidate_id]?.length > 0 ? (
+                            candidateSkills[candidate.candidate_id]
+                              .slice(0, 3)
+                              .map((skill, index) => (
+                                <span key={index} className={cx("skill-tag")}>
+                                  {skill}
+                                </span>
+                              ))
+                          ) : (
+                            <span className={cx("skill-tag", "no-skills")}>
                               Chưa cập nhật kỹ năng
+                            </span>
+                          )}
+                          {candidateSkills[candidate.candidate_id]?.length > 3 && (
+                            <span className={cx("skill-tag", "more-skills")}>
+                              +{candidateSkills[candidate.candidate_id].length - 3}
                             </span>
                           )}
                         </div>
