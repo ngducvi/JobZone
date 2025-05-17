@@ -472,32 +472,32 @@ Hãy phân tích theo các tiêu chí:
             const jobSkills = jobSkillsMap[selectedJob.job_id] || [];
             const candidateSkills = candidateSkillsMap[application.candidate?.candidate_id] || [];
             
-            const res = await fetch(`${process.env.REACT_APP_API_URL}/openai/match-score`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    candidate: {
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/openai/match-score`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+                candidate: {
                         ...application.candidate,
                         skills: candidateSkills,
-                    },
-                    job: {
+                },
+                job: {
                         ...selectedJob,
                         skills: jobSkills,
-                    },
-                    model: selectedModel,
-                }),
-            });
+                },
+                model: selectedModel,
+            }),
+        });
             
             if (!res.ok) throw new Error('Failed to fetch match score');
             
-            const data = await res.json();
+        const data = await res.json();
             setMatchScores(prev => ({
-                ...prev,
-                [application.application_id]: data,
-            }));
+            ...prev,
+            [application.application_id]: data,
+        }));
         } catch (error) {
             console.error("Error calculating match score:", error);
             toast.error("Không thể tính toán độ phù hợp");
@@ -868,15 +868,15 @@ Hãy phân tích theo các tiêu chí:
                                                                 <span>Đang tính...</span>
                                                             </div>
                                                         ) : matchScores[application.application_id] ? (
-                                                            <>
-                                                                {matchScores[application.application_id].score}%
-                                                                <button
-                                                                    className={cx('detail-btn')}
-                                                                    onClick={() => handleShowMatchDetail(application.application_id)}
-                                                                >
-                                                                    Chi tiết
-                                                                </button>
-                                                            </>
+                                                                <>
+                                                                    {matchScores[application.application_id].score}%
+                                                                    <button
+                                                                        className={cx('detail-btn')}
+                                                                        onClick={() => handleShowMatchDetail(application.application_id)}
+                                                                    >
+                                                                        Chi tiết
+                                                                    </button>
+                                                                </>
                                                         ) : (
                                                             <button 
                                                                 className={cx('calculate-btn')}

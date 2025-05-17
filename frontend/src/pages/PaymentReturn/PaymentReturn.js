@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import classNames from "classnames/bind";
 import styles from "./PaymentReturn.module.scss";
@@ -6,6 +6,7 @@ import Logo from "~/components/Logo";
 import { toast } from "react-hot-toast";
 import { authAPI, userApis } from "~/utils/api";
 import paymentServices from "~/services/paymentServices";
+import UserContext from '~/context/UserContext';
 
 const cx = classNames.bind(styles);
 
@@ -15,6 +16,25 @@ function PaymentReturn() {
   const [transactionData, setTransactionData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { user } = useContext(UserContext);
+  const [role, setRole] = useState(user?.role || localStorage.getItem('role') || null);
+
+  // Nếu chưa có role, gọi API lấy user
+  useEffect(() => {
+    if (!role) {
+      authAPI().get(userApis.getCurrentUser)
+        .then(res => {
+          if (res.data && res.data.user && res.data.user.role) {
+            setRole(res.data.user.role);
+            console.log("Role:", res.data.user.role);
+            localStorage.setItem('role', res.data.user.role);
+          } else {
+            setRole('user');
+          }
+        })
+        .catch(() => setRole('user'));
+    }
+  }, [role]);
 
   useEffect(() => {
     const processPaymentReturn = async () => {
@@ -22,17 +42,17 @@ function PaymentReturn() {
         // Thêm dòng để hiển thị URL đầy đủ để debug
         console.log("Full URL:", window.location.href);
 
-  const searchParams = new URLSearchParams(location.search);
+        const searchParams = new URLSearchParams(location.search);
         const data = searchParams.get("data");
         const isValid = searchParams.get("is_valid");
         const errorParam = searchParams.get("error");
-        
+
         console.log("Payment return params:", { data, isValid, errorParam });
-        
+
         // Check for direct VNPay parameters (vnp_ResponseCode exists)
         if (searchParams.has('vnp_ResponseCode') && !data) {
           console.log("Direct VNPay parameters detected, processing...");
-          
+
           // Extract parameters from VNPay redirect URL directly
           const responseCode = searchParams.get('vnp_ResponseCode');
           const transactionStatus = searchParams.get('vnp_TransactionStatus');
@@ -43,10 +63,10 @@ function PaymentReturn() {
           const cardType = searchParams.get('vnp_CardType');
           const payDate = searchParams.get('vnp_PayDate');
           const orderInfo = searchParams.get('vnp_OrderInfo');
-          
+
           // Assume transaction is valid if responseCode is "00"
           const isValidTransaction = responseCode === "00" && transactionStatus === "00";
-          
+
           // Process the VNPay data directly
           const vnpData = [
             responseCode,
@@ -59,9 +79,9 @@ function PaymentReturn() {
             payDate,
             orderInfo
           ].join("|");
-          
+
           processTransactionData(vnpData, isValidTransaction);
-          
+
           // Update user plan data if payment was successful
           if (isValidTransaction) {
             try {
@@ -73,7 +93,7 @@ function PaymentReturn() {
                 // Fallback: gọi trực tiếp API cập nhật gói người dùng nếu không thể cập nhật giao dịch
                 console.log("Fallback: Updating user plan directly");
               }
-              
+
               // Cập nhật kế hoạch người dùng - luôn thực hiện dù có lỗi ở trên hay không
               await paymentServices.updateUserPlan();
               console.log("User plan updated successfully");
@@ -81,23 +101,23 @@ function PaymentReturn() {
               console.error("Error updating user info:", error);
             }
           }
-          
+
           setLoading(false);
           return;
         }
-        
+
         // Nếu không có dữ liệu nào, có thể đang truy cập trực tiếp
         if (!data && !errorParam) {
           setError("Truy cập trực tiếp. Vui lòng thực hiện thanh toán từ trang giá cả.");
           setLoading(false);
           return;
         }
-        
+
         // Handle error cases from backend
         if (errorParam) {
           let errorMessage = "Có lỗi xảy ra trong quá trình xử lý thanh toán.";
-          
-          switch(errorParam) {
+
+          switch (errorParam) {
             case 'invalid_data':
               errorMessage = "Dữ liệu thanh toán không hợp lệ.";
               break;
@@ -128,10 +148,10 @@ function PaymentReturn() {
             default:
               errorMessage = "Có lỗi xảy ra trong quá trình xử lý thanh toán.";
           }
-          
+
           setError(errorMessage);
           toast.error(errorMessage);
-          
+
           // If we still have transaction data, try to display it
           if (data) {
             processTransactionData(data, false);
@@ -140,7 +160,7 @@ function PaymentReturn() {
           }
           return;
         }
-        
+
         // Normal flow - no error param
         if (!data) {
           setError("Dữ liệu thanh toán không hợp lệ hoặc không đầy đủ.");
@@ -148,10 +168,10 @@ function PaymentReturn() {
           setLoading(false);
           return;
         }
-        
+
         // Process the transaction data
         processTransactionData(data, isValid === "true");
-        
+
         // Fetch updated user data after successful payment
         if (isValid === "true") {
           try {
@@ -169,21 +189,21 @@ function PaymentReturn() {
         setLoading(false);
       }
     };
-    
+
     const processTransactionData = (data, isValid) => {
       try {
         const dataArray = data.split("|");
-        
+
         // Kiểm tra mảng dữ liệu có đầy đủ không
         if (!dataArray || dataArray.length < 3) {
           throw new Error("Dữ liệu giao dịch không đầy đủ");
         }
-        
+
         const responseCode = dataArray[0] || "";
-        
+
         // In ra console để debug
         console.log("Transaction data array:", dataArray);
-        
+
         // Xử lý số tiền
         let amount = "N/A";
         if (dataArray[3]) {
@@ -195,19 +215,19 @@ function PaymentReturn() {
               // (VNPay multiplies by 100 when sending to payment gateway)
               const adjustedAmount = dataArray[3].length > 8 ? amountValue / 100 : amountValue;
               amount = adjustedAmount.toLocaleString(
-    "vi-VN",
-    { style: "currency", currency: "VND" }
-  );
+                "vi-VN",
+                { style: "currency", currency: "VND" }
+              );
             }
           } catch (e) {
             console.error("Error parsing amount:", e);
             amount = "N/A";
           }
         }
-        
+
         // Xử lý thời gian để đảm bảo không bị lỗi
         const payDate = dataArray[7] || "";
-        
+
         setTransactionData({
           status: isValid && responseCode === "00" ? "Thành công" : "Thất bại",
           amount: amount,
@@ -222,9 +242,23 @@ function PaymentReturn() {
         setError("Không thể xử lý dữ liệu giao dịch: " + err.message);
       }
     };
-    
+
     processPaymentReturn();
   }, [location, navigate]);
+
+  // Tự động redirect sau 3s nếu thành công
+  useEffect(() => {
+    if (transactionData && transactionData.status === "Thành công" && role) {
+      const timer = setTimeout(() => {
+        if (role === 'recruiter') {
+          navigate('/recruiter/pricing');
+        } else {
+          navigate('/pricing');
+        }
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [transactionData, role, navigate]);
 
   // Get human-readable response message based on VNPay response code
   const getResponseMessage = (responseCode) => {
@@ -249,24 +283,24 @@ function PaymentReturn() {
       "79": "Giao dịch không thành công do: KH nhập sai mật khẩu thanh toán quá số lần quy định",
       "99": "Các lỗi khác"
     };
-    
+
     return messages[responseCode] || "Lỗi không xác định";
   };
 
   const formatDate = (dateString) => {
     if (!dateString || dateString.length < 14) return "N/A";
-    
+
     try {
       // Handle the format directly from VNPay (yyyyMMddHHmmss)
-    const date = new Date(
-      dateString.slice(0, 4),
-      dateString.slice(4, 6) - 1,
-      dateString.slice(6, 8),
-      dateString.slice(8, 10),
-      dateString.slice(10, 12),
-      dateString.slice(12, 14)
-    );
-    return date.toLocaleString("vi-VN");
+      const date = new Date(
+        dateString.slice(0, 4),
+        dateString.slice(4, 6) - 1,
+        dateString.slice(6, 8),
+        dateString.slice(8, 10),
+        dateString.slice(10, 12),
+        dateString.slice(12, 14)
+      );
+      return date.toLocaleString("vi-VN");
     } catch (error) {
       return "N/A";
     }
@@ -297,87 +331,87 @@ function PaymentReturn() {
               <div className={cx("direct-access-info")}>
                 <p>Bạn đang truy cập trực tiếp vào trang kết quả thanh toán mà không thông qua quá trình thanh toán.</p>
                 <p>Để tiến hành thanh toán, vui lòng nhấn nút bên dưới để đi đến trang giá cả và chọn gói phù hợp.</p>
-                <Link to="/pricing" className={cx("btn", "btn-primary", "mt-2")}>
+                <Link to={role === 'recruiter' ? "/recruiter/pricing" : "/pricing"} className={cx("btn", "btn-primary", "mt-2")}>
                   Đi đến trang giá cả
                 </Link>
               </div>
             )}
           </div>
         )}
-        
+
         {transactionData && (
           <>
-        <div className={cx("icon-container")}>
+            <div className={cx("icon-container")}>
               {transactionData.status === "Thành công" ? (
-            <div className={cx("icon", "success-icon")}>
+                <div className={cx("icon", "success-icon")}>
                   <i className="fas fa-check"></i>
-            </div>
-          ) : (
-            <div className={cx("icon", "failure-icon")}>
+                </div>
+              ) : (
+                <div className={cx("icon", "failure-icon")}>
                   <i className="fas fa-times"></i>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        <h1
-          className={cx(
-            "status",
+            <h1
+              className={cx(
+                "status",
                 transactionData.status === "Thành công" ? "success" : "failure"
-          )}
-        >
+              )}
+            >
               {transactionData.status === "Thành công"
-            ? "Thanh toán thành công!"
-            : "Thanh toán thất bại"}
-        </h1>
+                ? "Thanh toán thành công!"
+                : "Thanh toán thất bại"}
+            </h1>
             {transactionData.responseMessage && transactionData.status !== "Thành công" && (
               <p className={cx("response-message")}>{transactionData.responseMessage}</p>
             )}
-        <div className={cx("details")}>
-          <div className={cx("info-item")}>
-            <strong>Mã giao dịch:</strong>
+            <div className={cx("details")}>
+              <div className={cx("info-item")}>
+                <strong>Mã giao dịch:</strong>
                 <span className={cx("value")}>{transactionData.transactionNo}</span>
-          </div>
-          <div className={cx("info-item")}>
-            <strong>Mã đơn hàng:</strong>
+              </div>
+              <div className={cx("info-item")}>
+                <strong>Mã đơn hàng:</strong>
                 <span className={cx("value")}>{transactionData.orderId}</span>
-          </div>
-          <div className={cx("info-item")}>
-            <strong>Ngân hàng:</strong>
+              </div>
+              <div className={cx("info-item")}>
+                <strong>Ngân hàng:</strong>
                 <span className={cx("value")}>{transactionData.bankCode}</span>
-          </div>
-          <div className={cx("info-item")}>
-            <strong>Số tiền:</strong>
+              </div>
+              <div className={cx("info-item")}>
+                <strong>Số tiền:</strong>
                 <span className={cx("value")}>{transactionData.amount}</span>
-          </div>
-          <div className={cx("info-item")}>
-            <strong>Thời gian:</strong>
+              </div>
+              <div className={cx("info-item")}>
+                <strong>Thời gian:</strong>
                 <span className={cx("value")}>{formatDate(transactionData.payDate)}</span>
-          </div>
-        </div>
+              </div>
+            </div>
           </>
         )}
-        
+
         <div className={cx("actions")}>
-          <Link to="/" className={cx("btn", "btn-primary")}>
+          <Link to={role === 'recruiter' ? "/recruiter" : "/"} className={cx("btn", "btn-primary")}>
             Quay về trang chủ
           </Link>
-          <Link to="/pricing" className={cx("btn", "btn-secondary")}>
+          <Link to={role === 'recruiter' ? "/recruiter/pricing" : "/pricing"} className={cx("btn", "btn-secondary")}>
             Xem các gói dịch vụ
           </Link>
           {transactionData && transactionData.status === "Thành công" && (
-            <Link to="/user/profile" className={cx("btn", "btn-success")}>
-              Xem hồ sơ của tôi
+            <Link to={role === 'recruiter' ? "/recruiter" : "/user/profile"} className={cx("btn", "btn-success")}>
+              {role === 'recruiter' ? "Về trang nhà tuyển dụng" : "Xem hồ sơ của tôi"}
             </Link>
           )}
         </div>
-
+    
         <div className={cx("note")}>
           <small>*Một số thông báo lỗi có thể xuất hiện trong console trình duyệt do cấu hình của cổng thanh toán, điều này không ảnh hưởng đến giao dịch của bạn.</small>
         </div>
-        
+
         <div className={cx("direct-access-guide")} style={{ display: error && error.includes("Truy cập trực tiếp") ? 'block' : 'none' }}>
           <h3>Hướng dẫn thanh toán</h3>
           <ol>
-            <li>Truy cập vào <Link to="/pricing">trang giá cả</Link></li>
+            <li>Truy cập vào <Link to={role === 'recruiter' ? "/recruiter/pricing" : "/pricing"}>trang giá cả</Link></li>
             <li>Đăng nhập vào tài khoản của bạn (nếu chưa đăng nhập)</li>
             <li>Chọn gói Pro phù hợp với nhu cầu của bạn</li>
             <li>Nhấn nút "Nâng cấp ngay" để bắt đầu quá trình thanh toán</li>

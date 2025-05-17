@@ -552,7 +552,7 @@ function RecruiterCVManagement() {
             return null;
           }
           // Also check CV field values
-          await checkCvFieldValues(resumeId);
+            await checkCvFieldValues(resumeId);
           
           return response.data;
         } catch (error) {
@@ -1216,7 +1216,7 @@ function RecruiterCVManagement() {
                                     <span className={cx("btn-text")}>Xem</span>
                                   </button>
                                   <button
-                                    className={cx("download-btn")}
+                              className={cx("download-btn")}
                                     onClick={() => handleDownloadCV(application)}
                                     title="Tải CV"
                                     disabled={(!application.cv_info || application.cv_info.cv_name === 'CV không tìm thấy' || !application.cv_info.cv_id)}

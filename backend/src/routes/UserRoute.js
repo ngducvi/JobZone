@@ -148,4 +148,5 @@ router.get('/candidate-skills/:candidate_id', userController.getCandidateSkillsB
 router.get('/skills', userController.getAllSkills.bind(userController));
 router.post('/candidate-skill', userController.addCandidateSkill.bind(userController));
 router.delete('/candidate-skill/:candidate_id/:skill_name', userController.deleteCandidateSkill.bind(userController));
+router.get('/payment-transactions', userController.getAllPaymentTransactionsByUserId.bind(userController));
 module.exports = router;

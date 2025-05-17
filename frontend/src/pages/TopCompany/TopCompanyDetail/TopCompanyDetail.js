@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import avt from "~/assets/images/avt.png";
-import { FaUser, FaEllipsisV, FaArrowLeft, FaPaperclip, FaImage, FaPaperPlane, FaEdit, FaTrash, FaEnvelope } from "react-icons/fa";
+import { FaUser, FaEllipsisV, FaArrowLeft, FaPaperclip, FaImage, FaPaperPlane, FaEdit, FaTrash, FaEnvelope, FaCrown, FaStar, FaGem } from "react-icons/fa";
 import React from "react";
 
 const cx = classNames.bind(styles);
@@ -53,6 +53,7 @@ function TopCompanyDetail() {
   const fileInputRef = useRef(null);
   const [selectedRating, setSelectedRating] = useState(0);
   const [isReviewsLoading, setIsReviewsLoading] = useState(false);
+  const [companyPlan, setCompanyPlan] = useState('Basic');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -69,7 +70,7 @@ function TopCompanyDetail() {
         );
         
         setCompanyDetail(response.data.company);
-        console.log(response.data.recruiterCompanies);
+        console.log("companyDetail",response.data.company);
         setJobs(jobsResponse.data.jobs);
         setRecruiterCompanies(response.data.recruiterCompanies);
       } catch (error) {
@@ -188,6 +189,22 @@ function TopCompanyDetail() {
     checkAppliedStatusForJobs();
     fetchCvs();
   }, [jobs]);
+
+  useEffect(() => {
+    const fetchCompanyPlan = async () => {
+      try {
+        const response = await authAPI().get(userApis.checkPlan, {
+          params: { companyId: company }
+        });
+        if (response.data.code === 1) {
+          setCompanyPlan(response.data.plan);
+        }
+      } catch (error) {
+        console.error("Error fetching company plan:", error);
+      }
+    };
+    fetchCompanyPlan();
+  }, [company]);
 
   const handleFollow = () => {
     setIsFollowing(!isFollowing);
@@ -664,6 +681,28 @@ function TopCompanyDetail() {
     }
   };
 
+  const getPlanIcon = (plan) => {
+    switch (plan) {
+      case 'ProMax':
+        return <FaCrown className={cx('plan-icon', 'promax')} />;
+      case 'Pro':
+        return <FaGem className={cx('plan-icon', 'pro')} />;
+      default:
+        return <FaStar className={cx('plan-icon', 'basic')} />;
+    }
+  };
+
+  const getPlanLabel = (plan) => {
+    switch (plan) {
+      case 'ProMax':
+        return 'Pro Max';
+      case 'Pro':
+        return 'Pro';
+      default:
+        return 'Basic';
+    }
+  };
+
   if (isLoading) {
     return <CompanySkeleton />;
   }
@@ -675,7 +714,7 @@ function TopCompanyDetail() {
   return (
     <div className={styles.wrapper}>
       <div className={styles['hero-section']}>
-        <div className={styles['company-card']}>
+        <div className={`${styles['company-card']} ${companyPlan === 'Pro' ? styles['pro-border'] : ''}`}>
           <div className={styles['company-banner']}>
             <img src={companyDetail?.banner || images.banner} alt={companyDetail?.company_name} />
             <div className={styles.overlay} />
@@ -689,34 +728,47 @@ function TopCompanyDetail() {
 
             <div className={styles['company-stats']}>
               <h1>{companyDetail?.company_name}</h1>
-              
-              <div className={styles['stat-badges']}>
-                <div className={styles.badge}>
+              <div className={cx('plan-badge', companyDetail.plan && companyDetail.plan.toLowerCase())}>
+                {getPlanIcon(companyDetail.plan)}
+                <span>{getPlanLabel(companyDetail.plan)}</span>
+              </div>
+
+              {/* Info Row Start */}
+              <div className={styles['info-row']}>
+                <div className={styles['info-chip']}>
+                  <i className="fas fa-users" />
+                  <span>{companyDetail?.company_emp || '250+'} employees</span>
+                </div>
+                <a
+                  className={styles['info-chip']}
+                  href={companyDetail?.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <i className="fas fa-globe" />
+                  <span>{companyDetail?.website}</span>
+                </a>
+                <div className={styles['info-chip']}>
+                  <i className="fas fa-star" />
+                  <span>{averageRating} rating</span>
+                </div>
+                <div className={styles['info-chip']}>
                   <i className="fas fa-map-marker-alt" />
                   <span>{companyDetail?.address}</span>
                 </div>
-                <div className={styles.badge}>
-                  <i className="fas fa-users" />
-                  <span>{companyDetail?.company_emp || "250+"} employees</span>
-                </div>
-                <div className={styles.badge}>
-                  <i className="fas fa-globe" />
-                  <span>{companyDetail?.website}</span>
-                </div>
-                <div className={`${styles.badge} ${styles.rating}`}>
-                  <i className="fas fa-star" />
-                  <span>{averageRating} rating</span>
-                  </div>
+                <button
+                  className={styles['message-chip']}
+                  onClick={handleMessage}
+                  disabled={isMessageLoading}
+                >
+                  <FaEnvelope />
+                  <span>{isMessageLoading ? 'Đang xử lý...' : 'Message'}</span>
+                </button>
               </div>
+              {/* Info Row End */}
+
               
               <div className={styles['follow-button']}>
-                <button 
-                  className={`${styles['button-content']} ${isFollowing ? styles.following : ''}`}
-                  onClick={handleFollow}
-                >
-                  <i className={`fas ${isFollowing ? 'fa-user-check' : 'fa-user-plus'}`} />
-                  {isFollowing ? 'Following' : 'Follow Company'}
-                </button>
                 <button 
                   className={styles['message-button']}
                   onClick={handleMessage}
@@ -725,10 +777,7 @@ function TopCompanyDetail() {
                   <FaEnvelope />
                   <span>{isMessageLoading ? 'Đang xử lý...' : 'Message'}</span>
                 </button>
-                <div className={styles['follower-count']}>
-                  <i className="fas fa-users" />
-                  <span>2.5k followers</span>
-                </div>
+                
               </div>
             </div>
           </div>

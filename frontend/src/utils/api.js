@@ -192,6 +192,7 @@ export const userApis = {
     deleteCandidateSkill: (candidate_id, skill_name) => `/user/candidate-skill/${candidate_id}/${encodeURIComponent(skill_name)}`,
     getJobSkills: (job_id) => `/openai/job-skills/${job_id}`,
     getCandidateSkills: (candidate_id) => `/openai/candidate-skills/${candidate_id}`,
+    getAllPaymentTransactionsByUserId: '/user/payment-transactions',
 };
 
 
@@ -244,6 +245,8 @@ export const recruiterApis = {
     getCandidateSkills: (candidate_id) => `/openai/candidate-skills/${candidate_id}`,
     addJobSkill: '/recruiter/job-skill',
     removeJobSkill: '/recruiter/job-skill',
+    createPaymentUrl: '/vnpay/create_payment_url',
+    getUserPlan: (user_id) => `/recruiter/user-plan/${user_id}`,
 };
 
 export const messagesApis = {

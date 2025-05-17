@@ -331,13 +331,13 @@ class RecruiterController {
       }
       const token = Common.generateToken();
       // Tạo user với role là recruiter
-      const user = new User({ 
-        username, 
-        email, 
-        password, 
-        phone, 
-        name, 
-        role: 'recruiter' 
+      const user = new User({
+        username,
+        email,
+        password,
+        phone,
+        name,
+        role: 'recruiter'
       });
       const { message, isValid } = Common.checkValidUserInfo(user);
       if (!isValid) {
@@ -381,8 +381,8 @@ class RecruiterController {
                         <tr>
                           <td style="padding: 40px 0; text-align: center; background: linear-gradient(135deg, #013a74 0%, #02a346 100%);">
                             <img src="${process.env.LOGO_URL ||
-                              "https://your-logo-url.com"
-                            }" alt="JobZone" style="max-width: 180px; height: auto; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));">
+        "https://your-logo-url.com"
+        }" alt="JobZone" style="max-width: 180px; height: auto; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));">
                           </td>
                         </tr>
                       </table>
@@ -400,7 +400,7 @@ class RecruiterController {
                             
                             <p style="margin: 0 0 25px; font-size: 16px; line-height: 1.6; color: #4b5563;">
                               Xin chào <span style="font-weight: 600; color: #013a74;">${user.name
-                              }</span>,
+        }</span>,
                             </p>
                             
                             <p style="margin: 0 0 25px; font-size: 16px; line-height: 1.6; color: #4b5563;">
@@ -443,7 +443,7 @@ class RecruiterController {
                               <tr>
                                 <td style="background: linear-gradient(135deg, #013a74 0%, #02a346 100%); border-radius: 8px; box-shadow: 0 4px 12px rgba(1, 58, 116, 0.2);">
                                   <a href="${process.env.BASE_URL
-                                    }/user/verify-email?token=${token}&status=success" 
+        }/user/verify-email?token=${token}&status=success" 
                                      style="display: inline-block; padding: 16px 40px; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none;">
                                     Xác Minh Email Ngay
                                   </a>
@@ -716,7 +716,7 @@ class RecruiterController {
       // Collect all resume IDs for batch fetching
       const createdCvIds = [];
       const uploadedCvIds = [];
-      
+
       jobApplications.forEach(app => {
         if (app.resume_type === 'created' && app.resume) {
           createdCvIds.push(app.resume);
@@ -724,12 +724,12 @@ class RecruiterController {
           uploadedCvIds.push(app.resume);
         }
       });
-      
+
       // Batch fetch CV details
-      const userCvs = createdCvIds.length > 0 ? 
+      const userCvs = createdCvIds.length > 0 ?
         await UserCv.findAll({ where: { cv_id: { [Op.in]: createdCvIds } } }) : [];
-      
-      const candidateCvs = uploadedCvIds.length > 0 ? 
+
+      const candidateCvs = uploadedCvIds.length > 0 ?
         await CandidateCv.findAll({ where: { cv_id: { [Op.in]: uploadedCvIds } } }) : [];
 
       // Kết hợp thông tin người dùng và ứng viên vào jobApplications
@@ -738,10 +738,10 @@ class RecruiterController {
         const candidate = candidates.find(
           (c) => c.user_id === application.user_id
         );
-        
+
         // Get CV information based on resume_type
         let cvInfo = {};
-        
+
         if (application.resume_type === 'created') {
           // For created CVs, find details from userCvs
           const userCv = userCvs.find(cv => cv.cv_id === application.resume);
@@ -780,7 +780,7 @@ class RecruiterController {
             };
           }
         }
-        
+
         return {
           ...application.get({ plain: true }),
           user: user || null, // Thêm thông tin người dùng vào kết quả
@@ -1820,51 +1820,51 @@ class RecruiterController {
   async exportJobApplications(req, res) {
     try {
       const jobId = req.params.job_id;
-      
+
       // Get job details
       const job = await Job.findByPk(jobId);
       if (!job) {
-        return res.status(404).json({ 
-          message: "Không tìm thấy công việc", 
-          code: -1 
+        return res.status(404).json({
+          message: "Không tìm thấy công việc",
+          code: -1
         });
       }
-      
+
       // Get company details
       const company = await Company.findByPk(job.company_id);
-      
+
       // Get job applications
       const jobApplications = await JobApplication.findAll({
         where: { job_id: jobId },
       });
-      
+
       // If no applications, return an error
       if (jobApplications.length === 0) {
-        return res.status(404).json({ 
-          message: "Không có ứng viên nào cho công việc này", 
-          code: -1 
+        return res.status(404).json({
+          message: "Không có ứng viên nào cho công việc này",
+          code: -1
         });
       }
-      
+
       // Get user IDs from applications
       const userIds = jobApplications.map(application => application.user_id);
-      
+
       // Get user details
-      const users = await User.findAll({ 
+      const users = await User.findAll({
         where: { id: { [Op.in]: userIds } },
         attributes: ['id', 'name', 'email', 'phone', 'created_at']
       });
-      
+
       // Get candidate details
       const candidates = await Candidate.findAll({
         where: { user_id: { [Op.in]: userIds } }
       });
-      
+
       // Prepare data for export
       const exportData = jobApplications.map(application => {
         const user = users.find(u => u.id === application.user_id);
         const candidate = candidates.find(c => c.user_id === application.user_id);
-        
+
         return {
           application_id: application.application_id,
           application_date: application.applied_at,
@@ -1882,17 +1882,17 @@ class RecruiterController {
           career_objective: candidate ? candidate.career_objective : "N/A",
         };
       });
-      
+
       // Create a new Excel workbook
       const workbook = new excel.Workbook();
       const worksheet = workbook.addWorksheet('Ứng viên');
-      
+
       // Add job and company information at the top
       worksheet.addRow(['Công việc:', job.title]);
       worksheet.addRow(['Công ty:', company ? company.company_name : 'N/A']);
       worksheet.addRow(['Ngày xuất:', new Date().toLocaleDateString('vi-VN')]);
       worksheet.addRow([]);  // Empty row for spacing
-      
+
       // Define columns
       worksheet.columns = [
         { header: 'Mã ứng tuyển', key: 'application_id', width: 20 },
@@ -1910,7 +1910,7 @@ class RecruiterController {
         { header: 'Kỹ năng', key: 'skills', width: 30 },
         { header: 'Mục tiêu nghề nghiệp', key: 'career_objective', width: 40 },
       ];
-      
+
       // Add headers with styling
       const headerRow = worksheet.addRow(worksheet.columns.map(col => col.header));
       headerRow.eachCell((cell) => {
@@ -1925,7 +1925,7 @@ class RecruiterController {
           color: { argb: 'FFFFFF' }
         };
       });
-      
+
       // Add data rows
       exportData.forEach(data => {
         const row = worksheet.addRow({
@@ -1945,23 +1945,23 @@ class RecruiterController {
           career_objective: data.career_objective,
         });
       });
-      
+
       // Auto-filter for the header row
       worksheet.autoFilter = {
         from: { row: 5, column: 1 },
         to: { row: 5, column: worksheet.columns.length }
       };
-      
+
       // Set response headers
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       res.setHeader('Content-Disposition', `attachment; filename="job_applications_${jobId}.xlsx"`);
-      
+
       // Write to response
       await workbook.xlsx.write(res);
-      
+
       // End the response
       res.end();
-      
+
     } catch (error) {
       console.error('Error exporting job applications:', error);
       return res.status(500).json({
@@ -1975,7 +1975,7 @@ class RecruiterController {
   async findSimilarCandidates(req, res) {
     try {
       const { idealCandidate, searchCriteria, model = "gpt-4o-mini" } = req.body;
-      
+
       // Xác thực request
       if (!idealCandidate) {
         return res.status(400).json({
@@ -2001,7 +2001,7 @@ class RecruiterController {
 
       // Lấy danh sách user_ids từ các ứng viên
       const userIds = candidates.map(candidate => candidate.user_id);
-      
+
       // Lấy thông tin người dùng riêng biệt thay vì dùng include
       const users = await User.findAll({
         where: { id: { [Op.in]: userIds } },
@@ -2050,7 +2050,7 @@ class RecruiterController {
           data.similar_candidates.map(async (result) => {
             const candidateDetail = candidates.find(c => c.candidate_id === result.candidate_id);
             const userDetail = users.find(u => candidateDetail && u.id === candidateDetail.user_id);
-            
+
             // Nếu cần thêm các thông tin khác cho ứng viên
             if (candidateDetail) {
               return {
@@ -2063,7 +2063,7 @@ class RecruiterController {
                 }
               };
             }
-            
+
             return result;
           })
         );
@@ -2095,24 +2095,24 @@ class RecruiterController {
   async getNewJobApplicationsStats(req, res) {
     try {
       const { company_id, since } = req.query;
-      
+
       // Xác định company_id từ user hiện tại nếu không được truyền vào
       let companyId = company_id;
       if (!companyId) {
         const recruiterCompany = await RecruiterCompanies.findOne({
           where: { user_id: req.user.id }
         });
-        
+
         if (!recruiterCompany) {
           return res.status(404).json({
             message: "Không tìm thấy thông tin công ty của nhà tuyển dụng",
             code: -1
           });
         }
-        
+
         companyId = recruiterCompany.company_id;
       }
-      
+
       // Xác định thời điểm bắt đầu
       let startDate;
       if (since === 'today') {
@@ -2137,16 +2137,16 @@ class RecruiterController {
         startDate = new Date();
         startDate.setDate(startDate.getDate() - 1);
       }
-      
+
       // Lấy tất cả job_id của công ty
       const companyJobs = await Job.findAll({
         attributes: ['job_id', 'title'],
         where: { company_id: companyId },
         raw: true
       });
-      
+
       const jobIds = companyJobs.map(job => job.job_id);
-      
+
       if (jobIds.length === 0) {
         return res.json({
           newApplications: 0,
@@ -2155,7 +2155,7 @@ class RecruiterController {
           recentApplications: []
         });
       }
-      
+
       // Định nghĩa điều kiện tìm kiếm
       const whereClause = {
         applied_at: {
@@ -2165,12 +2165,12 @@ class RecruiterController {
           [Op.in]: jobIds
         }
       };
-      
+
       // Đếm số lượng đơn mới
       const totalNewApplications = await JobApplication.count({
         where: whereClause
       });
-      
+
       // Thống kê theo trạng thái
       const applicationsByStatus = await JobApplication.findAll({
         attributes: [
@@ -2180,7 +2180,7 @@ class RecruiterController {
         where: whereClause,
         group: ['status']
       });
-      
+
       // Thống kê theo công việc
       const applicationsByJob = await JobApplication.findAll({
         attributes: [
@@ -2190,7 +2190,7 @@ class RecruiterController {
         where: whereClause,
         group: ['job_id']
       });
-      
+
       // Lấy 10 đơn ứng tuyển gần nhất
       const recentApplications = await JobApplication.findAll({
         where: whereClause,
@@ -2204,13 +2204,13 @@ class RecruiterController {
           }
         ]
       });
-      
+
       // Map dữ liệu để trả về
       const formattedByStatus = applicationsByStatus.map(status => ({
         status: status.status,
         count: parseInt(status.get('count'))
       }));
-      
+
       // Map dữ liệu theo công việc
       const formattedByJob = applicationsByJob.map(item => {
         const job = companyJobs.find(j => j.job_id === item.job_id);
@@ -2220,7 +2220,7 @@ class RecruiterController {
           count: parseInt(item.get('count'))
         };
       });
-      
+
       // Chuẩn bị dữ liệu đơn ứng tuyển gần đây
       const formattedRecentApplications = recentApplications.map(app => {
         const job = companyJobs.find(j => j.job_id === app.job_id);
@@ -2234,7 +2234,7 @@ class RecruiterController {
           applied_at: app.applied_at
         };
       });
-      
+
       return res.json({
         newApplications: totalNewApplications,
         byStatus: formattedByStatus,
@@ -2242,7 +2242,7 @@ class RecruiterController {
         recentApplications: formattedRecentApplications,
         timestamp: new Date()
       });
-      
+
     } catch (error) {
       console.error("Error in getNewJobApplicationsStats:", error);
       return res.status(500).json({
@@ -2259,7 +2259,7 @@ class RecruiterController {
       return res.json({ userCv });
     } catch (error) {
       return res.status(500).send({
-        message: error.message, 
+        message: error.message,
         code: -1,
       });
     }
@@ -2293,7 +2293,7 @@ class RecruiterController {
         });
 
       }
-      
+
       return res.status(200).json({
         message: "Có thông tin công ty",
         code: 1,
@@ -2327,34 +2327,34 @@ class RecruiterController {
     try {
       const { company_id } = req.params;
       const { rating } = req.query;
-      
+
       // Kiểm tra xem nhà tuyển dụng có quyền xem đánh giá của công ty này không
       const recruiterCompany = await RecruiterCompanies.findOne({
-        where: { 
+        where: {
           user_id: req.user.id,
           company_id: company_id
         }
       });
-      
+
       if (!recruiterCompany) {
         return res.status(403).json({
           message: "Bạn không có quyền xem đánh giá của công ty này",
           code: -1
         });
       }
-      
+
       // Xây dựng điều kiện tìm kiếm
       const whereClause = { company_id };
-      
+
       // Thêm điều kiện lọc theo số sao nếu có
       if (rating) {
         whereClause.rating = parseInt(rating);
       }
-      
+
       // Lấy tất cả đánh giá của công ty
       const Reviews = require('../models/Reviews');
       const User = require('../models/User');
-      
+
       const reviews = await Reviews.findAll({
         where: whereClause,
         order: [["review_date", "DESC"]],
@@ -2364,7 +2364,7 @@ class RecruiterController {
           attributes: ['id', 'name', 'email'] // Chỉ lấy một số thông tin cần thiết
         }]
       });
-      
+
       // Tính toán số lượng đánh giá theo mỗi mức sao
       const ratingCounts = await Reviews.findAll({
         attributes: [
@@ -2375,13 +2375,13 @@ class RecruiterController {
         group: ['rating'],
         raw: true
       });
-      
+
       // Tính trung bình số sao
       const totalReviews = reviews.length;
       const avgRating = totalReviews > 0
         ? (reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews).toFixed(1)
         : 0;
-      
+
       // Format kết quả đếm theo mức sao
       const ratingDistribution = [1, 2, 3, 4, 5].map(star => {
         const found = ratingCounts.find(r => r.rating === star);
@@ -2390,14 +2390,14 @@ class RecruiterController {
           count: found ? parseInt(found.count) : 0
         };
       });
-      
+
       return res.json({
         reviews,
         totalReviews,
         avgRating,
         ratingDistribution
       });
-      
+
     } catch (error) {
       console.error('Error getting company reviews:', error);
       return res.status(500).json({
@@ -2454,7 +2454,7 @@ class RecruiterController {
   async addJobSkill(req, res) {
     try {
       const { job_id, skill_id } = req.body;
-      
+
       // Check if skill already exists for this job
       const existingSkill = await JobSkill.findOne({
         where: { job_id, skill_id }
@@ -2488,7 +2488,7 @@ class RecruiterController {
   async removeJobSkill(req, res) {
     try {
       const { job_id, skill_id } = req.body;
-      
+
       const deleted = await JobSkill.destroy({
         where: { job_id, skill_id }
       });
@@ -2535,6 +2535,69 @@ class RecruiterController {
       res.status(400).send({
         message: "Đã xảy ra lỗi khi lấy danh sách kỹ năng theo danh mục.",
         error: error.message
+      });
+    }
+  }
+
+
+  // get user_id và check plan của user đó nếu plan là pro thì trả về true nếu không thì trả về false
+  async getUserPlan(req, res) {
+    try {
+      const user_id = req.params.user_id;
+
+      // Check if user exists
+      const user = await User.findByPk(user_id);
+      if (!user) {
+        return res.status(404).json({
+          code: 0,
+          message: "User not found"
+        });
+      }
+
+      // Get user's company
+      const recruiterCompany = await RecruiterCompanies.findOne({
+        where: { user_id }
+      });
+
+      if (!recruiterCompany) {
+        return res.status(200).json({
+          code: 0,
+          message: "No company found for this user",
+          plan: user.plan || 'Basic',
+          plan_expired_at: user.plan_expired_at
+        });
+      }
+
+      const company = await Company.findByPk(recruiterCompany.company_id);
+      
+      if (!company) {
+        return res.status(200).json({
+          code: 0,
+          message: "Company not found",
+          plan: user.plan || 'Basic',
+          plan_expired_at: user.plan_expired_at
+        });
+      }
+
+      // If user has Pro/ProMax plan, update company plan to ProMax
+      if (user.plan === 'Pro' || user.plan === 'ProMax') {
+        company.plan = 'ProMax';
+        company.plan_expired_at = user.plan_expired_at;
+        await company.save();
+      }
+
+      return res.status(200).json({
+        code: 1,
+        message: "Success",
+        plan: user.plan || company.plan || 'Basic',
+        plan_expired_at: user.plan_expired_at || company.plan_expired_at
+      });
+
+    } catch (error) {
+      console.error("Error checking user plan:", error);
+      return res.status(500).json({
+        code: 0,
+        message: "Internal server error"
       });
     }
   }

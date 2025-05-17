@@ -1131,9 +1131,9 @@ const SearchCandidate = () => {
                             candidateSkills[candidate.candidate_id]
                               .slice(0, 3)
                               .map((skill, index) => (
-                                <span key={index} className={cx("skill-tag")}>
+                              <span key={index} className={cx("skill-tag")}>
                                   {skill}
-                                </span>
+                              </span>
                               ))
                           ) : (
                             <span className={cx("skill-tag", "no-skills")}>

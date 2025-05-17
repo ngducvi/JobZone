@@ -85,6 +85,8 @@ import MessagesRecruiter from '~/pages/Messages/MesagesRecruiter/MesagesRecruite
 import DashboardB from '~/pages/Admin/DashboardB/DashboardB';
 import CvConsulting from '~/pages/CvConsulting/CvConsulting';
 import CompanyReviews from '~/pages/Recruiter/CompanyReviews/CompanyReviews';
+import PaymentReturnRecruiter from '~/pages/Recruiter/PaymentReturnRecruiter/PaymentReturnRectuiter';
+import Wallet from '~/pages/Userinfo/Wallet/Wallet';
 const publicRoutes = [
     { path: '/', component: Dashboard },
     { path: '/user/verify-email', component: VerifyEmailSuccess, layout: null },
@@ -116,6 +118,7 @@ const publicRoutes = [
     { path: '/user/jobs-applying', component: JobsApplying },
     { path: '/user/jobs-viewed', component: ViewdJob },
     { path: '/user/create-cv', component: CreateCV },
+    { path: '/user/wallet', component: Wallet },
     { path: '/user/manager-cv', component: ManagerCV },
     { path: '/user/edit-cv', component: EditCV },
     { path: '/user/cv-consulting', component: CvConsulting },
@@ -132,6 +135,7 @@ const publicRoutes = [
     { path: '/403', component: Forbidden, layout: null },
     { path: '/recruiter', component: RecruiterHome, layout: RecruiterLayout},
     { path: '/recruiter/cv-management', component: RecruiterCVManagement , layout: RecruiterLayout},
+    { path: '/recruiter/payment-return', component: PaymentReturnRecruiter, layout: RecruiterLayout},
     { path: '/recruiter/ai-suggest', component: RecruiterAISuggest , layout: RecruiterLayout},
     { path: '/recruiter/campaigns', component: RecruiterCampaigns , layout: RecruiterLayout},
     { path: '/recruiter/jobs', component: RecruiterJobs , layout: RecruiterLayout},

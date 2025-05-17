@@ -58,4 +58,6 @@ router.get('/job-skills/:job_id', recruiterController.getJobSkills.bind(recruite
 router.post('/job-skill', recruiterController.addJobSkill.bind(recruiterController));
 router.delete('/job-skill', recruiterController.removeJobSkill.bind(recruiterController));
 
+router.get('/user-plan/:user_id', recruiterController.getUserPlan.bind(recruiterController));
+
 module.exports = router;

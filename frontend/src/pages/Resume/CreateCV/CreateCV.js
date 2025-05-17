@@ -39,6 +39,32 @@ const CreateCV = () => {
     '#ff5722'  // Deep Orange
   ];
 
+  const templateThumbnails = {
+    'e3e5aaab-da55-11ef-b243-2cf05db24bc7': images.basicCVs,
+    'cvtest': images.basicCVTemplate,
+    'e3e658d7-da55-11ef-b243-2cf05db24bc7': images.creattiveCV,
+    'template-basic-01': images.cvcoban,
+    'template-basic-010': images.cvcobanqua,
+    'template-creative-01': images.cvsangtao,
+    'e3e643a7-da55-11ef-b243-2cf05db24bc7': images.professsionalcv,
+    'template-basic-02': images.thanhlich,
+    'template-creative-010': images.cvsangtao1,
+    'template-creative-02': images.cvsangtaopink,
+    'template-creative-03': images.cvsangtaoblue,
+    'template-modern-02': images.hiendai1,
+    'template-modern-03': images.tinhte2,
+    'template-modern-04': images.hiendai4,
+  };
+
+  // basicCVs: require('~/assets/images/cv/BasicCVs.png'),   e3e5aaab-da55-11ef-b243-2cf05db24bc7
+  // basicCVTemplate: require('~/assets/images/cv/BasicCVTemplate.png'), f4678296-da56-11ef-b243-2cf05db24bc7
+  // creattiveCV: require('~/assets/images/cv/CreativeCV.png'),e3e658d7-da55-11ef-b243-2cf05db24bc7
+  // cvcoban: require('~/assets/images/cv/CVCơ bản.png'),template-basic-01
+  // cvcobanqua: require('~/assets/images/cv/CVCơbanqua.png'),template-basic-010
+  // cvsangtao: require('~/assets/images/cv/CVSangTao.png'),template-creative-01
+  // professsionalcv: require('~/assets/images/cv/ProfessionalCV.png'),e3e643a7-da55-11ef-b243-2cf05db24bc7
+  // thanhlich: require('~/assets/images/cv/Thanhlich.png'),template-basic-02
+
   const getTemplateTypeName = (typeId) => {
     switch (typeId) {
       case "type-creative":
@@ -55,13 +81,24 @@ const CreateCV = () => {
   };
 
   // Define filteredTemplates here before any useEffect that depends on it
-  const filteredTemplates = templates.filter(
+  const filteredTemplates = templates
+    .filter(
     (template) =>
       template.template_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       template.template_description
         .toLowerCase()
         .includes(searchTerm.toLowerCase())
-  );
+    )
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.created_at) - new Date(a.created_at);
+        case 'popular':
+          return (b.downloads || 0) - (a.downloads || 0);
+        default:
+          return 0;
+      }
+    });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -458,7 +495,10 @@ const CreateCV = () => {
                 onMouseLeave={() => setHoveredCard(null)}
               >
                 <div className={cx("template-image")}>
-                  <img src={images.coverletter} alt={template.template_name} />
+                  <img 
+                    src={templateThumbnails[template.template_id] || images.coverletter} 
+                    alt={template.template_name} 
+                  />
                   {hoveredCard === template.template_id && (
                     <div className={cx("template-overlay")}>
                       <div className={cx("overlay-buttons")}>

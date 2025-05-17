@@ -6,7 +6,7 @@ import styles from "./TopCompany.module.scss";
 import { authAPI, userApis } from "~/utils/api";
 import images from "~/assets/images";
 import { useNavigate } from "react-router-dom";
-import { FaStar } from "react-icons/fa";
+import { FaStar, FaCrown, FaGem } from "react-icons/fa";
 const cx = classNames.bind(styles);
 
 const TopCompany = () => {
@@ -60,6 +60,28 @@ const TopCompany = () => {
     return (sum / reviews.length).toFixed(1);
   };
 
+  const getPlanIcon = (plan) => {
+    switch (plan) {
+      case "ProMax":
+        return <FaCrown className={cx("plan-icon", "promax")} />;
+      case "Pro":
+        return <FaGem className={cx("plan-icon", "pro")} />;
+      default:
+        return <FaStar className={cx("plan-icon", "basic")} />;
+    }
+  };
+
+  const getPlanLabel = (plan) => {
+    switch (plan) {
+      case "ProMax":
+        return "Pro Max";
+      case "Pro":
+        return "Pro";
+      default:
+        return "Basic";
+    }
+  };
+
   const renderReviewStats = (company) => {
     const averageRating = getAverageRating(company.reviews);
     return (
@@ -97,6 +119,11 @@ const TopCompany = () => {
             src={company.logo || images.company_1}
             alt={company.company_name}
           />
+        </div>
+        {/* Plan badge */}
+        <div className={cx("plan-badge", company.plan && company.plan.toLowerCase())}>
+          {getPlanIcon(company.plan)}
+          <span>{getPlanLabel(company.plan)}</span>
         </div>
         <h3>{company.company_name}</h3>
         {renderReviewStats(company)}
@@ -162,16 +189,10 @@ const TopCompany = () => {
           </div>
         </div>
       ) : (
-        <div className={cx("categories-section")}>
-          <h2>DANH SÁCH CÁC TOP CÔNG TY</h2>
-          <div className={cx("categories-grid")}>
-            {topCompany.map((company, index) => (
-              <div key={company._id || company.id || index} className={cx("category-card")}>
-                <img src={company.banner || images.banner} alt={company.company_name} />
-                <h3>{company.company_name}</h3>
-                <p>{company.description}</p>
-              </div>
-            ))}
+        <div className={cx("company-list")}>
+          <h2>TOP CÔNG TY PRO MAX</h2>
+          <div className={cx("company-list-content")}>
+            {renderCompanyList(topCompany.filter(c => c.plan === "ProMax"))}
           </div>
         </div>
       )}

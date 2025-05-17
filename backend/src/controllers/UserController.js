@@ -3611,27 +3611,51 @@ class UserController {
   }
   // delete user cv template
   async deleteUserCvTemplate(req, res) {
+    let transaction;
     try {
       const { cv_id } = req.params;
       const user_id = req.user.id;
+
+      // Start a transaction
+      transaction = await sequelize.transaction();
+
+      // Find the CV and verify ownership
       const cv = await UserCv.findOne({
         where: {
           cv_id: cv_id,
           user_id: user_id
-        }
+        },
+        transaction
       });
+
       if (!cv) {
+        await transaction.rollback();
         return res.status(404).json({
           code: 0,
           message: "CV not found"
         });
       }
-      await cv.destroy();
+
+      // Delete related CvFieldValues first
+      await CvFieldValues.destroy({
+        where: { cv_id: cv_id },
+        transaction
+      });
+
+      // Delete the CV
+      await cv.destroy({ transaction });
+
+      // Commit the transaction
+      await transaction.commit();
+
       return res.status(200).json({
         code: 1,
         message: "CV template deleted successfully"
       });
     } catch (error) {
+      // Rollback the transaction if an error occurred
+      if (transaction) await transaction.rollback();
+      
       console.error("Error in deleteUserCvTemplate:", error);
       return res.status(500).json({
         code: 0,
@@ -4151,7 +4175,26 @@ class UserController {
       });
     }
   }
-
+  // get all payment_transactions by user_id
+  async getAllPaymentTransactionsByUserId(req, res) {
+    try {
+      const userId = req.user.id;
+      const paymentTransactions = await PaymentTransaction.findAll({
+        where: { user_id: userId }
+      });
+      return res.status(200).json({
+        success: true,
+        data: paymentTransactions
+      });
+    } catch (error) {
+      console.error('Error in getAllPaymentTransactionsByUserId:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Lỗi khi lấy danh sách giao dịch thanh toán'
+      });
+    }
+  }
+  
   async deleteCandidateSkill(req, res) {
     try {
       const { candidate_id, skill_name } = req.params;
