@@ -5,6 +5,7 @@ import { EventSourcePolyfill } from 'event-source-polyfill';
 import ModalTypeContext from '~/context/ModalTypeContext';
 import ModelAI from '~/components/ModelAI';
 import { FaRobot, FaUser, FaPaperPlane } from 'react-icons/fa';
+import ReactMarkdown from 'react-markdown';
 
 const cx = classNames.bind(styles);
 
@@ -56,6 +57,20 @@ const AiChat = () => {
   useEffect(() => {
     localStorage.setItem('aiChatUserInfo', JSON.stringify(userInfo));
   }, [userInfo]);
+
+  const formatBotMessage = (text) => {
+    // Loại bỏ dấu ngoặc kép thừa đầu/cuối nếu có
+    let formatted = text;
+    if (formatted.startsWith('"') && formatted.endsWith('"')) {
+      formatted = formatted.slice(1, -1);
+    }
+    // Thay thế \" thành "
+    formatted = formatted.replace(/\\"/g, '"');
+    // KHÔNG thay thế \n thành <br/>
+    // Xử lý các trường hợp \\n thành \n
+    formatted = formatted.replace(/\\n/g, '\n');
+    return formatted;
+  };
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -196,7 +211,9 @@ const AiChat = () => {
                 )}
               </div>
               <div className={cx('message-content', message.type)}>
-                {message.content}
+                <ReactMarkdown>
+                  {message.type === 'bot' ? formatBotMessage(message.content) : message.content}
+                </ReactMarkdown>
               </div>
             </div>
           ))}

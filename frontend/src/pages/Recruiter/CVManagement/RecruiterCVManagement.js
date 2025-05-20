@@ -547,12 +547,12 @@ function RecruiterCVManagement() {
         try {
           // Fetch user CV details
           const response = await authAPI().get(recruiterApis.getAllUserCvByCvId(resumeId));
-          console.log("User CV details:", response.data);
-          
-          // Also check CV field values
-          if (response.data.userCv) {
-            await checkCvFieldValues(resumeId);
+          if (!response.data.userCv) {
+            toast.error("CV này đã bị xóa hoặc không còn tồn tại. Vui lòng liên hệ ứng viên để cập nhật lại CV.");
+            return null;
           }
+          // Also check CV field values
+            await checkCvFieldValues(resumeId);
           
           return response.data;
         } catch (error) {
@@ -1170,23 +1170,24 @@ function RecruiterCVManagement() {
                             {application.resume || application.cv_info ? (
                               <div className={cx("cv-container")}>
                                 <div className={cx("cv-type")}>
-                                  {application.cv_info?.cv_type === 'created' || application.resume_type === 'created' ? (
+                                  {(!application.cv_info || application.cv_info.cv_name === 'CV không tìm thấy' || !application.cv_info.cv_id) ? (
+                                    <div className={cx("cv-badge", "missing")}>
+                                      <div className={cx("cv-badge-header")}>
+                                        <i className="fa-solid fa-triangle-exclamation"></i> CV không tồn tại
+                                      </div>
+                                      <span className={cx("cv-id")}>ID: {application.cv_info?.cv_id || application.resume}</span>
+                                    </div>
+                                  ) : application.cv_info?.cv_type === 'created' || application.resume_type === 'created' ? (
                                     <div className={cx("cv-badge", "created")}>
                                       <div className={cx("cv-badge-header")}>
                                         <i className="fa-solid fa-file-code"></i> CV tạo trên web
                                       </div>
-                                      <span className={cx("cv-id")}>
-                                        ID: {application.cv_info?.cv_id || application.resume}
-                                      </span>
+                                      <span className={cx("cv-id")}>ID: {application.cv_info?.cv_id || application.resume}</span>
                                       {application.cv_info?.cv_name && (
-                                        <span className={cx("cv-name")}>
-                                          {application.cv_info.cv_name}
-                                        </span>
+                                        <span className={cx("cv-name")}>{application.cv_info.cv_name}</span>
                                       )}
                                       {application.cv_info?.created_at && (
-                                        <span className={cx("cv-date")}>
-                                          {new Date(application.cv_info.created_at).toLocaleDateString('vi-VN')}
-                                        </span>
+                                        <span className={cx("cv-date")}>{new Date(application.cv_info.created_at).toLocaleDateString('vi-VN')}</span>
                                       )}
                                     </div>
                                   ) : (
@@ -1195,18 +1196,11 @@ function RecruiterCVManagement() {
                                         <i className="fa-solid fa-file-pdf"></i> CV tải lên
                                       </div>
                                       {application.cv_info?.cv_name && (
-                                        <span className={cx("cv-name")}>
-                                          {application.cv_info.cv_name}
-                                        </span>
+                                        <span className={cx("cv-name")}>{application.cv_info.cv_name}</span>
                                       )}
-                                      <span className={cx("cv-id")}>
-                                        {application.cv_info?.cv_link ? 'Link: PDF' : 
-                                         application.resume ? `ID: ${application.resume.substring(0, 15)}...` : 'N/A'}
-                                      </span>
+                                      <span className={cx("cv-id")}>{application.cv_info?.cv_link ? 'Link: PDF' : application.resume ? `ID: ${application.resume.substring(0, 15)}...` : 'N/A'}</span>
                                       {application.cv_info?.created_at && (
-                                        <span className={cx("cv-date")}>
-                                          {new Date(application.cv_info.created_at).toLocaleDateString('vi-VN')}
-                                        </span>
+                                        <span className={cx("cv-date")}>{new Date(application.cv_info.created_at).toLocaleDateString('vi-VN')}</span>
                                       )}
                                     </div>
                                   )}
@@ -1216,6 +1210,7 @@ function RecruiterCVManagement() {
                                     className={cx("view-btn")}
                                     onClick={() => handleViewCV(application)}
                                     title="Xem CV"
+                                    disabled={(!application.cv_info || application.cv_info.cv_name === 'CV không tìm thấy' || !application.cv_info.cv_id)}
                                   >
                                     <i className="fa-solid fa-eye"></i>
                                     <span className={cx("btn-text")}>Xem</span>
@@ -1224,6 +1219,7 @@ function RecruiterCVManagement() {
                               className={cx("download-btn")}
                                     onClick={() => handleDownloadCV(application)}
                                     title="Tải CV"
+                                    disabled={(!application.cv_info || application.cv_info.cv_name === 'CV không tìm thấy' || !application.cv_info.cv_id)}
                                   >
                                     <i className="fa-solid fa-download"></i>
                                     <span className={cx("btn-text")}>Tải xuống</span>

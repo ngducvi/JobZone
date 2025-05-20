@@ -8,6 +8,8 @@ import { faStar, faRocket, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { authAPI, recruiterApis } from '~/utils/api';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { useContext } from 'react';
+import UserContext from '~/context/UserContext';
 const cx = classNames.bind(styles);
 
 const PRICING_PLANS = {
@@ -59,28 +61,33 @@ const PricingRecruiter = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPlan, setCurrentPlan] = useState(null);
   const [planExpiredAt, setPlanExpiredAt] = useState(null);
-
-  
+  const { user } = useContext(UserContext);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchCompanyPlan = async () => {
+    const fetchPlan = async () => {
       try {
         setIsLoading(true);
-        const responseCompany = await authAPI().get(recruiterApis.getAllRecruiterCompanies);
-        setCurrentPlan(responseCompany.data.companies[0].plan);
-        setPlanExpiredAt(responseCompany.data.companies[0].plan_expired_at);
-        console.log(planExpiredAt);
+        if (user && user.id) {
+          const res = await authAPI().get(recruiterApis.getUserPlan(user.id));
+          if (res.data && res.data.code === 1) {
+            setCurrentPlan(res.data.plan);
+            setPlanExpiredAt(res.data.plan_expired_at);
+          } else {
+            setCurrentPlan('Basic');
+            setPlanExpiredAt(null);
+          }
+        }
       } catch (error) {
-        console.error(error);
-        toast('Không thể tải thông tin gói dịch vụ', {
-          icon: '❌',
-        });
+        setCurrentPlan('Basic');
+        setPlanExpiredAt(null);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchCompanyPlan();
-  }, []);
+    fetchPlan();
+  }, [user]);
+
   // Thêm state để theo dõi viewport
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
@@ -93,6 +100,33 @@ const PricingRecruiter = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const handleSubscribe = async (plan) => {
+    if (!user || !user.id) {
+      toast.error('Bạn cần đăng nhập để đăng ký gói!');
+      return;
+    }
+    if (plan.name === 'Basic') {
+      toast.success('Bạn đang sử dụng gói miễn phí!');
+      return;
+    }
+    try {
+      // Giá tiền cứng cho ProMax, có thể lấy từ plan.price nếu backend đồng bộ
+      const amount = 999000;
+      const response = await authAPI().post(recruiterApis.createPaymentUrl, {
+        amount,
+        bankCode: '',
+        language: 'vn'
+      });
+      if (response.data && response.data.status === 'success' && response.data.paymentUrl) {
+        window.location.href = response.data.paymentUrl;
+      } else {
+        toast.error('Không thể tạo đường dẫn thanh toán!');
+      }
+    } catch (error) {
+      toast.error('Có lỗi khi tạo thanh toán!');
+    }
+  };
 
   return (
     <div className={cx('wrapper')}>
@@ -165,7 +199,11 @@ const PricingRecruiter = () => {
                       )}
                     </>
                   ) : (
-                    <button className={cx('subscribe-btn')} style={{ '--plan-color': plan.color }}>
+                    <button
+                      className={cx('subscribe-btn')}
+                      style={{ '--plan-color': plan.color }}
+                      onClick={() => handleSubscribe(plan)}
+                    >
                       {plan.price === 'Miễn phí' ? 'Dùng ngay' : 'Đăng ký ngay'}
                     </button>
                   )}

@@ -47,7 +47,7 @@ const RecruiterAISuggest = () => {
     const [interviewQuestions, setInterviewQuestions] = useState(null);
     const [candidateFit, setCandidateFit] = useState(null);
     const [jobPostAnalysis, setJobPostAnalysis] = useState(null);
-    const [selectedModel, setSelectedModel] = useState("gpt-4o-mini");
+    const [selectedModel, setSelectedModel] = useState("gemini-1.5-pro");
     const [matchScores, setMatchScores] = useState({});
     const [showMatchDetail, setShowMatchDetail] = useState(null);
     const [selectedCandidates, setSelectedCandidates] = useState([]);
@@ -55,6 +55,9 @@ const RecruiterAISuggest = () => {
     const [comparisonResult, setComparisonResult] = useState(null);
     const [isScreening, setIsScreening] = useState(false);
     const [screeningResult, setScreeningResult] = useState(null);
+    const [jobSkillsMap, setJobSkillsMap] = useState({});
+    const [candidateSkillsMap, setCandidateSkillsMap] = useState({});
+    const [loadingMatchScores, setLoadingMatchScores] = useState({});
 
     useEffect(() => {
         const fetchData = async () => {
@@ -109,8 +112,27 @@ const RecruiterAISuggest = () => {
 
     useEffect(() => {
         if (selectedJob && jobApplications[selectedJob.job_id]) {
-            jobApplications[selectedJob.job_id].forEach(app => {
-                if (!matchScores[app.application_id]) fetchMatchScore(app);
+            // Only fetch skills for visible applications
+            const visibleApplications = jobApplications[selectedJob.job_id]
+                .filter(app => app.status === activeTab);
+                
+            visibleApplications.forEach(async (app) => {
+                const candidateId = app.candidate?.candidate_id;
+                if (candidateId && !candidateSkillsMap[candidateId]) {
+                    try {
+                        const res = await authAPI().get(recruiterApis.getCandidateSkills(candidateId));
+                        setCandidateSkillsMap(prev => ({ ...prev, [candidateId]: res.data.skills || [] }));
+                        if (app.candidate) app.candidate.skills = res.data.skills || [];
+                        // Calculate match score immediately after getting skills
+                        fetchMatchScore(app);
+                    } catch (err) {
+                        if (app.candidate) app.candidate.skills = [];
+                        console.error('Error fetching candidate skills:', err);
+                    }
+                } else if (candidateId && !matchScores[app.application_id]) {
+                    // If we have skills but no match score, calculate it
+                    fetchMatchScore(app);
+                }
             });
         }
         // eslint-disable-next-line
@@ -118,6 +140,15 @@ const RecruiterAISuggest = () => {
 
     const handleSelectJob = async (job) => {
         setSelectedJob(job);
+        // Fetch job skills from backend
+        try {
+            const res = await authAPI().get(recruiterApis.getJobSkills(job.job_id));
+            setJobSkillsMap(prev => ({ ...prev, [job.job_id]: res.data.skills || [] }));
+            // Attach to job object for AI
+            job.skills = res.data.skills || [];
+        } catch (err) {
+            job.skills = [];
+        }
         await fetchAISuggestions(job.job_id);
     };
 
@@ -306,19 +337,20 @@ Hãy tạo các câu hỏi theo các nhóm:
         setIsAnalyzingFit(true);
         setSelectedCandidate(candidate);
         const token = localStorage.getItem("token");
-
+        const jobSkills = jobSkillsMap[selectedJob.job_id] || [];
+        const candidateSkills = candidateSkillsMap[candidate.candidate?.candidate_id] || [];
         const prompt = `Là một chuyên gia tuyển dụng, hãy đánh giá mức độ phù hợp của ứng viên với vị trí:
 
 Thông tin ứng viên:
 - Tên: ${candidate.user?.name}
 - Vị trí ứng tuyển: ${selectedJob?.title}
 - Kinh nghiệm: ${candidate.candidate?.experience}
-- Kỹ năng: ${candidate.candidate?.skills}
+- Kỹ năng: ${candidateSkills.join(', ')}
 
 Thông tin công việc:
 - Mô tả: ${selectedJob?.description}
 - Yêu cầu: ${selectedJob?.job_requirements}
-- Kỹ năng cần thiết: ${selectedJob?.skills}
+- Kỹ năng cần thiết: ${jobSkills.join(', ')}
 
 Hãy đánh giá theo các tiêu chí:
 1. Phù hợp về kỹ năng
@@ -432,6 +464,14 @@ Hãy phân tích theo các tiêu chí:
     };
 
     const fetchMatchScore = async (application) => {
+        if (!application.candidate?.candidate_id || !selectedJob?.job_id) return;
+        
+        setLoadingMatchScores(prev => ({ ...prev, [application.application_id]: true }));
+        
+        try {
+            const jobSkills = jobSkillsMap[selectedJob.job_id] || [];
+            const candidateSkills = candidateSkillsMap[application.candidate?.candidate_id] || [];
+            
         const res = await fetch(`${process.env.REACT_APP_API_URL}/openai/match-score`, {
             method: "POST",
             headers: {
@@ -440,35 +480,30 @@ Hãy phân tích theo các tiêu chí:
             },
             body: JSON.stringify({
                 candidate: {
-                    name: application.user?.name,
-                    experience: application.candidate?.experience,
-                    skills: application.candidate?.skills,
-                    current_salary: application.candidate?.current_salary,
-                    expected_salary: application.candidate?.expected_salary,
-                    location: application.candidate?.location,
-                    qualifications: application.candidate?.qualifications,
-                    career_objective: application.candidate?.career_objective,
-                    willing_to_relocate: application.candidate?.willing_to_relocate,
+                        ...application.candidate,
+                        skills: candidateSkills,
                 },
                 job: {
-                    title: selectedJob.title,
-                    description: selectedJob.description,
-                    job_requirements: selectedJob.job_requirements,
-                    skills: selectedJob.skills,
-                    salary: selectedJob.salary,
-                    location: selectedJob.location,
-                    education: selectedJob.education,
-                    experience: selectedJob.experience,
-                    working_location: selectedJob.working_location,
+                        ...selectedJob,
+                        skills: jobSkills,
                 },
                 model: selectedModel,
             }),
         });
+            
+            if (!res.ok) throw new Error('Failed to fetch match score');
+            
         const data = await res.json();
-        setMatchScores((prev) => ({
+            setMatchScores(prev => ({
             ...prev,
             [application.application_id]: data,
         }));
+        } catch (error) {
+            console.error("Error calculating match score:", error);
+            toast.error("Không thể tính toán độ phù hợp");
+        } finally {
+            setLoadingMatchScores(prev => ({ ...prev, [application.application_id]: false }));
+        }
     };
 
     const handleShowMatchDetail = (applicationId) => {
@@ -508,7 +543,7 @@ Hãy phân tích theo các tiêu chí:
                     candidates: selectedCandidates.map(candidate => ({
                         name: candidate.user?.name,
                         experience: candidate.candidate?.experience,
-                        skills: candidate.candidate?.skills,
+                        skills: candidateSkillsMap[candidate.candidate?.candidate_id] || [],
                         current_salary: candidate.candidate?.current_salary,
                         expected_salary: candidate.candidate?.expected_salary,
                         location: candidate.candidate?.location,
@@ -548,7 +583,7 @@ Hãy phân tích theo các tiêu chí:
                 .map(candidate => ({
                     name: candidate.user?.name,
                     experience: candidate.candidate?.experience,
-                    skills: candidate.candidate?.skills,
+                    skills: candidateSkillsMap[candidate.candidate?.candidate_id] || [],
                     current_salary: candidate.candidate?.current_salary,
                     expected_salary: candidate.candidate?.expected_salary,
                     location: candidate.candidate?.location,
@@ -827,8 +862,12 @@ Hãy phân tích theo các tiêu chí:
                                                     <td>{application.candidate?.about_me || "Không có thông tin"}</td>
                                                     <td>{application.candidate?.career_objective || "Không có thông tin"}</td>
                                                     <td>
-                                                        {matchScores[application.application_id]
-                                                            ? (
+                                                        {loadingMatchScores[application.application_id] ? (
+                                                            <div className={cx('loading-score')}>
+                                                                <FaSpinner className={cx("spinner")} />
+                                                                <span>Đang tính...</span>
+                                                            </div>
+                                                        ) : matchScores[application.application_id] ? (
                                                                 <>
                                                                     {matchScores[application.application_id].score}%
                                                                     <button
@@ -838,9 +877,14 @@ Hãy phân tích theo các tiêu chí:
                                                                         Chi tiết
                                                                     </button>
                                                                 </>
-                                                            )
-                                                            : <FaSpinner className={cx("spinner")} />
-                                                        }
+                                                        ) : (
+                                                            <button 
+                                                                className={cx('calculate-btn')}
+                                                                onClick={() => fetchMatchScore(application)}
+                                                            >
+                                                                Tính độ phù hợp
+                                                            </button>
+                                                        )}
                                                     </td>
                                                     <td>
                                                         <select

@@ -9,4 +9,5 @@ router.get("/all-models-voice", usageController.allModelsVoice.bind(usageControl
 router.get("/all-categories", usageController.allCategories.bind(usageController));
 router.get("/by-category/:category", usageController.getByCategory.bind(usageController));
 router.get("/search-category", usageController.searchCategory.bind(usageController));
+
 module.exports = router;

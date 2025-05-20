@@ -40,7 +40,7 @@ const JobDetail = () => {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [showAiSection, setShowAiSection] = useState(false);
   const [candidateProfile, setCandidateProfile] = useState(null);
-  const [selectedAiModel, setSelectedAiModel] = useState("gpt-4o-mini");
+  const [selectedAiModel, setSelectedAiModel] = useState("gemini-2.0-flash");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -419,8 +419,18 @@ const JobDetail = () => {
 
     setIsAnalyzing(true);
     try {
+      // Ensure job_id and all relevant fields are sent
       const response = await authAPI().post(userApis.analyzeJobForCandidate, {
-        job,
+        job: {
+          job_id: job.job_id,
+          title: job.title,
+          company_name: company?.companyName || job.company_name,
+          description: job.description,
+          job_requirements: job.job_requirements,
+          salary: job.salary,
+          location: job.location,
+          benefits: job.benefits,
+        },
         candidateProfile,
         model: selectedAiModel
       });
@@ -526,7 +536,7 @@ const JobDetail = () => {
           <div className={cx("ai-icon")}>
             <FaRobot />
           </div>
-          <h3>AI Job Analysis</h3>
+          <h3>Phân tích công việc bằng AI</h3>
           <div className={cx("ai-plan-badge", userPlan.toLowerCase())}>
             {userPlan}
           </div>
@@ -537,13 +547,13 @@ const JobDetail = () => {
             {isAnalyzing ? (
               <div className={cx("ai-loading")}>
                 <FaSpinner className={cx("spinner")} />
-                <p>Analyzing job details...</p>
+                <p>Đang phân tích chi tiết công việc...</p>
               </div>
             ) : analysisResult ? (
               <div className={cx("analysis-result")}>
                 {aiAccess.features.includes('job_analysis') && (
                   <div className={cx("analysis-section")}>
-                    <h4><FaChartBar /> Match Analysis</h4>
+                    <h4><FaChartBar /> Phân tích khớp ứng tuyển</h4>
                     <div className={cx("match-score")}>
                       <div className={cx("score-circle", getScoreCategory(analysisResult.match_analysis.overall_match_score))}>
                         {analysisResult.match_analysis.overall_match_score}%
@@ -555,16 +565,16 @@ const JobDetail = () => {
                       <div className={cx("radial-chart")}>
                         {analysisResult.match_analysis.detailed_skills_match && (
                           <>
-                            <div className={cx("chart-title")}>Skills Match Visualization</div>
+                            <div className={cx("chart-title")}>Kỹ năng phù hợp</div>
                             <div className={cx("chart-container")}>
                               <div className={cx("chart-legend")}>
                                 <div className={cx("legend-item")}>
                                   <span className={cx("legend-color", "matched")}></span>
-                                  <span>Matched Skills</span>
+                                  <span>Kỹ năng phù hợp</span>
                                 </div>
                                 <div className={cx("legend-item")}>
                                   <span className={cx("legend-color", "missing")}></span>
-                                  <span>Missing Skills</span>
+                                  <span>Kỹ năng còn thiếu</span>
                                 </div>
                               </div>
                               <div className={cx("skills-distribution")}>
@@ -596,7 +606,7 @@ const JobDetail = () => {
                       
                       {/* Radar chart for multi-dimensional match */}
                       <div className={cx("radar-chart")}>
-                        <div className={cx("chart-title")}>Match Profile</div>
+                        <div className={cx("chart-title")}>Hồ sơ khớp ứng tuyển</div>
                         <div className={cx("radar-container")}>
                           <div className={cx("radar-web")}>
                             <div className={cx("radar-circle", "circle-5")}></div>
@@ -644,11 +654,11 @@ const JobDetail = () => {
                             </div>
                             
                             <div className={cx("radar-labels")}>
-                              <div className={cx("radar-label", "label-1")}>Skills</div>
-                              <div className={cx("radar-label", "label-2")}>Experience</div>
-                              <div className={cx("radar-label", "label-3")}>Education</div>
-                              <div className={cx("radar-label", "label-4")}>Location</div>
-                              <div className={cx("radar-label", "label-5")}>Salary</div>
+                              <div className={cx("radar-label", "label-1")}>Kỹ năng</div>
+                              <div className={cx("radar-label", "label-2")}>Kinh nghiệm</div>
+                              <div className={cx("radar-label", "label-3")}>Học vấn</div>
+                              <div className={cx("radar-label", "label-4")}>Địa điểm</div>
+                              <div className={cx("radar-label", "label-5")}>Lương</div>
                             </div>
                           </div>
                           
@@ -656,11 +666,11 @@ const JobDetail = () => {
                           <div className={cx("radar-legend")}>
                             <div className={cx("legend-item")}>
                               <span className={cx("legend-color", "high")}></span>
-                              <span>Your profile</span>
+                              <span>Hồ sơ của bạn</span>
                             </div>
                             <div className={cx("legend-item")}>
                               <span className={cx("legend-color", "reference")}></span>
-                              <span>Ideal match</span>
+                              <span>Hồ sơ phù hợp</span>
                             </div>
                           </div>
                         </div>
@@ -668,10 +678,10 @@ const JobDetail = () => {
                       
                       {/* Score breakdown chart */}
                       <div className={cx("score-breakdown")}>
-                        <div className={cx("chart-title")}>Match Score Breakdown</div>
+                        <div className={cx("chart-title")}>Phân tích điểm khớp ứng tuyển</div>
                         <div className={cx("score-bars")}>
                           <div className={cx("score-bar-item")}>
-                            <div className={cx("score-label")}>Skills</div>
+                            <div className={cx("score-label")}>Kỹ năng</div>
                             <div className={cx("score-bar-container")}>
                               <div 
                                 className={cx("score-bar", getScoreCategory(analysisResult.match_analysis.overall_match_score * 0.8))} 
@@ -682,7 +692,7 @@ const JobDetail = () => {
                           </div>
                           
                           <div className={cx("score-bar-item")}>
-                            <div className={cx("score-label")}>Experience</div>
+                            <div className={cx("score-label")}>Kinh nghiệm</div>
                             <div className={cx("score-bar-container")}>
                               <div 
                                 className={cx("score-bar", getScoreCategory(analysisResult.match_analysis.overall_match_score * 0.9))} 
@@ -693,7 +703,7 @@ const JobDetail = () => {
                           </div>
                           
                           <div className={cx("score-bar-item")}>
-                            <div className={cx("score-label")}>Education</div>
+                            <div className={cx("score-label")}>Học vấn</div>
                             <div className={cx("score-bar-container")}>
                               <div 
                                 className={cx("score-bar", getScoreCategory(analysisResult.match_analysis.overall_match_score * 1.1 > 100 ? 100 : analysisResult.match_analysis.overall_match_score * 1.1))} 
@@ -704,7 +714,7 @@ const JobDetail = () => {
                           </div>
                           
                           <div className={cx("score-bar-item")}>
-                            <div className={cx("score-label")}>Location</div>
+                            <div className={cx("score-label")}>Địa điểm</div>
                             <div className={cx("score-bar-container")}>
                               <div 
                                 className={cx("score-bar", getScoreCategory(analysisResult.match_analysis.overall_match_score * 0.7))} 
@@ -715,7 +725,7 @@ const JobDetail = () => {
                           </div>
                           
                           <div className={cx("score-bar-item")}>
-                            <div className={cx("score-label")}>Salary</div>
+                            <div className={cx("score-label")}>Lương</div>
                             <div className={cx("score-bar-container")}>
                               <div 
                                 className={cx("score-bar", getScoreCategory(analysisResult.match_analysis.overall_match_score * 0.95))} 
@@ -726,7 +736,7 @@ const JobDetail = () => {
                           </div>
                           
                           <div className={cx("score-bar-item", "overall-score")}>
-                            <div className={cx("score-label")}>Overall</div>
+                            <div className={cx("score-label")}>Tổng</div>
                             <div className={cx("score-bar-container")}>
                               <div 
                                 className={cx("score-bar", getScoreCategory(analysisResult.match_analysis.overall_match_score))} 
@@ -761,7 +771,7 @@ const JobDetail = () => {
 
                     {aiAccess.features.includes('skills_match') && (
                       <div className={cx("skills-match")}>
-                        <h5>Skills Analysis</h5>
+                        <h5>Phân tích kỹ năng</h5>
                         <div className={cx("skills-columns")}>
                           <div className={cx("skill-column")}>
                             <h6>Kỹ năng phù hợp</h6>
@@ -804,8 +814,8 @@ const JobDetail = () => {
                         <div key={idx} className={cx("question-item")}>
                           <div className={cx("question")}>{item.question}</div>
                           <div className={cx("question-details")}>
-                            <p><strong>Why this might be asked:</strong> {item.reasoning}</p>
-                            <p><strong>How to prepare:</strong> {item.preparation_tips}</p>
+                            <p><strong>Lý do câu hỏi này có thể được hỏi:</strong> {item.reasoning}</p>
+                            <p><strong>Cách chuẩn bị:</strong> {item.preparation_tips}</p>
                           </div>
                         </div>
                       ))}
@@ -839,7 +849,7 @@ const JobDetail = () => {
                       <FaLock /> Nâng cấp đến {userPlan === 'Basic' ? 'Pro' : 'ProMax'} để mở khóa các tính năng AI.
                     </p>
                     <button className={cx("upgrade-btn")} onClick={() => navigate("/pricing")}>
-                      Upgrade Plan
+                      Nâng cấp gói
                     </button>
                   </div>
                 )}

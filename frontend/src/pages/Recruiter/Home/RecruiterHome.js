@@ -16,6 +16,7 @@ import {
   faCheck,
   faTimes,
   faTrash,
+  faRocket
 } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "react-toastify";
 
@@ -23,9 +24,49 @@ const cx = classNames.bind(styles);
 
 // Define plan details
 const planDetails = {
-  Basic: { color: "#f0ad4e", icon: faStar },
-  Pro: { color: "#5bc0de", icon: faCrown },
-  ProMax: { color: "#d9534f", icon: faGem },
+  Basic: {
+    name: 'Basic',
+    color: '#f0ad4e',
+    icon: faStar,
+    price: 'Miễn phí',
+    features: [
+      'Đăng tin tuyển dụng cơ bản',
+      'Tìm kiếm ứng viên cơ bản',
+      'Xem hồ sơ ứng viên giới hạn',
+      'Hỗ trợ qua email',
+      'Không giới hạn thời gian sử dụng'
+    ]
+  },
+  ProMax: {
+    name: 'ProMax',
+    color: '#d9534f',
+    icon: faRocket,
+    price: '999.000',
+    features: [
+      'Tất cả tính năng Basic',
+      'Đăng tin tuyển dụng không giới hạn',
+      'Tìm kiếm ứng viên nâng cao',
+      'Xem hồ sơ ứng viên không giới hạn',
+      'AI đề xuất ứng viên phù hợp',
+      'Báo cáo phân tích chi tiết',
+      'Tư vấn tuyển dụng 1-1',
+      'Ưu tiên hiển thị tin tuyển dụng',
+      'Hỗ trợ 24/7 qua chat',
+      'Thời hạn 180 ngày'
+    ]
+  }
+};
+
+// Hàm tính số ngày còn lại
+const getDaysLeft = (expiredAt) => {
+  if (!expiredAt) return null;
+  const now = new Date();
+  const expired = new Date(expiredAt);
+  now.setHours(0,0,0,0);
+  expired.setHours(0,0,0,0);
+  const diff = expired - now;
+  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+  return days > 0 ? days : 0;
 };
 
 function RecruiterHome() {
@@ -49,6 +90,7 @@ function RecruiterHome() {
   const [jobApplications, setJobApplications] = useState({});
   const token = localStorage.getItem("token");
   const [hasBusinessLicense, setHasBusinessLicense] = useState(false);
+  const [planExpiredAt, setPlanExpiredAt] = useState(null);
 
   const handleStatusChange = async (applicationId, newStatus) => {
     try {
@@ -117,6 +159,7 @@ function RecruiterHome() {
             if (updatedCompanyResponse.data.companies && updatedCompanyResponse.data.companies.length > 0) {
               setCompanyInfo(updatedCompanyResponse.data.companies[0]);
               setPlan(updatedCompanyResponse.data.companies[0].plan);
+              setPlanExpiredAt(updatedCompanyResponse.data.companies[0].plan_expired_at);
             }
           } catch (error) {
             console.error("Error creating company:", error);
@@ -124,6 +167,7 @@ function RecruiterHome() {
         } else {
           setCompanyInfo(responseCompany.data.companies[0]);
           setPlan(responseCompany.data.companies[0].plan);
+          setPlanExpiredAt(responseCompany.data.companies[0].plan_expired_at);
         }
       } catch (error) {
         console.error("Error fetching recruiter data:", error);
@@ -181,6 +225,19 @@ function RecruiterHome() {
 
     fetchCompanyData();
   }, [companyInfo]);
+
+  // Nếu chưa đăng nhập, hiển thị thông báo và nút đăng nhập
+  if (!token || !recruiter) {
+    return (
+      <div className={cx("not-logged-in-wrapper")}> 
+        <div className={cx("not-logged-in-card")}> 
+          <i className="fa-solid fa-user-lock"></i>
+          <h2>Vui lòng đăng nhập để xem thông tin nhà tuyển dụng</h2>
+          <button className={cx("login-btn")} onClick={() => navigate("/login")}>Đăng nhập</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cx("wrapper")}>
@@ -270,15 +327,49 @@ function RecruiterHome() {
             <p>Tự động phân tích bằng công nghệ trí tuệ nhân tạo</p>
             <button className={cx("ai-btn")}>
               <i className="fa-solid fa-robot"></i>
-              Tôi ưu thiết lập
+              Tối ưu thiết lập
             </button>
-            <button className={cx("view-all-btn")}>XEM TẤT CẢ ĐỀ XUẤT</button>
+            {/* navigation to toppy ai */}
+            <button className={cx("view-all-btn")} onClick={() => navigate("/recruiter/ai-suggest")}>XEM TẤT CẢ ĐỀ XUẤT</button>
           </div>
 
-          <div className={cx("service-card")}>
-            <h3>Dịch vụ sắp hết hạn</h3>
-            <p>Hiện không có dịch vụ nào sắp hết hạn</p>
-            <button className={cx("manage-btn")}>QUẢN LÝ DỊCH VỤ</button>
+          {/* Block dịch vụ/gói giống PricingRecruiter */}
+          <div className={cx("service-card", plan === 'ProMax' ? 'promax' : 'basic')}> 
+            <div className={cx('plan-header')}>
+              <FontAwesomeIcon icon={planDetails[plan]?.icon} className={cx('plan-icon')} />
+              <span className={cx('plan-name')}>{planDetails[plan]?.name}</span>
+              {plan === 'ProMax' && (
+                <span className={cx('badge-popular')}>Nổi bật</span>
+              )}
+            </div>
+            <div className={cx('plan-price')}>
+              {planDetails[plan]?.price === 'Miễn phí' ? (
+                <span className={cx('amount', 'free')}>{planDetails[plan]?.price}</span>
+              ) : (
+                <>
+                  <span className={cx('currency')}>₫</span>
+                  <span className={cx('amount')}>{planDetails[plan]?.price}</span>
+                  <span className={cx('period')}>/gói</span>
+                </>
+              )}
+            </div>
+            <ul className={cx('plan-features')}>
+              {planDetails[plan]?.features.map((feature, idx) => (
+                <li key={idx}><FontAwesomeIcon icon={faCheck} className={cx('check-icon')} /> {feature}</li>
+              ))}
+            </ul>
+            {plan === 'ProMax' ? (
+              <>
+                <button className={cx('plan-btn', 'current')} disabled>Đang sử dụng</button>
+                {planExpiredAt && (
+                  <div className={cx('plan-expired-text')}>
+                    {getDaysLeft(planExpiredAt) > 0 ? `Còn ${getDaysLeft(planExpiredAt)} ngày` : 'Đã hết hạn'}
+                  </div>
+                )}
+              </>
+            ) : (
+              <button className={cx('plan-btn', 'upgrade')} onClick={() => navigate('/recruiter/pricing')}>Nâng cấp ProMax</button>
+            )}
           </div>
         </div>
 

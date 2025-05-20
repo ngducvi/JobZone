@@ -976,3 +976,52 @@
   }
 }
 
+.plan-badge {
+  margin-left: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 10px;
+  margin-top: 10px;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  animation: badgePulse 2s infinite;
+
+  .plan-icon {
+    font-size: 15px;
+    margin-right: 4px;
+  }
+
+  &.basic {
+    background: linear-gradient(135deg, #64748b, #94a3b8);
+    color: #fff;
+    .plan-icon { color: #fbbf24; }
+  }
+  &.pro {
+    background: linear-gradient(135deg, #0284c7, #0ea5e9);
+    color: #fff;
+    .plan-icon { color: #fef3c7; }
+  }
+  &.promax {
+    background: linear-gradient(135deg, #7c3aed, #a78bfa);
+    color: #fff;
+    .plan-icon { color: #fef3c7; animation: crownRotate 3s infinite; }
+  }
+}
+
+@keyframes badgePulse {
+  0% { transform: scale(1);}
+  50% { transform: scale(1.05);}
+  100% { transform: scale(1);}
+}
+@keyframes crownRotate {
+  0% { transform: rotate(0deg);}
+  25% { transform: rotate(-10deg);}
+  75% { transform: rotate(10deg);}
+  100% { transform: rotate(0deg);}
+}
+

@@ -780,6 +780,26 @@
       color: #d97706;
     }
     
+    &.missing {
+      background-color: #f3f4f6;
+      color: #dc2626;
+      border: 1.5px dashed #dc2626;
+      opacity: 0.85;
+      .cv-badge-header {
+        color: #dc2626;
+        font-weight: 700;
+        i {
+          color: #dc2626;
+          margin-right: 4px;
+        }
+      }
+      .cv-id {
+        color: #64748b;
+        font-size: 10px;
+        font-style: italic;
+      }
+    }
+    
     .cv-badge-header {
       display: flex;
       align-items: center;

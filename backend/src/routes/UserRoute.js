@@ -144,4 +144,9 @@ router.delete('/reviews/:review_id', userController.deleteReviewByReviewId.bind(
 router.get('/check-candidate-status', userController.checkCandidateStatus.bind(userController));
 router.get('/conversations', userController.getAllConversations.bind(userController));
 router.get('/recruiter-company', userController.getRecruiterCompanyByUserId.bind(userController));
+router.get('/candidate-skills/:candidate_id', userController.getCandidateSkillsByCandidateId.bind(userController));
+router.get('/skills', userController.getAllSkills.bind(userController));
+router.post('/candidate-skill', userController.addCandidateSkill.bind(userController));
+router.delete('/candidate-skill/:candidate_id/:skill_name', userController.deleteCandidateSkill.bind(userController));
+router.get('/payment-transactions', userController.getAllPaymentTransactionsByUserId.bind(userController));
 module.exports = router;

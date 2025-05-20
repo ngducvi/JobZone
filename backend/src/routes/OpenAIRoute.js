@@ -31,4 +31,6 @@ router.post("/compare-candidates", openAIController.compareCandidates.bind(openA
 router.post("/screen-candidates", openAIController.screenCandidates.bind(openAIController));
 router.post("/find-similar-candidates", openAIController.findSimilarCandidates.bind(openAIController));
 router.post("/analyze-job-for-candidate", openAIController.analyzeJobForCandidate.bind(openAIController));
+router.get("/job-skills/:job_id", openAIController.getJobSkills.bind(openAIController));
+router.get("/candidate-skills/:candidate_id", openAIController.getCandidateSkills.bind(openAIController));
 module.exports = router;

@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import UserContext from "~/context/UserContext";
 import { toast } from "react-toastify";
 import { EventSourcePolyfill } from "event-source-polyfill";
-import { FaRobot, FaSpinner, FaChartBar } from "react-icons/fa";
+import { FaRobot, FaSpinner, FaChartBar, FaTimes } from "react-icons/fa";
 import ModelAI from "~/components/ModelAI";
 
 const cx = classNames.bind(styles);
@@ -16,7 +16,7 @@ const cx = classNames.bind(styles);
 const PreviewJobModal = ({ isOpen, onClose, jobDetails, companyInfo }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState(null);
-  const [selectedModel, setSelectedModel] = useState("gpt-4o-mini");
+  const [selectedModel, setSelectedModel] = useState("gemini-1.5-pro");
 
   const analyzeJobPost = async () => {
     if (isAnalyzing) return;
@@ -303,6 +303,12 @@ function PostJob() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [categoryName, setCategoryName] = useState("Chọn danh mục nghề");
 
+  // Skills state
+  const [skills, setSkills] = useState([]);
+  const [selectedSkills, setSelectedSkills] = useState([]);
+  const [showSkillsModal, setShowSkillsModal] = useState(false);
+  const [isLoadingSkills, setIsLoadingSkills] = useState(false);
+
   // Fetch categories by parent_id
   const fetchCategoriesByParentId = async (parentId) => {
     try {
@@ -332,6 +338,22 @@ function PostJob() {
 
   // Handle category selection and navigation between levels
   const handleCategorySelect = async (category) => {    
+    // If we're at level 1, fetch and display skills for this category
+    if (category.level === 1) {
+      try {
+        setIsLoadingSkills(true);
+        const response = await authAPI().get(recruiterApis.getSkillsByCategoryId(category.category_id));
+        setSkills(response.data.skills);
+        // Clear selected skills when changing category
+        setSelectedSkills([]);
+      } catch (error) {
+        console.error('Error fetching skills for category:', error);
+        toast.error('Không thể tải danh sách kỹ năng cho danh mục này');
+      } finally {
+        setIsLoadingSkills(false);
+      }
+    }
+
     // If we're at level 3 or this category doesn't have children, select it as final choice
     if (category.level === 3 || !category.has_children) {
       setCategoryId(category.category_id);
@@ -579,6 +601,104 @@ function PostJob() {
     setShowLocationModal(false);
   };
 
+  // Fetch all skills when component mounts
+  useEffect(() => {
+    const fetchSkills = async () => {
+      try {
+        setIsLoadingSkills(true);
+        const response = await authAPI().get(recruiterApis.getAllSkills);
+        setSkills(response.data.skills);
+      } catch (error) {
+        console.error('Error fetching skills:', error);
+        toast.error('Không thể tải danh sách kỹ năng');
+      } finally {
+        setIsLoadingSkills(false);
+      }
+    };
+    fetchSkills();
+  }, []);
+
+  // Handle skill selection
+  const handleSkillSelect = (skill) => {
+    const isSelected = selectedSkills.some(s => s.skill_id === skill.skill_id);
+    
+    if (isSelected) {
+      // Remove skill from selected skills
+      setSelectedSkills(prev => prev.filter(s => s.skill_id !== skill.skill_id));
+    } else {
+      // Add skill to selected skills
+      setSelectedSkills(prev => [...prev, skill]);
+    }
+  };
+
+  // Add skills to job after job creation
+  const addSkillsToJob = async (jobId) => {
+    try {
+      // Add all selected skills to the job
+      await Promise.all(
+        selectedSkills.map(skill =>
+          authAPI().post(recruiterApis.addJobSkill, {
+            job_id: jobId,
+            skill_id: skill.skill_id
+          })
+        )
+      );
+    } catch (error) {
+      console.error('Error adding skills to job:', error);
+      toast.error('Đã xảy ra lỗi khi thêm kỹ năng vào job');
+    }
+  };
+
+  // Skills Modal Component
+  const SkillsModal = ({ isOpen, onClose }) => {
+    if (!isOpen) return null;
+
+    return (
+      <div className={cx("modal-overlay")}>
+        <div className={cx("modal-content", "skills-modal")}>
+          <div className={cx("modal-header")}>
+            <h3>Chọn kỹ năng</h3>
+            <button className={cx("close-btn")} onClick={onClose}>
+              <i className="fa-solid fa-times"></i>
+            </button>
+          </div>
+
+          <div className={cx("modal-body")}>
+            {isLoadingSkills ? (
+              <div className={cx("loading-container")}>
+                <FaSpinner className={cx("spinner")} />
+                <span>Đang tải danh sách kỹ năng...</span>
+              </div>
+            ) : (
+              <div className={cx("skills-list")}>
+                {skills.map((skill) => (
+                  <div
+                    key={skill.skill_id}
+                    className={cx("skill-item", {
+                      selected: selectedSkills.some(s => s.skill_id === skill.skill_id)
+                    })}
+                    onClick={() => handleSkillSelect(skill)}
+                  >
+                    <span className={cx("skill-name")}>{skill.skill_name}</span>
+                    {skill.description && (
+                      <span className={cx("skill-description")}>{skill.description}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className={cx("modal-footer")}>
+            <button className={cx("confirm-btn")} onClick={onClose}>
+              Xác nhận
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -587,7 +707,6 @@ function PostJob() {
     // Kiểm tra xem danh mục đã được chọn chưa
     if (!categoryId) {
       setError("Vui lòng chọn danh mục nghề trước khi đăng tin.");
-      // Cuộn trang đến vị trí phần tử input danh mục
       const categoryInput = document.querySelector(`.${cx("category-input")}`);
       if (categoryInput) {
         categoryInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -595,26 +714,9 @@ function PostJob() {
       return;
     }
 
-    console.log("Submitting job data:", {
-      jobTitle,
-      description,
-      email,
-      specialisms,
-      salary,
-      username,
-      jobType,
-      careerLevel,
-      experience,
-      location,
-      benefits,
-      jobRequirements,
-      deadline,
-      company_id: companyId,
-      category_id: categoryId,
-    });
-
     try {
-      await authAPI().post(recruiterApis.postJob, {
+      // Create job first
+      const response = await authAPI().post(recruiterApis.postJob, {
         title: jobTitle,
         description,
         email,
@@ -633,10 +735,25 @@ function PostJob() {
         last_modified_by: username,
         category_id: categoryId,
       });
+
+      console.log('Job creation response:', response.data); // Debug log
+
+      // Extract job_id from response
+      const jobId = response.data.job?.job_id || response.data.job_id;
+      
+      if (!jobId) {
+        throw new Error('Không thể lấy ID của job vừa tạo');
+      }
+
+      // Add skills to the job if there are any selected skills
+      if (selectedSkills.length > 0) {
+        await addSkillsToJob(jobId);
+      }
+
       setSuccess("Đăng tin tuyển dụng thành công!");
       navigate("/recruiter/jobs");
     } catch (err) {
-      console.error("Error posting job:", err.response.data); // In ra thông báo lỗi chi tiết
+      console.error("Error posting job:", err.response?.data || err.message);
       setError("Đã xảy ra lỗi khi đăng tin tuyển dụng. Vui lòng thử lại.");
     }
   };
@@ -682,24 +799,24 @@ function PostJob() {
     }
 
     const prompt = `Là một chuyên gia tuyển dụng, hãy tạo một bản mô tả công việc chi tiết cho vị trí "${jobTitle}". 
-    Hãy cung cấp thông tin theo format sau:
+    Hãy cung cấp thông tin theo các phần sau (chỉ trả về nội dung, không đánh số thứ tự):
     
-    1. Mô tả công việc:
+    Mô tả công việc:
     - Tổng quan về vị trí
     - Các trách nhiệm chính
     - Môi trường làm việc
     
-    2. Yêu cầu công việc:
+    Yêu cầu công việc:
     - Kỹ năng cần thiết
     - Kinh nghiệm yêu cầu
     - Trình độ học vấn
     
-    3. Quyền lợi:
+    Quyền lợi:
     - Lương thưởng
     - Phúc lợi
     - Cơ hội phát triển
     
-    4. Thông tin bổ sung:
+    Thông tin bổ sung:
     - Địa điểm làm việc
     - Hình thức làm việc
     - Thời gian làm việc`;
@@ -742,15 +859,41 @@ function PostJob() {
           try {
             // Parse AI response and update form fields
             const sections = aiResponse.split('\n\n');
+            let currentSection = '';
+            let currentContent = '';
+
             sections.forEach(section => {
-              if (section.includes('Mô tả công việc:')) {
-                setDescription(section.replace('Mô tả công việc:', '').trim());
-              } else if (section.includes('Yêu cầu công việc:')) {
-                setJobRequirements(section.replace('Yêu cầu công việc:', '').trim());
-              } else if (section.includes('Quyền lợi:')) {
-                setBenefits(section.replace('Quyền lợi:', '').trim());
+              // Remove any leading numbers and dots
+              const cleanSection = section.replace(/^\d+\.\s*/, '').trim();
+              
+              if (cleanSection.toLowerCase().includes('mô tả công việc:')) {
+                if (currentSection && currentContent) {
+                  updateField(currentSection, currentContent.trim());
+                }
+                currentSection = 'description';
+                currentContent = cleanSection.replace('Mô tả công việc:', '').trim();
+              } else if (cleanSection.toLowerCase().includes('yêu cầu công việc:')) {
+                if (currentSection && currentContent) {
+                  updateField(currentSection, currentContent.trim());
+                }
+                currentSection = 'jobRequirements';
+                currentContent = cleanSection.replace('Yêu cầu công việc:', '').trim();
+              } else if (cleanSection.toLowerCase().includes('quyền lợi:')) {
+                if (currentSection && currentContent) {
+                  updateField(currentSection, currentContent.trim());
+                }
+                currentSection = 'benefits';
+                currentContent = cleanSection.replace('Quyền lợi:', '').trim();
+              } else if (currentSection) {
+                currentContent += '\n' + cleanSection;
               }
             });
+
+            // Update the last section
+            if (currentSection && currentContent) {
+              updateField(currentSection, currentContent.trim());
+            }
+
             toast.success("Đã tạo nội dung thành công!");
           } catch (error) {
             console.error('Error parsing AI response:', error);
@@ -772,6 +915,23 @@ function PostJob() {
         eventSource.close();
       }
     };
+  };
+
+  // Helper function to update form fields
+  const updateField = (field, content) => {
+    switch (field) {
+      case 'description':
+        setDescription(content);
+        break;
+      case 'jobRequirements':
+        setJobRequirements(content);
+        break;
+      case 'benefits':
+        setBenefits(content);
+        break;
+      default:
+        break;
+    }
   };
 
   return (
@@ -978,6 +1138,69 @@ function PostJob() {
             <i className="fa-solid fa-chevron-right"></i>
           </div>
           {categoryId === "" && <div className={cx("error-hint")}>Vui lòng chọn một danh mục nghề</div>}
+          
+          {/* Display skills section when a level 1 category is selected */}
+          {categoryPath.length > 1 && categoryPath[1].level === 1 && (
+            <div className={cx("skills-section")}>
+              <div className={cx("skills-header")}>
+                <h4>Kỹ năng phù hợp với danh mục</h4>
+                <span className={cx("skills-count")}>{skills.length} kỹ năng</span>
+              </div>
+              
+              {isLoadingSkills ? (
+                <div className={cx("loading-skills")}>
+                  <FaSpinner className={cx("spinner")} />
+                  Đang tải danh sách kỹ năng...
+                </div>
+              ) : (
+                <div className={cx("skills-grid")}>
+                  {skills.map((skill) => (
+                    <div
+                      key={skill.skill_id}
+                      className={cx("skill-item", {
+                        selected: selectedSkills.some(s => s.skill_id === skill.skill_id)
+                      })}
+                      onClick={() => handleSkillSelect(skill)}
+                    >
+                      <div className={cx("skill-name")}>{skill.skill_name}</div>
+                      {skill.description && (
+                        <div className={cx("skill-description")}>{skill.description}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        <div className={cx("form-group")}>
+          <label htmlFor="skills">Kỹ năng yêu cầu</label>
+          <div 
+            className={cx("skills-input")} 
+            onClick={() => setShowSkillsModal(true)}
+          >
+            <div className={cx("selected-skills")}>
+              {selectedSkills.length > 0 ? (
+                selectedSkills.map((skill) => (
+                  <div key={skill.skill_id} className={cx("skill-tag")}>
+                    {skill.skill_name}
+                    <button
+                      className={cx("remove-skill")}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSkillSelect(skill);
+                      }}
+                    >
+                      <FaTimes />
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <span className={cx("placeholder")}>Chọn kỹ năng yêu cầu</span>
+              )}
+            </div>
+            <i className="fa-solid fa-chevron-right"></i>
+          </div>
         </div>
         <div className={cx("button-group")}>
           <button type="submit" className={cx("submit-btn")}>
@@ -1127,6 +1350,12 @@ function PostJob() {
           </div>
         </div>
       )}
+
+      {/* Add SkillsModal */}
+      <SkillsModal 
+        isOpen={showSkillsModal}
+        onClose={() => setShowSkillsModal(false)}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@ const querystring = require('qs');
 const crypto = require('crypto');
 const PaymentTransaction = require('../models/PaymentTransaction');
 const User = require('../models/User');
+const Company = require('../models/Company');
 require('dotenv').config();
 const { Op } = require('sequelize');
 
@@ -551,6 +552,92 @@ class VnpayController {
     } catch (error) {
       console.error("Error in checkAndUpdateTransaction:", error);
       return res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+  }
+
+  // Hàm xác thực thanh toán cho recruiter
+  async verifyVnpayReturnRecruiter(req, res) {
+    try {
+      if (Object.keys(req.query).length === 0) {
+        return res.redirect(`${this.feUrl}/recruiter/payment/return?error=direct_access`);
+      }
+      const vnp_Params = req.query;
+      const orderId = vnp_Params['vnp_TxnRef'];
+      const secureHash = vnp_Params['vnp_SecureHash'];
+      if (!orderId) {
+        return res.redirect(`${this.feUrl}/recruiter/payment/return?error=missing_order_id`);
+      }
+      let paymentTransaction = await PaymentTransaction.findByPk(orderId);
+      if (!paymentTransaction) {
+        return res.redirect(`${this.feUrl}/recruiter/payment/return?error=transaction_not_found`);
+      }
+      if (!secureHash) {
+        return res.redirect(`${this.feUrl}/recruiter/payment/return?error=missing_signature`);
+      }
+      const vnpParams = { ...vnp_Params };
+      delete vnpParams['vnp_SecureHash'];
+      delete vnpParams['vnp_SecureHashType'];
+      const signData = [];
+      Object.keys(vnpParams)
+        .sort()
+        .forEach(key => {
+          const value = vnpParams[key];
+          if (!value || value === "" || value === undefined || value === null) return;
+          signData.push(`${key}=${value}`);
+        });
+      const signString = signData.join('&');
+      const hmac = crypto.createHmac('sha512', this.secretKey);
+      const signed = hmac.update(Buffer.from(signString, 'utf-8')).digest('hex');
+      const valid = secureHash === signed;
+      const responseCode = vnp_Params['vnp_ResponseCode'];
+      const transactionStatus = vnp_Params['vnp_TransactionStatus'];
+      // Tìm company theo user_id của transaction
+      const userId = paymentTransaction.user_id;
+      const company = await Company.findOne({ where: { created_by: userId } });
+      if (!company) {
+        return res.redirect(`${this.feUrl}/recruiter/payment/return?error=company_not_found`);
+      }
+      if (valid && responseCode === "00" && transactionStatus === "00") {
+        paymentTransaction.status = 'success';
+        await paymentTransaction.save();
+        let planExpiredAt;
+        let plan = "ProMax";
+        // Xác định gói dịch vụ dựa trên số tiền
+        if (paymentTransaction.amount < 999000) {
+          plan = "Basic";
+        }
+        // Kiểm tra company đã có gói và còn hạn không
+        const companyHasActivePlan = company.plan !== 'Basic' && company.plan_expired_at && new Date(company.plan_expired_at) > new Date();
+        if (companyHasActivePlan) {
+          planExpiredAt = new Date(company.plan_expired_at);
+          // Gói ProMax: cộng thêm 180 ngày
+          planExpiredAt.setDate(planExpiredAt.getDate() + 180);
+        } else {
+          planExpiredAt = new Date();
+          planExpiredAt.setDate(planExpiredAt.getDate() + 180);
+        }
+        company.plan = plan;
+        company.plan_expired_at = planExpiredAt;
+        await company.save();
+      } else {
+        paymentTransaction.status = 'failed';
+        await paymentTransaction.save();
+      }
+      const data = [
+        responseCode || "",
+        transactionStatus || "",
+        orderId || "",
+        vnp_Params['vnp_Amount'] || "",
+        vnp_Params['vnp_BankCode'] || "",
+        vnp_Params['vnp_BankTranNo'] || "",
+        vnp_Params['vnp_CardType'] || "",
+        vnp_Params['vnp_PayDate'] || "",
+        vnp_Params['vnp_OrderInfo'] || ""
+      ].join("|");
+      return res.redirect(`${this.feUrl}/recruiter/payment/return?data=${encodeURIComponent(data)}&is_valid=${valid}`);
+    } catch (error) {
+      console.error("Error in verifyVnpayReturnRecruiter:", error);
+      return res.redirect(`${this.feUrl}/recruiter/payment/return?error=server_error`);
     }
   }
 }

@@ -53,6 +53,8 @@ function EditJobModal({ isOpen, onClose, jobData, onEdit, setSelectedJob }) {
   const [workingLocation, setWorkingLocation] = useState(jobData ? jobData.working_location : 'Chưa có địa điểm');
   const [status, setStatus] = useState(jobData ? jobData.status : 'Chưa có trạng thái');
   const [categoryId, setCategoryId] = useState(jobData ? jobData.category_id : 'Chưa có chuyên ngành');
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [isConfirmed, setIsConfirmed] = useState(false);
 
   // Thêm state cho địa điểm
   const [provinces, setProvinces] = useState([]);
@@ -388,6 +390,12 @@ function EditJobModal({ isOpen, onClose, jobData, onEdit, setSelectedJob }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Nếu job đang active và chưa được xác nhận
+    if (status === 'Active' && !isConfirmed) {
+      setShowConfirmModal(true);
+      return;
+    }
+    
     // Chuyển đổi giá trị hiển thị sang giá trị database
     const salaryValue = mapDisplayValueToDatabase(salary, salaryMapping);
     const experienceValue = mapDisplayValueToDatabase(experience, experienceMapping);
@@ -413,6 +421,12 @@ function EditJobModal({ isOpen, onClose, jobData, onEdit, setSelectedJob }) {
     console.log("Submitting updated job:", updatedJob);
     await onEdit(jobData.job_id, updatedJob);
     onClose();
+  };
+
+  const handleConfirmEdit = () => {
+    setIsConfirmed(true);
+    setShowConfirmModal(false);
+    handleSubmit(new Event('submit')); // Trigger form submission again
   };
 
   if (!isOpen) return null;
@@ -634,6 +648,40 @@ function EditJobModal({ isOpen, onClose, jobData, onEdit, setSelectedJob }) {
                 </button>
                 <button className={cx('confirm-btn')} onClick={handleConfirmCategory}>
                   Xác nhận
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Confirmation Modal for Active Jobs */}
+        {showConfirmModal && (
+          <div className={cx('modal-overlay', 'inner-modal')}>
+            <div className={cx('modal-content', 'confirm-modal')}>
+              <button className={cx('close-btn')} onClick={() => setShowConfirmModal(false)} aria-label="Đóng cảnh báo">
+                <i className="fa-solid fa-times"></i>
+              </button>
+              <div className={cx('modal-header', 'centered')}>
+                <h3>Cảnh báo</h3>
+              </div>
+              <div className={cx('modal-body', 'centered')}>
+                <div className={cx('warning-icon')}>
+                  <i className="fa-solid fa-exclamation-triangle"></i>
+                </div>
+                <p className={cx('warning-text')}>Tin tuyển dụng này đang ở trạng thái hiển thị. Việc chỉnh sửa có thể ảnh hưởng đến:</p>
+                <ul className={cx('warning-list')}>
+                  <li>Ứng viên đã ứng tuyển</li>
+                  <li>Trải nghiệm người dùng</li>
+                  <li>Tính nhất quán của dữ liệu</li>
+                </ul>
+                <p className={cx('confirm-text')}>Bạn có chắc chắn muốn tiếp tục chỉnh sửa?</p>
+              </div>
+              <div className={cx('modal-footer', 'centered')}>
+                <button className={cx('cancel-btn')} onClick={() => setShowConfirmModal(false)}>
+                  Hủy
+                </button>
+                <button className={cx('confirm-btn')} onClick={handleConfirmEdit}>
+                  Tiếp tục chỉnh sửa
                 </button>
               </div>
             </div>
@@ -982,7 +1030,7 @@ function RecruiterJobs() {
                   }}
                 >
                   <i className={JOB_STATUS[job.status]?.icon}></i>
-                  {JOB_STATUS[job.status]?.label}
+                  {job.status}
                 </span>
               </div>
               

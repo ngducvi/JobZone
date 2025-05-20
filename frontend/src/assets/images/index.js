@@ -17,6 +17,20 @@ const images = {
     default_cv: require('~/assets/images/defaulcv.png'),
     coverletter: require('~/assets/images/coverletter.png'),
     avt: require('~/assets/images/avt.png'),
+    basicCVs: require('~/assets/images/cv/BasicCVs.png'),
+    basicCVTemplate: require('~/assets/images/cv/BasicCVTemplate.png'),
+    creattiveCV: require('~/assets/images/cv/CreativeCV.png'),
+    cvcoban: require('~/assets/images/cv/CVCơ bản.png'),
+    cvcobanqua: require('~/assets/images/cv/CVCơbanqua.png'),
+    cvsangtao: require('~/assets/images/cv/CVSangTao.png'),
+    professsionalcv: require('~/assets/images/cv/ProfessionalCV.png'),
+    thanhlich: require('~/assets/images/cv/Thanhlich.png'),
+    cvsangtao1: require('~/assets/images/cv/CV Sáng tạo1.png'),
+    cvsangtaopink: require('~/assets/images/cv/Sáng tạo Pink.png'),
+    cvsangtaoblue: require('~/assets/images/cv/Sáng tạo Blue.png'),
+    hiendai1: require('~/assets/images/cv/Hiện đại 1.png'),
+    tinhte2: require('~/assets/images/cv/Tinh tế 2.png'),
+    hiendai4: require('~/assets/images/cv/Hiện đại 4.png'),
 };
 
 export default images;
